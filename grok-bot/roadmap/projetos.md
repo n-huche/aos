@@ -1,4 +1,4 @@
-# Projetos GitHub — Backend Java + Spring (1ª vaga)
+# Projetos — Backend Java + Spring (1ª vaga)
 
 **Objetivo:** maximizar chance de estágio/júnior backend o mais rápido possível.  
 **Stack alvo:** Java 21 · Spring Boot 3 · SQL · REST · Git  
@@ -10,6 +10,8 @@ Confirmado por Radar de Vagas + Arquiteto de Portfólio (set/2026).
 
 ## Ordem de execução
 
+- [ ]
+
 1. **Projeto 1 — API âncora** (obrigatório)
 2. → **Começar a candidatar estágio**
 3. **Projeto 2 — Desafio estilo Itaú**
@@ -20,6 +22,8 @@ Fora do plano: Toujours, roadmaps gigantes, certificados agora, Kafka/K8s/micros
 ---
 
 ## Projeto 1 — API âncora com regra de negócio
+
+- [ ]
 
 ### Por quê
 Cobre o que as vagas pedem de verdade: Java, Spring Boot, REST, SQL, Git; e o que júnior quase exige: JPA, testes, Docker, JWT. Uma API completa com regra de negócio vale mais que vários CRUDs.
@@ -74,6 +78,8 @@ Kafka, Kubernetes, microsserviços, Eureka, CQRS, GraphQL, Clean Architecture te
 
 ## Projeto 2 — Desafio estilo Itaú (transações + estatística)
 
+- [ ]
+
 ### Por quê
 Treina take-home de banco/fintech: API enxuta, validação, status HTTP, commits por feature. Combustível de entrevista / desempate — não pré-requisito para começar a aplicar.
 
@@ -99,6 +105,8 @@ Sobe local, testes verdes, README com `curl`, histórico de commits claro.
 
 ## Projeto 3 — Diferencial (opcional)
 
+- [ ]
+
 Só depois de candidatar com #1 (e idealmente #2). Escolher **um**:
 
 | Opção | O quê | Por quê |
@@ -113,6 +121,8 @@ Fila + Redis + cloud tudo junto; terceiro monólito CRUD paralelo.
 ---
 
 ## Checklist GitHub / README (olhada de 30s)
+
+- [ ]
 
 ### Perfil
 - Bio: `Backend Java/Spring · buscando estágio`
@@ -141,6 +151,8 @@ README só com lista de libs · um commit `final` · sem como rodar · só H2 se
 
 ## O que não fazer (global)
 
+- [ ]
+
 - 10 repos abandonados
 - Wall de badges
 - Listar Kafka/K8s sem código
@@ -152,6 +164,8 @@ README só com lista de libs · um commit `final` · sem como rodar · só H2 se
 ---
 
 ## Próximo passo concreto
+
+- [ ]
 
 1. Escolher domínio do Projeto 1: **A (pedidos/estoque)** ou **B (reembolso)**.
 2. Criar o repositório e o README esqueleto.

@@ -1,17 +1,16 @@
 # Grok Bot — memória operacional
 
-Arquivos na raiz = o que você usa no dia a dia.  
-`operacional/` = time/bots (gabinete).
+Raiz flat. Roadmap (estudo + projetos) em `roadmap/`.
 
 ## Na raiz
 
 - [[meu-objetivo]]
 - [[meu-plano]]
 - [[decisoes]]
-- [[projetos-github-java-estagio]]
-- [[fontes-estudo-java-spring]]
 - [[como-aprender]]
-
-## Operacional
-
 - [[equipe]]
+
+## Roadmap
+
+- [[estudo]] — onde estudar (YouTube-first, EN)
+- [[projetos]] — projetos GitHub sequenciais

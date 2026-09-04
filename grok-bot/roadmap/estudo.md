@@ -1,4 +1,4 @@
-# Onde estudar — Java + Spring (1ª vaga)
+# Estudo — Java + Spring (1ª vaga)
 
 **Objetivo:** aprender o mais rápido possível **com excelência** — YouTube primeiro; fontes em inglês ok (e preferíveis quando forem melhores).  
 **Rotina:** você define. Este doc só diz *onde*.  
@@ -11,6 +11,8 @@ Nota: as **fontes** são em inglês; o **texto deste arquivo** é em português.
 
 ## Princípios
 
+- [ ]
+
 - **1 principal + no máximo 1 complementar** por tópico.
 - Mão no teclado — prática > binge.
 - Pule GUI, Kafka, K8s, microsserviços, React, Python/IA em qualquer vídeo.
@@ -20,6 +22,8 @@ Nota: as **fontes** são em inglês; o **texto deste arquivo** é em português.
 ---
 
 ## 1. Java básico
+
+- [ ]
 
 Variáveis, tipos, if/loops, métodos, classes, List/ArrayList, exceções.
 
@@ -34,6 +38,8 @@ Variáveis, tipos, if/loops, métodos, classes, List/ArrayList, exceções.
 
 ## 2. OOP
 
+- [ ]
+
 Encapsulamento, herança, interface, equals/hashCode.
 
 | | |
@@ -47,6 +53,8 @@ Encapsulamento, herança, interface, equals/hashCode.
 
 ## 3. Git + GitHub
 
+- [ ]
+
 | | |
 |---|---|
 | **Principal** | [freeCodeCamp — Git & GitHub Crash Course for Beginners](https://www.youtube.com/watch?v=mAFoROnOfHs) |
@@ -57,6 +65,8 @@ Encapsulamento, herança, interface, equals/hashCode.
 ---
 
 ## 4. SQL
+
+- [ ]
 
 CRUD, JOIN, PK/FK, índices básicos.
 
@@ -71,6 +81,8 @@ CRUD, JOIN, PK/FK, índices básicos.
 
 ## 5. HTTP + REST + JSON
 
+- [ ]
+
 | | |
 |---|---|
 | **Principal** | [Traversy Media — HTTP Crash Course](https://www.youtube.com/watch?v=iYM2zFP3Zn0) — Express é só demo; **ignore Node**, foque no protocolo |
@@ -82,6 +94,8 @@ CRUD, JOIN, PK/FK, índices básicos.
 
 ## 6. Maven
 
+- [ ]
+
 | | |
 |---|---|
 | **Principal** | [Programming Techie — Maven Complete Tutorial with IntelliJ](https://www.youtube.com/watch?v=JhSBS2OpGdU) (~38 min) |
@@ -92,6 +106,8 @@ CRUD, JOIN, PK/FK, índices básicos.
 ---
 
 ## 7. Spring Boot
+
+- [ ]
 
 Controllers, services, DI, application.yml.
 
@@ -106,6 +122,8 @@ Controllers, services, DI, application.yml.
 
 ## 8. Spring Data JPA + PostgreSQL + Flyway
 
+- [ ]
+
 | | |
 |---|---|
 | **Principal** | [Amigoscode — Spring Boot Full Course 2025](https://www.youtube.com/watch?v=Cw0J6jYJtzw) — Boot + Postgres via Docker + JPA |
@@ -117,6 +135,8 @@ Controllers, services, DI, application.yml.
 
 ## 9. Validation + ControllerAdvice + DTO ≠ entity
 
+- [ ]
+
 | | |
 |---|---|
 | **Principal** | [CodeSnippet — RestControllerAdvice / Exception Handling](https://www.youtube.com/watch?v=IdHHwZg3v58) |
@@ -127,6 +147,8 @@ Controllers, services, DI, application.yml.
 ---
 
 ## 10. Spring Security + JWT
+
+- [ ]
 
 **Decisão:** caminho **A** — a API **emite** JWT (`JwtAuthenticationFilter` + **JJWT**). Caminho **B** fica **opcional depois** (não estudar agora).
 
@@ -141,6 +163,8 @@ Controllers, services, DI, application.yml.
 
 ## 11. JUnit + Mockito
 
+- [ ]
+
 | | |
 |---|---|
 | **Principal** | [Amigoscode — Software Testing Tutorial](https://www.youtube.com/watch?v=Geq60OVyBPg) |
@@ -151,6 +175,8 @@ Controllers, services, DI, application.yml.
 ---
 
 ## 12. Docker Compose (app + Postgres)
+
+- [ ]
 
 | | |
 |---|---|
@@ -163,6 +189,8 @@ Controllers, services, DI, application.yml.
 
 ## 13. OpenAPI / Swagger
 
+- [ ]
+
 | | |
 |---|---|
 | **Principal** | [springdoc.org](https://springdoc.org/) — melhor que tutoriais aleatórios: `springdoc-openapi-starter-webmvc-ui`, `/swagger-ui.html`, `/v3/api-docs` |
@@ -173,5 +201,7 @@ Controllers, services, DI, application.yml.
 ---
 
 ## Mini-projeto acumulativo
+
+- [ ]
 
 Uma API REST (tarefas/contatos): DTOs validados, entities JPA ≠ DTOs, PostgreSQL + Flyway, JWT, testes, Compose, springdoc — depois sobe pro **Projeto 1** (API âncora com regra de negócio) do doc de projetos.

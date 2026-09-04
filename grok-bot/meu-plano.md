@@ -33,14 +33,14 @@ Certificados: **~0** como requisito em estágio/jr Java abertos. Pular cert agor
 2. **Projeto 2 — Desafio estilo Itaú** (transações + estatística).
 3. **Projeto 3 — diferencial** só se ainda precisar (CSV job / CI+Testcontainers / N+1 documentado).
 
-Detalhe: [[projetos-github-java-estagio]]
+Detalhe: [[projetos]]
 
 ## 4. Estudo
 
 Ordem: Java básico → OOP → Git → SQL → HTTP/REST → Maven → Spring Boot → JPA+Postgres+Flyway → Validation/DTO → **Security+JWT (caminho A: filtro + JJWT; B opcional depois)** → JUnit → Docker Compose → OpenAPI.
 
 Fontes: YouTube-first, EN. Texto das notas em PT.  
-Detalhe: [[fontes-estudo-java-spring]]
+Detalhe: [[estudo]]
 
 Rotina: **com o Nicolas** (não com o Chefe de gabinete).
 
