@@ -9,6 +9,7 @@ Raiz flat. Roadmap (estudo + projetos) em `roadmap/`.
 - [[decisoes]]
 - [[como-aprender]]
 - [[equipe]]
+- [[oi-mae]]
 
 ## Roadmap
 
