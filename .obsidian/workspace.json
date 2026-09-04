@@ -41,12 +41,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "grok bot/projetos-github-java-estagio.md",
+                "file": "backend/introduction/hosting.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "projetos-github-java-estagio"
+              "title": "hosting"
             }
           }
         ],
@@ -218,11 +218,11 @@
       "obsidian-excalidraw-plugin:New drawing": false
     }
   },
-  "active": "f0a26bf914ef3371",
+  "active": "d7b98be4854bcdcf",
   "lastOpenFiles": [
-    "grok bot",
+    "grok-bot/projetos-github-java-estagio.md",
+    "grok-bot",
     "backend/introduction/hosting.md",
-    "grok bot/projetos-github-java-estagio.md",
     "backend/introduction/index/introduction.md",
     "backend/introduction/domain name.md",
     "backend/introduction/http.md",
