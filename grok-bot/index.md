@@ -1,13 +1,6 @@
 # Grok Bot — memória operacional
 
-Duas pastas só:
-
-| Pasta | Pra quem | O quê |
-|---|---|---|
-| [[nicolas]] / `nicolas/` | **Você** | Objetivo, plano, decisões, estudo, projetos |
-| `gabinete/` | **Chefe de gabinete + bots** | Equipe e operação do time |
-
-## Pra você (`nicolas/`)
+Notas do gabinete (estrutura em revisão). Links:
 
 - [[meu-objetivo]]
 - [[meu-plano]]
@@ -15,7 +8,4 @@ Duas pastas só:
 - [[fontes-estudo-java-spring]]
 - [[como-aprender]]
 - [[projetos-github-java-estagio]]
-
-## Pro gabinete (`gabinete/`)
-
 - [[equipe]]
