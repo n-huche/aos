@@ -124,11 +124,11 @@ Controllers, services, DI, application.yml.
 
 - [ ]
 
-| | |
-|---|---|
-| **Principal** | [Amigoscode — Spring Boot Full Course 2025](https://www.youtube.com/watch?v=Cw0J6jYJtzw) — Boot + Postgres via Docker + JPA |
-| **Cobrir** | `@Entity`, `JpaRepository`, CRUD; aprenda `ddl-auto` e depois **desligue** |
-| **Pular** | K8s/AWS/microsserviços no fim; nunca trate `ddl-auto=update` como migração de verdade |
+|                  |                                                                                                                                          |
+| ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| **Principal**    | [Amigoscode — Spring Boot Full Course 2025](https://www.youtube.com/watch?v=Cw0J6jYJtzw) — Boot + Postgres via Docker + JPA              |
+| **Cobrir**       | `@Entity`, `JpaRepository`, CRUD; aprenda `ddl-auto` e depois **desligue**                                                               |
+| **Pular**        | K8s/AWS/microsserviços no fim; nunca trate `ddl-auto=update` como migração de verdade                                                    |
 | **Complementar** | [Devtiro — Flyway with Spring Boot](https://www.youtube.com/watch?v=IuKXPx3WLbg) — depois: **Flyway ON + `ddl-auto=validate` ou `none`** |
 
 ---
