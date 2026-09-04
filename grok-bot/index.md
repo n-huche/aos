@@ -1,37 +1,21 @@
 # Grok Bot — memória operacional
 
-Notas geradas / mantidas com o **Chefe de gabinete** e o bot **docs**.
+Duas pastas só:
 
-## Estrutura
+| Pasta | Pra quem | O quê |
+|---|---|---|
+| [[nicolas]] / `nicolas/` | **Você** | Objetivo, plano, decisões, estudo, projetos |
+| `gabinete/` | **Chefe de gabinete + bots** | Equipe e operação do time |
 
-```
-grok-bot/
-├── index.md
-├── carreira/     → objetivo, plano, decisões
-├── estudo/       → fontes + como aprender
-├── portfolio/    → projetos GitHub
-└── equipe/       → bots do time
-```
+## Pra você (`nicolas/`)
 
-## Carreira
+- [[meu-objetivo]]
+- [[meu-plano]]
+- [[decisoes]]
+- [[fontes-estudo-java-spring]]
+- [[como-aprender]]
+- [[projetos-github-java-estagio]]
 
-- [[meu-objetivo]] — para onde vai (longo + curto prazo) + dados
-- [[meu-plano]] — stack, portfólio, estudo, riscos + dados de mercado
-- [[decisoes]] — histórico compacto de escolhas
+## Pro gabinete (`gabinete/`)
 
-## Estudo
-
-- [[fontes-estudo-java-spring]] — onde estudar (YouTube-first, EN)
-- [[como-aprender]] — como estudar (rápido + retenção)
-
-## Portfólio
-
-- [[projetos-github-java-estagio]] — detalhe dos projetos GitHub
-
-## Equipe
-
-- [[equipe]] — bots do time
-
-## Como usar
-
-Atualizações relevantes do gabinete entram sob `grok-bot/` (nas pastas acima). Não misturar com notas de estudo em `backend/` sem necessidade.
+- [[equipe]]
