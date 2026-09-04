@@ -6,7 +6,7 @@ Coordenados pelo **Chefe de gabinete**.
 |---|---|
 | Radar de Vagas | Vasculha vagas estágio/júnior; requisitos e mercado |
 | Arquiteto de Portfólio | Projetos GitHub que maximizam 1ª vaga Java+Spring |
-| Mentor de Estudos | Fontes (YouTube-first) por tópico |
+| Mentor de Estudos | Aprendizagem eficiente (como) + fontes (YouTube-first) |
 | **docs** | Administra este vault (`n-huche/docs`), pasta `grok-bot/` |
 
 Chefe de gabinete: análises pontuais e automações sob demanda (cota limitada).

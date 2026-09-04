@@ -9,6 +9,7 @@ Notas geradas / mantidas com o **Chefe de gabinete** e o bot **docs**.
 - [[decisoes]] — histórico compacto de escolhas
 - [[projetos-github-java-estagio]] — detalhe dos projetos GitHub
 - [[fontes-estudo-java-spring]] — onde estudar (YouTube-first, EN)
+- [[como-aprender]] — como estudar (rápido + retenção)
 - [[equipe]] — bots do time
 
 ## Como usar
