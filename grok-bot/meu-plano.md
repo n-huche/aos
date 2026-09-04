@@ -28,7 +28,7 @@ Certificados: **~0** como requisito em estágio/jr Java abertos. Pular cert agor
 
 ## 3. Portfólio (sequencial)
 
-1. **Projeto 1 — API âncora** (Spring Boot 3, Java 21, JPA, Postgres, Flyway, JWT, JUnit, Docker Compose, OpenAPI) com **regra de negócio** (pedidos/estoque ou reembolso).  
+1. **Projeto 1 — API âncora** (Spring Boot 3, Java 21, JPA, Postgres, Flyway, **JWT emitido pela API (filtro + JJWT)**, JUnit, Docker Compose, OpenAPI) com **regra de negócio** (pedidos/estoque ou reembolso).  
    → Assim que hireable: **candidatar estágio** (não esperar o #2).
 2. **Projeto 2 — Desafio estilo Itaú** (transações + estatística).
 3. **Projeto 3 — diferencial** só se ainda precisar (CSV job / CI+Testcontainers / N+1 documentado).
@@ -37,7 +37,7 @@ Detalhe: [[projetos-github-java-estagio]]
 
 ## 4. Estudo
 
-Ordem: Java básico → OOP → Git → SQL → HTTP/REST → Maven → Spring Boot → JPA+Postgres+Flyway → Validation/DTO → Security+JWT → JUnit → Docker Compose → OpenAPI.
+Ordem: Java básico → OOP → Git → SQL → HTTP/REST → Maven → Spring Boot → JPA+Postgres+Flyway → Validation/DTO → **Security+JWT (caminho A: filtro + JJWT; B opcional depois)** → JUnit → Docker Compose → OpenAPI.
 
 Fontes: YouTube-first, EN. Texto das notas em PT.  
 Detalhe: [[fontes-estudo-java-spring]]
