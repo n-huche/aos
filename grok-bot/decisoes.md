@@ -23,6 +23,12 @@ Atualizado: 2026-09-04
 
 Domínio preferido no #1: pedidos/estoque ou reembolso.
 
+
+## Security (Projeto 1)
+
+- **A (escolhida):** a API **emite** JWT — filtro custom + **JJWT**
+- **B:** opcional depois (não bloqueia a 1ª vaga)
+
 ## Certificados
 
 **Não** agora. Nenhum cert encurta a 1ª vaga mais que o Projeto 1 hireable.
