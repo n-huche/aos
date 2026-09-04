@@ -4,8 +4,10 @@ Notas geradas / mantidas com o **Chefe de gabinete** e o bot **docs**.
 
 ## Conteúdo
 
-- [[decisoes]] — stack, carreira, o que está fora
-- [[projetos-github-java-estagio]] — plano de projetos GitHub (1ª vaga)
+- [[meu-objetivo]] — para onde vai (longo + curto prazo) + dados
+- [[meu-plano]] — stack, portfólio, estudo, riscos + dados de mercado
+- [[decisoes]] — histórico compacto de escolhas
+- [[projetos-github-java-estagio]] — detalhe dos projetos GitHub
 - [[fontes-estudo-java-spring]] — onde estudar (YouTube-first, EN)
 - [[equipe]] — bots do time
 
