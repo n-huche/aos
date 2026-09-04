@@ -11,4 +11,4 @@ Notas geradas / mantidas com o **Chefe de gabinete** e o bot **docs**.
 
 ## Como usar
 
-Atualizações relevantes do gabinete entram aqui (`docs/grok-bot/`). Não misturar com notas de estudo em `backend/` sem necessidade.
+Atualizações relevantes do gabinete entram aqui (`grok-bot/`). Não misturar com notas de estudo em `backend/` sem necessidade.
