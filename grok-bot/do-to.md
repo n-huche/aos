@@ -1,39 +1,30 @@
 # Do-to
 
-## Trocar bateria do iPhone 12 — Conecta Phone
+## Trocar bateria do iPhone 12
 
 - [ ]
 
 ### Quando
 **14–18 set 2026**, qualquer um desses dias, entre **9:00 e 16:00**.  
-Fazer quando estiver na escola da Ana (interclasse): ir à loja **ou** pedir delivery.
+Preferência: quando estiver na escola da Ana (interclasse).
 
-### O quê
-Trocar a bateria do iPhone 12 na **Conecta Phone** (peça “Premium”, não Apple original — aparece como **Bateria: Desconhecida** no Histórico de Peças).
-
-### Onde
-**Av. Engenheiro Antônio de Góes, 14 — Pina**, Recife.  
-WhatsApp: (81) 98964-3974
-
-**Delivery:** buscam e devolvem o celular.
-
-### Preço (combinado)
-| | |
-|---|---|
-| À vista | **R$ 280** |
-| Parcelado | **R$ 290** (até 6×) |
-| Garantia | 6 meses (pedir **por escrito** + NF) |
-| Prazo | no mesmo dia (conforme anúncio) |
+### Opções em disputa
+| | Conecta Phone | Vteck |
+|---|---|---|
+| Endereço | Av. Eng. Antônio de Góes, 14 — **Pina** | R. do Aragão, 17 — **Boa Vista** |
+| Tel/WA | (81) 98964-3974 | (81) 99461-0633 |
+| Distância vs Tacaruna/Boa Vista | Longe (~6 km da escola / Pina) | Perto do Shopping Boa Vista (~400 m a pé) |
+| Preço | **R$ 280** à vista / **R$ 290** parcelado | Consultar |
+| Extra | Delivery (buscam e devolvem) | Confirmar se é o mesmo ponto da Imperatrizcell |
+| Peça | “Premium” (não Apple — Histórico: Desconhecida) | Multimarca — pedir marca + garantia |
 
 ### Contexto
-**Escola da Ana:** EREM Sizenando Silveira — Av. Jornalista Mário Melo, s/n — Santo Amaro.  
-**Distância escola → técnico:** ~6 km · ~9–20 min de carro · a pé ~1h (não vale). Delivery encaixa bem.
+**Escola da Ana:** EREM Sizenando Silveira — Av. Jornalista Mário Melo, s/n — Santo Amaro.
 
-### Checklist
+### Checklist (qualquer uma)
 - [ ] Backup feito
-- [ ] Confirmar delivery em Santo Amaro / horário do interclasse
-- [ ] NF + garantia 6 meses por escrito
-- [ ] Aceitar aviso no iOS (“peça não verificada”)
+- [ ] Marca da célula + garantia por escrito + NF
+- [ ] Aceitar aviso no iOS se não for peça Apple
 
 ---
 
