@@ -1,6 +1,6 @@
 # Grok Bot — memória operacional
 
-Notas geradas / mantidas com o **Chefe de gabinete** e o bot **Obsidian**.
+Notas geradas / mantidas com o **Chefe de gabinete** e o bot **docs**.
 
 ## Conteúdo
 
