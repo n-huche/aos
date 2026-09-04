@@ -1,46 +1,47 @@
-# Where to study — Java + Spring (1st job)
+# Onde estudar — Java + Spring (1ª vaga)
 
-**Goal:** learn as fast as possible **with excellence** — YouTube-first, English OK.  
-**Routine:** yours. This doc only says *where*.  
-**Out of scope:** Kafka, K8s, microservices, React, Python/AI, certificates, giant roadmaps.
+**Objetivo:** aprender o mais rápido possível **com excelência** — YouTube primeiro; fontes em inglês ok (e preferíveis quando forem melhores).  
+**Rotina:** você define. Este doc só diz *onde*.  
+**Fora do escopo:** Kafka, K8s, microsserviços, React, Python/IA, certificados, roadmaps gigantes.
 
-Source: Mentor de Estudos v2 (Sep 2026). Previous PT-BR-heavy map discarded.
-
----
-
-## Principles
-
-- **1 primary + at most 1 complementary** per topic.
-- Hands on keyboard — practice > binge.
-- Skip GUI, Kafka, K8s, microservices, React, Python/AI in any video.
-- Prefer English when it’s the better source (you’re fluent).
-- One accumulating mini-repo; each topic adds a slice.
+Fonte: Mentor de Estudos v2 (set/2026). Mapa anterior com viés PT-BR descartado.  
+Nota: as **fontes** são em inglês; o **texto deste arquivo** é em português.
 
 ---
 
-## 1. Java basics
+## Princípios
 
-Variables, types, if/loops, methods, classes, List/ArrayList, exceptions.
+- **1 principal + no máximo 1 complementar** por tópico.
+- Mão no teclado — prática > binge.
+- Pule GUI, Kafka, K8s, microsserviços, React, Python/IA em qualquer vídeo.
+- Prefira inglês quando a fonte for melhor (você é fluente).
+- Um mini-repo acumulativo; cada tópico acrescenta uma fatia.
+
+---
+
+## 1. Java básico
+
+Variáveis, tipos, if/loops, métodos, classes, List/ArrayList, exceções.
 
 | | |
 |---|---|
-| **Primary** | [Bro Code — Java Full Course for free](https://www.youtube.com/watch?v=xTtL8E4LzTQ) — use description timestamps |
-| **Cover** | JDK/IDE, variables/types, if/switch, loops, methods, classes, arrays, **ArrayList**, **exceptions** |
-| **Skip** | Swing/GUI, graphics, audio, multithreading, advanced generics, serialization, long game projects |
-| **Complementary** | [Programming with Mosh — Java Full Course for Beginners](https://www.youtube.com/watch?v=eIrMbAQSU34) — shorter clean fundamentals; don’t re-binge Bro Code |
+| **Principal** | [Bro Code — Java Full Course for free](https://www.youtube.com/watch?v=xTtL8E4LzTQ) — use os timestamps da descrição |
+| **Cobrir** | JDK/IDE, variáveis/tipos, if/switch, loops, métodos, classes, arrays, **ArrayList**, **exceções** |
+| **Pular** | Swing/GUI, graphics, áudio, multithreading, genéricos avançados, serialização, projetos longos de jogos |
+| **Complementar** | [Programming with Mosh — Java Full Course for Beginners](https://www.youtube.com/watch?v=eIrMbAQSU34) — fundamentos mais curtos e limpos; não reassista o Bro Code inteiro |
 
 ---
 
 ## 2. OOP
 
-Encapsulation, inheritance, interface, equals/hashCode.
+Encapsulamento, herança, interface, equals/hashCode.
 
 | | |
 |---|---|
-| **Primary** | [Coding with John — Tutorials playlist](https://www.youtube.com/playlist?list=PLkeaG1zpPTHhXOfy-mFbdqd1Zz4GnjcpC) — especially [equals vs ==](https://www.youtube.com/watch?v=AoUVdLWLFQw); implement equals/hashCode on a domain class |
-| **Cover** | Encapsulation, inheritance, polymorphism, abstract vs interface, toString, equals/hashCode |
-| **Skip** | Multithreading, deep generics, reflection, full GoF patterns |
-| **Complementary** | [Baeldung — equals() and hashCode() contracts](https://www.baeldung.com/java-equals-hashcode-contracts) |
+| **Principal** | [Coding with John — Tutorials playlist](https://www.youtube.com/playlist?list=PLkeaG1zpPTHhXOfy-mFbdqd1Zz4GnjcpC) — em especial [equals vs ==](https://www.youtube.com/watch?v=AoUVdLWLFQw); implemente equals/hashCode numa classe de domínio |
+| **Cobrir** | Encapsulamento, herança, polimorfismo, abstract vs interface, toString, equals/hashCode |
+| **Pular** | Multithreading, genéricos profundos, reflection, padrões GoF completos |
+| **Complementar** | [Baeldung — equals() and hashCode() contracts](https://www.baeldung.com/java-equals-hashcode-contracts) |
 
 ---
 
@@ -48,23 +49,23 @@ Encapsulation, inheritance, interface, equals/hashCode.
 
 | | |
 |---|---|
-| **Primary** | [freeCodeCamp — Git & GitHub Crash Course for Beginners](https://www.youtube.com/watch?v=mAFoROnOfHs) |
-| **Cover** | init/status/add/commit/log, branch, merge, remote, push/pull, PR, `.gitignore` |
-| **Skip** | Advanced rebase, complex hooks, submodules, deep CI/CD |
-| **Complementary** | [Pro Git](https://git-scm.com/book/en/v2) — Ch. 1–3 + Ch. 6 (GitHub) only |
+| **Principal** | [freeCodeCamp — Git & GitHub Crash Course for Beginners](https://www.youtube.com/watch?v=mAFoROnOfHs) |
+| **Cobrir** | init/status/add/commit/log, branch, merge, remote, push/pull, PR, `.gitignore` |
+| **Pular** | Rebase avançado, hooks complexos, submodules, CI/CD profundo |
+| **Complementar** | [Pro Git](https://git-scm.com/book/en/v2) — só Ch. 1–3 + Ch. 6 (GitHub) |
 
 ---
 
 ## 4. SQL
 
-CRUD, JOIN, PK/FK, basic indexes.
+CRUD, JOIN, PK/FK, índices básicos.
 
 | | |
 |---|---|
-| **Primary** | [freeCodeCamp / Mike Dane — SQL Tutorial](https://www.youtube.com/watch?v=HXV3zeQKqGY) |
-| **Cover** | Tables, PK/FK, INSERT/SELECT/UPDATE/DELETE, WHERE, INNER/LEFT JOIN, constraints, basic indexes |
-| **Skip** | Triggers, long ER digressions, stored procedures, heavy analytics |
-| **Complementary** | [Mode SQL Tutorial](https://mode.com/sql-tutorial) — SELECT/JOIN drills if needed |
+| **Principal** | [freeCodeCamp / Mike Dane — SQL Tutorial](https://www.youtube.com/watch?v=HXV3zeQKqGY) |
+| **Cobrir** | Tabelas, PK/FK, INSERT/SELECT/UPDATE/DELETE, WHERE, INNER/LEFT JOIN, constraints, índices básicos |
+| **Pular** | Triggers, ER longos, stored procedures, analytics pesado |
+| **Complementar** | [Mode SQL Tutorial](https://mode.com/sql-tutorial) — drills de SELECT/JOIN se precisar |
 
 ---
 
@@ -72,10 +73,10 @@ CRUD, JOIN, PK/FK, basic indexes.
 
 | | |
 |---|---|
-| **Primary** | [Traversy Media — HTTP Crash Course](https://www.youtube.com/watch?v=iYM2zFP3Zn0) — Express is demo only; **ignore Node**, focus on the protocol |
-| **Cover** | GET/POST/PUT/PATCH/DELETE, 2xx/4xx/5xx, Content-Type, JSON body, REST resources |
-| **Skip** | Express/Node code, deep HTTPS, HTTP/2/3 internals |
-| **Complementary** | [MDN — A typical HTTP session](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Session) |
+| **Principal** | [Traversy Media — HTTP Crash Course](https://www.youtube.com/watch?v=iYM2zFP3Zn0) — Express é só demo; **ignore Node**, foque no protocolo |
+| **Cobrir** | GET/POST/PUT/PATCH/DELETE, 2xx/4xx/5xx, Content-Type, body JSON, recursos REST |
+| **Pular** | Código Express/Node, HTTPS profundo, internals HTTP/2/3 |
+| **Complementar** | [MDN — A typical HTTP session](https://developer.mozilla.org/en-US/docs/Web/HTTP/Guides/Session) |
 
 ---
 
@@ -83,10 +84,10 @@ CRUD, JOIN, PK/FK, basic indexes.
 
 | | |
 |---|---|
-| **Primary** | [Programming Techie — Maven Complete Tutorial with IntelliJ](https://www.youtube.com/watch?v=JhSBS2OpGdU) (~38 min) |
-| **Cover** | `pom.xml` (GAV), dependencies, lifecycle compile/test/package, `src/main` & `src/test` |
-| **Skip** | Multi-module, obscure plugins, remote release/deploy |
-| **Complementary** | [Maven in 5 Minutes](https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html) |
+| **Principal** | [Programming Techie — Maven Complete Tutorial with IntelliJ](https://www.youtube.com/watch?v=JhSBS2OpGdU) (~38 min) |
+| **Cobrir** | `pom.xml` (GAV), dependencies, lifecycle compile/test/package, `src/main` e `src/test` |
+| **Pular** | Multi-module, plugins obscuros, release/deploy remoto |
+| **Complementar** | [Maven in 5 Minutes](https://maven.apache.org/guides/getting-started/maven-in-five-minutes.html) |
 
 ---
 
@@ -96,10 +97,10 @@ Controllers, services, DI, application.yml.
 
 | | |
 |---|---|
-| **Primary** | [Dan Vega / freeCodeCamp — Spring Boot 3](https://www.youtube.com/watch?v=31KTdfRH6nY) |
-| **Cover** | Initializr, `@RestController`, service layer, DI/`@Service`, `application.yml`, JSON |
-| **Skip** | Deep RestClient / later modules — stay on API + DI + config |
-| **Complementary** | [Amigoscode — Spring Boot 3 (2 Hours)](https://www.youtube.com/watch?v=-mwpoE0x0JQ) — skip the DB part (topic 8) |
+| **Principal** | [Dan Vega / freeCodeCamp — Spring Boot 3](https://www.youtube.com/watch?v=31KTdfRH6nY) |
+| **Cobrir** | Initializr, `@RestController`, camada service, DI/`@Service`, `application.yml`, JSON |
+| **Pular** | RestClient profundo / módulos laterais — fique em API + DI + config |
+| **Complementar** | [Amigoscode — Spring Boot 3 (2 Hours)](https://www.youtube.com/watch?v=-mwpoE0x0JQ) — pule a parte de DB (tópico 8) |
 
 ---
 
@@ -107,10 +108,10 @@ Controllers, services, DI, application.yml.
 
 | | |
 |---|---|
-| **Primary** | [Amigoscode — Spring Boot Full Course 2025](https://www.youtube.com/watch?v=Cw0J6jYJtzw) — Boot + Postgres via Docker + JPA |
-| **Cover** | `@Entity`, `JpaRepository`, CRUD; learn `ddl-auto` then **turn it off** |
-| **Skip** | K8s/AWS/microservices at the end; never treat `ddl-auto=update` as real migrations |
-| **Complementary** | [Devtiro — Flyway with Spring Boot](https://www.youtube.com/watch?v=IuKXPx3WLbg) — then: **Flyway ON + `ddl-auto=validate` or `none`** |
+| **Principal** | [Amigoscode — Spring Boot Full Course 2025](https://www.youtube.com/watch?v=Cw0J6jYJtzw) — Boot + Postgres via Docker + JPA |
+| **Cobrir** | `@Entity`, `JpaRepository`, CRUD; aprenda `ddl-auto` e depois **desligue** |
+| **Pular** | K8s/AWS/microsserviços no fim; nunca trate `ddl-auto=update` como migração de verdade |
+| **Complementar** | [Devtiro — Flyway with Spring Boot](https://www.youtube.com/watch?v=IuKXPx3WLbg) — depois: **Flyway ON + `ddl-auto=validate` ou `none`** |
 
 ---
 
@@ -118,10 +119,10 @@ Controllers, services, DI, application.yml.
 
 | | |
 |---|---|
-| **Primary** | [Exception Handling & Request Validation | RestControllerAdvice](https://www.youtube.com/watch?v=UD1MzZJjSUQ) |
-| **Cover** | `@NotBlank`/`@Email`/`@Size`, `@Valid`, DTO ≠ entity, global `@RestControllerAdvice` |
-| **Skip** | MySQL-specific bits, complex custom validators, groups |
-| **Complementary** | [reflectoring.io — Validation with Spring Boot](https://reflectoring.io/bean-validation-with-spring-boot/) |
+| **Principal** | [Exception Handling & Request Validation | RestControllerAdvice](https://www.youtube.com/watch?v=UD1MzZJjSUQ) |
+| **Cobrir** | `@NotBlank`/`@Email`/`@Size`, `@Valid`, DTO ≠ entity, `@RestControllerAdvice` global |
+| **Pular** | Detalhes específicos de MySQL, validadores custom complexos, groups |
+| **Complementar** | [reflectoring.io — Validation with Spring Boot](https://reflectoring.io/bean-validation-with-spring-boot/) |
 
 ---
 
@@ -129,10 +130,10 @@ Controllers, services, DI, application.yml.
 
 | | |
 |---|---|
-| **Primary** | [Amigoscode — Spring Boot 3 + Security 6 JWT](https://www.youtube.com/watch?v=KxqlJblhzfI) |
-| **Cover** | `SecurityFilterChain`, UserDetails, BCrypt, JWT, route authorization |
-| **Skip** | OAuth2 social, full Authorization Server, multi-tenancy |
-| **Complementary** | [Dan Vega — Spring Security JWT](https://www.youtube.com/watch?v=KYNR5js2cXE) — pick **one** path and go deep |
+| **Principal** | [Amigoscode — Spring Boot 3 + Security 6 JWT](https://www.youtube.com/watch?v=KxqlJblhzfI) |
+| **Cobrir** | `SecurityFilterChain`, UserDetails, BCrypt, JWT, autorização de rotas |
+| **Pular** | OAuth2 social, Authorization Server completo, multi-tenancy |
+| **Complementar** | [Dan Vega — Spring Security JWT](https://www.youtube.com/watch?v=KYNR5js2cXE) — escolha **um** caminho e aprofunde |
 
 ---
 
@@ -140,10 +141,10 @@ Controllers, services, DI, application.yml.
 
 | | |
 |---|---|
-| **Primary** | [Amigoscode — Software Testing Tutorial](https://www.youtube.com/watch?v=Geq60OVyBPg) |
-| **Cover** | `@Test`, assertions, `@Mock`/`@InjectMocks`, when/verify, service tests without DB |
-| **Skip** | Diffblue, TDD dogma, Testcontainers (later), 100% coverage |
-| **Complementary** | [Coding with John — Java Unit Testing with JUnit](https://www.youtube.com/watch?v=vZm0lHciFsQ) |
+| **Principal** | [Amigoscode — Software Testing Tutorial](https://www.youtube.com/watch?v=Geq60OVyBPg) |
+| **Cobrir** | `@Test`, assertions, `@Mock`/`@InjectMocks`, when/verify, testar service sem DB |
+| **Pular** | Diffblue, dogma TDD, Testcontainers (depois), cobertura 100% |
+| **Complementar** | [Coding with John — Java Unit Testing with JUnit](https://www.youtube.com/watch?v=vZm0lHciFsQ) |
 
 ---
 
@@ -151,10 +152,10 @@ Controllers, services, DI, application.yml.
 
 | | |
 |---|---|
-| **Primary** | [TechWorld with Nana — Docker Tutorial](https://www.youtube.com/watch?v=3c-iBn73dDE) — jump to Compose; don’t need all 3h linear |
-| **Cover** | Dockerfile for the API, Compose `app` + `postgres`, ports, env, volumes |
-| **Skip** | AWS registry, K8s, Swarm |
-| **Complementary** | [Docker Docs — Compose](https://docs.docker.com/compose/) |
+| **Principal** | [TechWorld with Nana — Docker Tutorial](https://www.youtube.com/watch?v=3c-iBn73dDE) — vá direto à seção Compose; não precisa das 3h lineares |
+| **Cobrir** | Dockerfile da API, Compose `app` + `postgres`, ports, env, volumes |
+| **Pular** | AWS registry, K8s, Swarm |
+| **Complementar** | [Docker Docs — Compose](https://docs.docker.com/compose/) |
 
 ---
 
@@ -162,13 +163,13 @@ Controllers, services, DI, application.yml.
 
 | | |
 |---|---|
-| **Primary** | [springdoc.org](https://springdoc.org/) — better than random videos: `springdoc-openapi-starter-webmvc-ui`, `/swagger-ui.html`, `/v3/api-docs` |
-| **Cover** | Boot 3 dependency, UI, `@Operation`/`@Tag`, open paths in Security |
-| **Skip** | Springfox, codegen, multi-group, complex Maven plugin |
-| **Complementary** | [Baeldung — OpenAPI 3.0 with Spring](https://www.baeldung.com/spring-rest-openapi-documentation) |
+| **Principal** | [springdoc.org](https://springdoc.org/) — melhor que tutoriais aleatórios: `springdoc-openapi-starter-webmvc-ui`, `/swagger-ui.html`, `/v3/api-docs` |
+| **Cobrir** | Dependência Boot 3, UI, `@Operation`/`@Tag`, liberar paths no Security |
+| **Pular** | Springfox, codegen, multi-group, plugin Maven complexo |
+| **Complementar** | [Baeldung — OpenAPI 3.0 with Spring](https://www.baeldung.com/spring-rest-openapi-documentation) |
 
 ---
 
-## Accumulating mini-project
+## Mini-projeto acumulativo
 
-One REST API (tasks/contacts): validated DTOs, JPA entities ≠ DTOs, PostgreSQL + Flyway, JWT, tests, Compose, springdoc — then graduate to **Project 1** (business-rule anchor) from the portfolio doc.
+Uma API REST (tarefas/contatos): DTOs validados, entities JPA ≠ DTOs, PostgreSQL + Flyway, JWT, testes, Compose, springdoc — depois sobe pro **Projeto 1** (API âncora com regra de negócio) do doc de projetos.
