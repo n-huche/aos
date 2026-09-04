@@ -65,7 +65,7 @@ CRUD, JOIN, PK/FK, índices básicos.
 | **Principal** | [freeCodeCamp / Mike Dane — SQL Tutorial](https://www.youtube.com/watch?v=HXV3zeQKqGY) |
 | **Cobrir** | Tabelas, PK/FK, INSERT/SELECT/UPDATE/DELETE, WHERE, INNER/LEFT JOIN, constraints, índices básicos |
 | **Pular** | Triggers, ER longos, stored procedures, analytics pesado |
-| **Complementar** | [Mode SQL Tutorial](https://mode.com/sql-tutorial) — drills de SELECT/JOIN se precisar |
+| **Complementar** | [ThoughtSpot SQL Tutorial](https://www.thoughtspot.com/sql-tutorial) — drills de SELECT/JOIN se precisar |
 
 ---
 
@@ -119,7 +119,7 @@ Controllers, services, DI, application.yml.
 
 | | |
 |---|---|
-| **Principal** | [Exception Handling & Request Validation | RestControllerAdvice](https://www.youtube.com/watch?v=UD1MzZJjSUQ) |
+| **Principal** | [CodeSnippet — RestControllerAdvice / Exception Handling](https://www.youtube.com/watch?v=IdHHwZg3v58) |
 | **Cobrir** | `@NotBlank`/`@Email`/`@Size`, `@Valid`, DTO ≠ entity, `@RestControllerAdvice` global |
 | **Pular** | Detalhes específicos de MySQL, validadores custom complexos, groups |
 | **Complementar** | [reflectoring.io — Validation with Spring Boot](https://reflectoring.io/bean-validation-with-spring-boot/) |
@@ -152,7 +152,7 @@ Controllers, services, DI, application.yml.
 
 | | |
 |---|---|
-| **Principal** | [TechWorld with Nana — Docker Tutorial](https://www.youtube.com/watch?v=3c-iBn73dDE) — vá direto à seção Compose; não precisa das 3h lineares |
+| **Principal** | [TechWorld with Nana — Docker Crash Course](https://www.youtube.com/watch?v=pg19Z8LL06w) — mais curto; Compose docs no complementar |
 | **Cobrir** | Dockerfile da API, Compose `app` + `postgres`, ports, env, volumes |
 | **Pular** | AWS registry, K8s, Swarm |
 | **Complementar** | [Docker Docs — Compose](https://docs.docker.com/compose/) |
