@@ -128,12 +128,14 @@ Controllers, services, DI, application.yml.
 
 ## 10. Spring Security + JWT
 
+**Decisão:** caminho **A** — a API **emite** JWT (`JwtAuthenticationFilter` + **JJWT**). Caminho **B** fica **opcional depois** (não estudar agora).
+
 | | |
 |---|---|
 | **Principal** | [Amigoscode — Spring Boot 3 + Security 6 JWT](https://www.youtube.com/watch?v=KxqlJblhzfI) |
-| **Cobrir** | `SecurityFilterChain`, UserDetails, BCrypt, JWT, autorização de rotas |
-| **Pular** | OAuth2 social, Authorization Server completo, multi-tenancy |
-| **Complementar** | [Dan Vega — Spring Security JWT](https://www.youtube.com/watch?v=KYNR5js2cXE) — escolha **um** caminho e aprofunde |
+| **Cobrir** | `SecurityFilterChain`, UserDetails, BCrypt, **emitir JWT**, filtro que valida o token, autorização de rotas |
+| **Pular** | OAuth2 social, Authorization Server completo, multi-tenancy, caminho B (resource server / IdP externo) |
+| **Complementar** | [Dan Vega — Spring Security JWT](https://www.youtube.com/watch?v=KYNR5js2cXE) — aprofunda o **mesmo** caminho A (filtro + JJWT); não misturar com B |
 
 ---
 
