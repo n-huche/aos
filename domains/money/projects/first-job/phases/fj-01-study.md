@@ -1,7 +1,7 @@
 # Estudo — Java + Spring (1ª vaga)
 
 **Objetivo:** aprender o mais rápido possível **com excelência** — YouTube primeiro; fontes em inglês ok (e preferíveis quando forem melhores).  
-**Rotina:** você define. Este doc só diz *onde* (método: [learning-method](../learning-method.md) · análise: [fj-01-learning](../analysis/fj-01-learning.md)).  
+**Rotina:** você define. Este doc só diz *onde* (método: [learning-method](../learning-method.md) · análise: [fj-learning](../analysis/fj-learning.md)).  
 **Fora do escopo neste ciclo:** Kafka, K8s, microsserviços, React, Python/IA, certificados, roadmaps gigantes.
 
 Fonte: Mentor de Estudos v2 (set/2026). Fontes em inglês; texto deste arquivo em português.

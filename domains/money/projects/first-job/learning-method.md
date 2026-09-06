@@ -1,6 +1,6 @@
 # Método de estudo (FJ-01 → gate FJ-02)
 
-**Análise:** [fj-01-learning](analysis/fj-01-learning.md)  
+**Análise:** [fj-learning](analysis/fj-learning.md)  
 **Mapa de fontes:** [fj-01-study](phases/fj-01-study.md)  
 **Alvo:** prontidão mínima para [FJ-02](phases/fj-02-projects.md) o mais rápido possível — não domínio profundo.
 
@@ -23,7 +23,7 @@ Completo → lacuna → sozinho sem vídeo → próximo feature similar do zero.
 
 ## Parar e ir para FJ-02 quando
 
-Gate único em [fj-01-learning — Critério de sucesso](analysis/fj-01-learning.md): `mvn` + Compose, 1 resource+JWT-A+Flyway+1 teste sem vídeo, fluxo HTTP→JSON em ~2 min. Buracos ok — abrir FJ-02.
+Gate único em [fj-learning — Critério de sucesso](analysis/fj-learning.md): `mvn` + Compose, 1 resource+JWT-A+Flyway+1 teste sem vídeo, fluxo HTTP→JSON em ~2 min. Buracos ok — abrir FJ-02.
 
 ## Sessão longa (opcional)
 

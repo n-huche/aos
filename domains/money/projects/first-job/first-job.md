@@ -2,7 +2,7 @@
 
 **Objetivo:** conquistar o primeiro emprego na área de tecnologia (estágio/júnior backend).  
 **Status geral:** não iniciado  
-**Análises:** [stack](analysis/fj-stack.md) · [como estudar / gate FJ-02](analysis/fj-01-learning.md)
+**Análises:** [stack](analysis/fj-stack.md) · [como estudar / gate FJ-02](analysis/fj-learning.md)
 
 ## Funil
 

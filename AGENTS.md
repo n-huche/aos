@@ -31,6 +31,7 @@ Preferidos para **desenvolvimento**, **edições de texto** e **metanálises** d
 - Completo, mas enxuto; uma fonte da verdade por tema (não duplicar tabelas/rosters).
 - Status padronizado: `não iniciado` | `em andamento` | `concluído` | `não planejado` | `pausado`.
 - Ao criar nota de natureza conhecida → partir do template em `templates/`.
+- Analyses em pastas `analysis/`: slug **sem** enumeração de fase (ex.: `fj-learning.md`, `fj-stack.md` — não `fj-01-learning.md`). Fases em `phases/` podem manter id (`fj-01-study.md`).
 - Links: `[nome](caminho relativo)` — não `[[wiki]]`.
 - Ambiguidade factual ou de decisão → perguntar; não inventar dados pessoais.
 - Cursor e demais agentes **não editam** `agents/grok-bot/`.
