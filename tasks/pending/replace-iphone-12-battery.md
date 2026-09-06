@@ -1,6 +1,6 @@
 # Trocar bateria do iPhone 12
 
-**Domínio:** [Relacionamentos](../../domains/relationships/relationships.md)  
+**Domínio:** [Relacionamentos](../../projects/relationships/relationships.md)  
 **Status:** não iniciado
 
 ## O quê

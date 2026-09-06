@@ -1,6 +1,6 @@
 # Presentes de 1 ano de namoro para Ana
 
-**Domínio:** [Relacionamentos](../../domains/relationships/relationships.md)  
+**Domínio:** [Relacionamentos](../../projects/relationships/relationships.md)  
 **Status:** não iniciado
 
 ## O quê
