@@ -25,7 +25,7 @@ Após cada entrega relevante ao Nicolas:
 
 ## O que não substitui
 
-- Domínios de vida (`domains/`) — não reescrever análise de carreira aqui; só apontar.
+- Domínios de vida (`projects/`) — não reescrever análise de carreira aqui; só apontar.
 - Chat — resultado imediato fica no chat; o vault é a memória durável do gabinete.
 
 Ver [ops/delegacao](./delegacao.md) · [historico/2026-09](../historico/2026-09.md).
