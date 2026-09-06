@@ -2,15 +2,7 @@
 
 Vault Obsidian + git (`n-huche/docs`). Fonte de anotações e planos.
 
-## Quem faz o quê
-
-### Grok Bot — `agents/grok-bot/`
-
-Usar para **pesquisas específicas** e **automações web**. Memória: [grok-bot](agents/grok-bot/grok-bot.md). Roster: [team](agents/grok-bot/team.md). Só o Grok Bot (e o Nicolas) altera essa pasta.
-
-### Outros agentes (Cursor etc.)
-
-Preferidos para **desenvolvimento**, **edições de texto** e **metanálises** do vault. Seguir este arquivo e `agents/templates/`. Sem pasta de memória própria. **Não tocar** em `agents/grok-bot/`. Procedures e templates em `agents/procedures/` e `agents/templates/` são compartilhados (podem editar).
+Qualquer agente segue este arquivo, `agents/procedures/` e `agents/templates/`. Sem pasta de memória por ferramenta.
 
 ## Convenções
 

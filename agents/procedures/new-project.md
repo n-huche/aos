@@ -1,6 +1,6 @@
 # Novo projeto
 
-Não inventar domínio, datas, pessoas nem fases. Sem `.gitkeep`. Não editar `agents/grok-bot/` (memória do Grok Bot). `agents/procedures/` e `agents/templates/` são compartilhados. Hub a partir de [project-template](../templates/project-template.md). Análise, se houver, a partir de [analysis-template](../templates/analysis-template.md). Fase a partir de [phases-template](../templates/phases-template.md). Pasta só com nota dentro.
+Não inventar domínio, datas, pessoas nem fases. Sem `.gitkeep`. Hub a partir de [project-template](../templates/project-template.md). Análise, se houver, a partir de [analysis-template](../templates/analysis-template.md). Fase a partir de [phases-template](../templates/phases-template.md). Pasta só com nota dentro.
 
 | Campo | Pasta |
 |---|---|
@@ -44,6 +44,6 @@ Conteúdo longo fica na fase, não no hub.
 5. Análise só se o usuário pediu ou já trouxe a decisão. Slug **sem** id de fase (`{slug}-stack.md`, não `{prefixo}-01-stack.md`). Pasta `analysis/` nasce com o primeiro arquivo.
 6. Não criar `learning-method.md`, spec extra, nem outras notas “por se acaso”. Itens de portfólio (se houver) ficam no **corpo da fase**, não em nota à parte.
 7. Em [projects](../../projects/projects.md): na seção de status + domínio, item `- [{Nome}]({status}/{domínio}/{slug}/{slug}.md) — {blurb}`. Trocar `--` se a seção estava vazia.
-8. Links `[nome](caminho relativo)` — não `[[wiki]]`. Buscar no vault (exceto `agents/grok-bot/`) menções ao tema e apontar para o hub quando fizer sentido.
+8. Links `[nome](caminho relativo)` — não `[[wiki]]`. Buscar no vault menções ao tema e apontar para o hub quando fizer sentido.
 
 Mudança de status **depois** de criado: [status-change](status-change.md).

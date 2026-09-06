@@ -8,7 +8,3 @@
 
 - Texto por dia juntos (legendas / entradas conforme o formato do site).
 - Seleção de fotos alinhada a cada dia / momento.
-
-## Apoio
-
-Bot **Escritor** — textos do projeto (legendas, diário, Início, etc.).

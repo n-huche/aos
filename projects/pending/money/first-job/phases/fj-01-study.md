@@ -6,7 +6,7 @@
 **Rotina:** você define. Este doc só diz *onde* (método: [learning-method](../learning-method.md) · análise: [fj-learning](../analysis/fj-learning.md)).  
 **Fora do escopo neste ciclo:** Kafka, K8s, microsserviços, React, Python/IA, certificados, roadmaps gigantes.
 
-Fonte: Mentor de Estudos v2 (set/2026). Fontes em inglês; texto deste arquivo em português.
+Fonte: mapa YouTube-first (set/2026). Fontes em inglês; texto deste arquivo em português.
 
 ## Entrega
 

@@ -1,4 +1,4 @@
-# AY1-02 — desenvolvimento do site
+# AY1-03 — desenvolvimento do site
 
 **Objetivo:** desenvolver o site estático (só frontend) com imagens e textos no repositório, usando o Cursor.  
 **Status:** não iniciado  
@@ -7,16 +7,17 @@
 ## Entrega
 
 - Site estático (só frontend) no repositório, com imagens e textos, layout e seções definidos na construção.
+- Playlist: conteúdo de [AY1-02](ay1-02-playlist.md).
 
 ## Organização no repositório
 
-Fonte: recomendação do bot **Pesquisa** (formato content/repo para AY1-02).
+Fonte: formato content/repo para AY1-03.
 
 - **Spec fina** (1–3 MDs + schema) **separada** do conteúdo editorial.
 - Árvore `content/` no **repo do site** (não no vault Obsidian): pasta = hierarquia ≤3 níveis; item = `index.md` + imagens colocalizadas.
 - **JSON/YAML** só para config (paleta, nav, Spotify IDs) — não para prosa longa.
 - Esqueleto sugerido:
-  - `docs/ay1-02-spec.md`
+  - `docs/ay1-03-spec.md`
   - `schema/content.schema.json`
   - `content/{inicio,diario,memorias,playlist}/`
   - `scripts/process-images`

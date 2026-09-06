@@ -21,7 +21,7 @@
 
 ## Projeto no vault
 
-- [Ana Year One](../../projects/pending/relationships/ana-year-one/ana-year-one.md) — site estático + vídeo ao ar livre (fases AY1-01…04).
+- [Ana Year One](../../projects/pending/relationships/ana-year-one/ana-year-one.md) — site estático + vídeo ao ar livre (fases AY1-01…05).
 
 ## Notas
 

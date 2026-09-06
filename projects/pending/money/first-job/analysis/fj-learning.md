@@ -2,7 +2,7 @@
 
 **Atualizado:** 2026-09-06  
 **Objeto:** método e profundidade mínima para os tópicos do [FJ-01](../phases/fj-01-study.md), no formato YouTube-first → mini-repo acumulativo  
-**Fontes:** brief do bot Pesquisa (CS education + psicologia cognitiva traduzida); mapa [fj-01-study](../phases/fj-01-study.md); stack [fj-stack](./fj-stack.md)
+**Fontes:** CS education + psicologia cognitiva traduzida; mapa [fj-01-study](../phases/fj-01-study.md); stack [fj-stack](./fj-stack.md)
 
 ## Pergunta
 
@@ -26,7 +26,7 @@ Qual método e qual profundidade mínima nos tópicos do FJ-01 levam **mais ráp
 
 ## Achados
 
-Síntese ancorada em **aprender programação / tutoriais de software** e só então em mecanismos cognitivos gerais. Corpus: Pesquisa + papers clássicos com DOI.
+Síntese ancorada em **aprender programação / tutoriais de software** e só então em mecanismos cognitivos gerais. Corpus: papers clássicos com DOI.
 
 ### 1. Worked examples e carga cognitiva (CS / instrução)
 

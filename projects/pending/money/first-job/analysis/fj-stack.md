@@ -2,7 +2,7 @@
 
 **Atualizado:** 2026-09-04  
 **Objeto:** stack e caminho até o primeiro emprego em tecnologia (estágio/júnior backend, Brasil)  
-**Fontes:** Radar de Vagas + Arquiteto de Portfólio + Mentor de Estudos (corpus ~70–80 vagas úteis; Java estágio/jr; Gupy/Programathor/GeekHunter/etc.)
+**Fontes:** corpus ~70–80 vagas úteis (Java estágio/jr; Gupy/Programathor/GeekHunter/etc.)
 
 ## Pergunta
 
@@ -38,7 +38,7 @@ Python fica para quando o alvo for IA — não agora.
 
 - Fontes: [estudo](../phases/fj-01-study.md) · método: [learning-method](../learning-method.md)
 - Portfólio: [projetos](../phases/fj-02-projects.md) — candidatar estágio assim que o Projeto 1 estiver hireable, sem esperar o #2
-- Estudo com o Nicolas (não com o Chefe de gabinete)
+- Estudo com o Nicolas
 
 ## Riscos
 
