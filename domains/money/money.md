@@ -8,7 +8,3 @@ Cabe aqui: emprego e carreira, skills com valor de mercado, produtos, investimen
 
 - [First Job](projects/first-job/first-job.md) — conquistar estágio/júnior backend
 - [roadmap-backend](projects/roadmap.sh/backend/README.md) — dominar backend
-
-## Recursos
-
-- [learning-method](resources/learning-method.md) — como estudar

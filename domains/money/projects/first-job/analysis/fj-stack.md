@@ -1,4 +1,4 @@
-# First Job — análise
+# First Job Stack — análise
 
 **Atualizado:** 2026-09-04  
 **Objeto:** stack e caminho até o primeiro emprego em tecnologia (estágio/júnior backend, Brasil)  
@@ -36,8 +36,8 @@ Python fica para quando o alvo for IA — não agora.
 
 ## Implicações
 
-- Fontes: [estudo](../phases/first-job-study.md) · método: [learning-method](../../../resources/learning-method.md)
-- Portfólio: [projetos](../phases/first-job-projects.md) — candidatar estágio assim que o Projeto 1 estiver hireable, sem esperar o #2
+- Fontes: [estudo](../phases/fj-01-study.md) · método: [learning-method](../learning-method.md)
+- Portfólio: [projetos](../phases/fj-02-projects.md) — candidatar estágio assim que o Projeto 1 estiver hireable, sem esperar o #2
 - Estudo com o Nicolas (não com o Chefe de gabinete)
 
 ## Riscos

@@ -4,7 +4,7 @@
 **Stack alvo:** Java 21 · Spring Boot 3 · SQL · REST · Git  
 **Regra:** um projeto por vez. Candidatar assim que o Projeto 1 estiver hireable — não esperar o 2.
 
-Decisões de stack/mercado: [análise](../analysis/first-job-analysis.md). Fontes: [estudo](first-job-study.md).
+Decisões de stack/mercado: [análise](../analysis/fj-stack.md). Fontes: [estudo](fj-01-study.md).
 
 ---
 

@@ -9,7 +9,7 @@
 | Nome | Nicolas Huche |
 | Como chama o Chefe | **chefe** |
 | Idioma | Português (fluente em inglês) |
-| Onde | Recife (perto do Colégio Sylvio Rabelo) |
+| Onde | Rio de Janeiro |
 | Formação | 1º semestre — Ciência da Computação |
 | Experiência profissional | Nenhuma |
 | GitHub | `n-huche` |

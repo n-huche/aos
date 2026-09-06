@@ -7,7 +7,3 @@ Cabe aqui: namoro e amizade, família, comportamento em relação (incluindo pre
 ## Projetos
 
 _Em construção — ver `projects/`._
-
-## Recursos
-
-_Em construção — ver `resources/`._

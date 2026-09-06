@@ -14,4 +14,4 @@ Três eixos por **finalidade**. O que decide o lugar de uma nota não é o tema 
 
 Uma mesma competência pode aparecer em mais de um domínio (ex.: leitura social usada para vender *e* para namorar). Replica-se o *uso*, não o arquivo: a fonte fica no domínio da finalidade principal; o outro só aponta para ela.
 
-Em cada domínio: `projects/` (o que concluir) e `resources/` (o que serve a mais de um projeto).
+Em cada domínio: `projects/` (o que concluir).

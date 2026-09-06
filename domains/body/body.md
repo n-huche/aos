@@ -7,7 +7,3 @@ Cabe aqui: treino, alimentação, sono, aparência, roupa e postura **quando o f
 ## Projetos
 
 _Em construção — ver `projects/`._
-
-## Recursos
-
-_Em construção — ver `resources/`._
