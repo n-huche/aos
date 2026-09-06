@@ -8,18 +8,13 @@ Coordenados pelo **Chefe de gabinete**. Usados sobretudo via Grok Bot para pesqu
 | Arquiteto de Portfólio | Projetos GitHub que maximizam 1ª vaga Java+Spring |
 | Mentor de Estudos | Aprendizagem (como) + fontes (YouTube-first) |
 | Pesquisa | Pesquisa geral sob demanda (preço, qualidade, proximidade) |
-| Planilha Financeira | Orquestra a planilha financeira no Canva; fala só com as categorias |
 | **docs** | Administra este vault (`n-huche/docs`), pasta `agents/grok-bot/` |
 
-### Planilha (hierarquia)
-
-Chefe de gabinete → Planilha Financeira → categorias → subcategorias.
-
-- **Nicolas** → Conta Nubank, Cartão Nubank
-- **Ana** → Conta Nubank Ana, Cartão C6, Dinheiro Físico
-- **PicPay** → sem subcategoria (edita direto)
-
 Chefe de gabinete: análises pontuais e automações sob demanda (cota limitada).
+
+## Fora de escopo (decisão 2026-09-06)
+
+**Planilha financeira Canva** — não automatizar via Grok Bot / Chefe por enquanto. Bots de Planilha a excluir na sidebar (ver [ops/planilha](./ops/planilha.md)).
 
 ## Vault
 

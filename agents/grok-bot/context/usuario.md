@@ -39,3 +39,7 @@
 - Certificados: **não** agora.
 - Portfólio: P1 hireable → candidatar → P2 → P3 opcional.
 - Toujours: fora do foco da 1ª vaga.
+
+## Automação financeira
+
+**Não** usar o Chefe / Grok Bot para automatizar a planilha Canva por enquanto (decisão 2026-09-06). Detalhe: [ops/planilha](../ops/planilha.md).
