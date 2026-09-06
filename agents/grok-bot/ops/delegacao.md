@@ -33,3 +33,4 @@ Ver também [grok-bot](../grok-bot.md) · [team](../team.md).
 2. Existe bot na tabela / no [team](../team.md)? → delegar.
 3. Não existe? → criar bot, depois delegar.
 4. Nunca “fazer rápido” no lugar do especialista.
+5. Depois da entrega → mandar **docs** registrar em `historico/` (e `ops/` se regra nova). Ver [registro](./registro.md).

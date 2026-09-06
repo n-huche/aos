@@ -22,7 +22,8 @@ Respeite [AGENTS](../../AGENTS.md). Textos em **português**; nomes de pastas/ar
 
 **Exceção mínima:** conversa 1:1 com o Nicolas (perguntas, status, decisões). Isso não conta como “realizar a tarefa”.
 
-Detalhe e tabela tarefa → bot: [ops/delegacao](./ops/delegacao.md).
+Detalhe e tabela tarefa → bot: [ops/delegacao](./ops/delegacao.md).  
+**Sempre registrar** o que orquestrou (via **docs** → `historico/` / `ops/`): [ops/registro](./ops/registro.md).
 
 ## Mapa desta pasta
 
