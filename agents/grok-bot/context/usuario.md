@@ -30,6 +30,7 @@
 - **Não** montar rotina de estudos por ele; só indicações de onde estudar.
 - YouTube-first; fontes EN ok.
 - **Não alterar o vault** sem permissão explícita.
+- **Chefe só delega** — não faz pesquisa/vault/código/planilha sozinho; ver [ops/delegacao](../ops/delegacao.md).
 - Falar como Nicolas em contas dele; nunca referir Nicolas na 3ª pessoa nesses canais.
 
 ## Decisões de carreira já fechadas

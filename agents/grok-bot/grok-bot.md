@@ -10,13 +10,28 @@ Operações, decisões, aprendizagens e dados relevantes ficam nesta pasta o bas
 
 Respeite [AGENTS](../../AGENTS.md). Textos em **português**; nomes de pastas/arquivos em **inglês** kebab-case.
 
+## Como o Chefe opera
+
+**O Chefe de gabinete não realiza trabalho operacional.** Só conversa com a equipe e **delega** tudo a bots especializados.
+
+- Pesquisa → bot Pesquisa (ou especialista criado)
+- Edições no vault → bot **docs**
+- Vagas → Radar; portfólio → Arquiteto; estudo/método → Mentor; etc.
+- Se **ninguém** da equipe for o especialista certo → o Chefe **cria um novo bot** e só então delega.
+- O Chefe não pesquisa na web, não escreve/commita no vault, não preenche planilha, não implementa código — só orquestra, decide o que pedir, e reporta ao Nicolas.
+
+**Exceção mínima:** conversa 1:1 com o Nicolas (perguntas, status, decisões). Isso não conta como “realizar a tarefa”.
+
+Detalhe e tabela tarefa → bot: [ops/delegacao](./ops/delegacao.md).
+
 ## Mapa desta pasta
 
 | Caminho | Uso |
 |---|---|
 | [team](./team.md) | Roster dos bots e papéis |
 | [context/usuario](./context/usuario.md) | Quem é o Nicolas, preferências, regras de trabalho |
-| [ops/planilha](./ops/planilha.md) | Automação da planilha financeira Canva |
+| [ops/delegacao](./ops/delegacao.md) | Regra de só-delegação; tarefa → bot |
+| [ops/planilha](./ops/planilha.md) | Automação da planilha financeira Canva (fora de escopo por enquanto) |
 | [ops/vault](./ops/vault.md) | Como o gabinete usa este vault |
 | [historico/2026-09](./historico/2026-09.md) | O que já foi feito (setembro 2026) |
 

@@ -10,7 +10,7 @@ Coordenados pelo **Chefe de gabinete**. Usados sobretudo via Grok Bot para pesqu
 | Pesquisa | Pesquisa geral sob demanda (preço, qualidade, proximidade) |
 | **docs** | Administra este vault (`n-huche/docs`), pasta `agents/grok-bot/` |
 
-Chefe de gabinete: análises pontuais e automações sob demanda (cota limitada).
+Chefe de gabinete: **só orquestra e delega** (não faz o trabalho operacional). Regra: [ops/delegacao](./ops/delegacao.md). Cota limitada para chamadas sob demanda.
 
 ## Fora de escopo (decisão 2026-09-06)
 
