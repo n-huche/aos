@@ -1,12 +1,17 @@
-# Estudo — Java + Spring (1ª vaga)
+# FJ-01 — estudo (Java + Spring, 1ª vaga)
 
 **Objetivo:** aprender o mais rápido possível **com excelência** — YouTube primeiro; fontes em inglês ok (e preferíveis quando forem melhores).  
+**Status:** não iniciado  
+**Projeto:** [First Job](../first-job.md)  
 **Rotina:** você define. Este doc só diz *onde* (método: [learning-method](../learning-method.md) · análise: [fj-learning](../analysis/fj-learning.md)).  
 **Fora do escopo neste ciclo:** Kafka, K8s, microsserviços, React, Python/IA, certificados, roadmaps gigantes.
 
 Fonte: Mentor de Estudos v2 (set/2026). Fontes em inglês; texto deste arquivo em português.
 
----
+## Entrega
+
+- Mapa de fontes (1 principal + no máximo 1 complementar por tópico) e mini-repo acumulativo.
+- Prontidão mínima para abrir [FJ-02](fj-02-projects.md) — não domínio profundo.
 
 ## Princípios
 

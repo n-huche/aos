@@ -1,6 +1,6 @@
 # {{Título}}
 
-**Domínio:** [Dinheiro](../projects/money/money.md) | [Relacionamentos](../projects/relationships/relationships.md) | [Corpo](../projects/body/body.md)  
+**Domínio:** Dinheiro | Relacionamentos | Corpo — [glossário](../../AGENTS.md)  
 **Status:** não iniciado | em andamento | concluído | recorrente
 
 ## O quê

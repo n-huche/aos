@@ -1,12 +1,17 @@
-# Projetos — Backend Java + Spring (1ª vaga)
+# FJ-02 — projetos (Backend Java + Spring, 1ª vaga)
 
 **Objetivo:** maximizar chance de estágio/júnior backend o mais rápido possível.  
+**Status:** não iniciado  
+**Projeto:** [First Job](../first-job.md)  
 **Stack alvo:** Java 21 · Spring Boot 3 · SQL · REST · Git  
 **Regra:** um projeto por vez. Candidatar assim que o Projeto 1 estiver hireable — não esperar o 2.
 
 Decisões de stack/mercado: [análise](../analysis/fj-stack.md). Fontes: [estudo](fj-01-study.md).
 
----
+## Entrega
+
+- Projeto 1 hireable (API âncora com regra de negócio) e candidatura a estágio — não esperar o Projeto 2.
+- Projeto 2 (desafio estilo Itaú) e, se ainda precisar de sinal, Projeto 3 (diferencial).
 
 ## Ordem de execução
 

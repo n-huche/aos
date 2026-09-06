@@ -4,6 +4,10 @@
 **Status:** não iniciado  
 **Projeto:** [Ana Year One](../ana-year-one.md)
 
+## Entrega
+
+- Site estático (só frontend) no repositório, com imagens e textos, layout e seções definidos na construção.
+
 ## Organização no repositório
 
 Fonte: recomendação do bot **Pesquisa** (formato content/repo para AY1-02).
@@ -25,13 +29,11 @@ Fonte: recomendação do bot **Pesquisa** (formato content/repo para AY1-02).
   - Início: blocos em Markdown
 - **Fotos** no git do site (ou Git LFS) — **não** no vault.
 
----
-
-# Conteúdo da página
+## Conteúdo da página
 
 A página é um frontend com conteúdo definido na construção. Layout, seções, textos, imagens, cores e músicas são fixos: não há editor nem conteúdo genérico.
 
-## Estrutura
+### Estrutura
 
 A página usa um único layout. Tamanhos de fonte e posição de cada elemento são definidos por esse layout.
 
@@ -46,13 +48,13 @@ Há quatro seções, nesta ordem:
 
 Pastas e itens seguem a ordem definida no conteúdo, com uma exceção: no Diário, as entradas de um mesmo recipiente aparecem por data, da mais antiga para a mais recente.
 
-### Início
+#### Início
 
 - Nome do casal (Nicolas e Ana), um coração e um campo de texto.
 - Imagem de fundo, exibida semitransparente.
 - Contador opcional de dias de relacionamento (desde 05/09/2025), a partir da data de início.
 
-### Diário — entradas
+#### Diário — entradas
 
 Cada entrada tem:
 
@@ -60,7 +62,7 @@ Cada entrada tem:
 - Texto
 - 1 Imagem
 
-### Memórias — momentos
+#### Memórias — momentos
 
 Cada momento tem:
 
@@ -69,7 +71,7 @@ Cada momento tem:
 - Data.
 - 10 Imagens.
 
-### Playlist — músicas
+#### Playlist — músicas
 
 Cada música tem:
 
@@ -78,11 +80,11 @@ Cada música tem:
 - Texto dizendo porque aquela musica lembra ela.
 - Player embutido do Spotify.
 
-## Imagens
+### Imagens
 
 Toda imagem é recodificada, redimensionada para no máximo 2048 px no lado maior e sem metadados embutidos (por exemplo localização).
 
-## Cores
+### Cores
 
 A paleta tem três cores:
 
