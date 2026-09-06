@@ -4,50 +4,43 @@
 **Stack alvo:** Java 21 · Spring Boot 3 · SQL · REST · Git  
 **Regra:** um projeto por vez. Candidatar assim que o Projeto 1 estiver hireable — não esperar o 2.
 
-Confirmado por Radar de Vagas + Arquiteto de Portfólio (set/2026).
+Decisões de stack/mercado: [análise](../analysis/first-job-analysis.md). Fontes: [estudo](first-job-study.md).
 
 ---
 
 ## Ordem de execução
-
-- [ ]
 
 1. **Projeto 1 — API âncora** (obrigatório)
 2. → **Começar a candidatar estágio**
 3. **Projeto 2 — Desafio estilo Itaú**
 4. **Projeto 3 — Diferencial** (só se ainda precisar de sinal)
 
-Fora do plano: Toujours, roadmaps gigantes, certificados agora, Kafka/K8s/microsserviços no v1.
+Fora do plano neste ciclo: roadmaps gigantes, certificados agora, Kafka/K8s/microsserviços no v1.
 
 ---
 
 ## Projeto 1 — API âncora com regra de negócio
 
-- [ ]
-
 ### Por quê
-Cobre o que as vagas pedem de verdade: Java, Spring Boot, REST, SQL, Git; e o que júnior quase exige: JPA, testes, Docker, JWT. Uma API completa com regra de negócio vale mais que vários CRUDs.
+Cobre o que as vagas pedem: Java, Spring Boot, REST, SQL, Git; e o que júnior quase exige: JPA, testes, Docker, JWT. Uma API com regra de negócio vale mais que vários CRUDs.
 
-### Domínio (escolher UM)
+### Domínio
+
+**Status:** pendente — escolher **um**:
 
 | Opção | Regra de negócio que prova | Preferência |
 |---|---|---|
-| **A) Pedidos + estoque** | Não confirma pedido sem saldo; baixa estoque ao confirmar | **Recomendada** |
-| **B) Reembolsos com aprovação** | Fluxo de status + role aprovador | **Recomendada** |
+| **A) Pedidos + estoque** | Não confirma pedido sem saldo; baixa estoque ao confirmar | Recomendada |
+| **B) Reembolsos com aprovação** | Fluxo de status + role aprovador | Recomendada |
 | **C) Oficina / agenda** | Não agenda horário já ocupado | Ok |
 
 Evitar: CRUD de livros, todo list, produtos sem regra.
 
 ### Stack exata
-- Java 21
-- Spring Boot 3 (Web, Validation, Data JPA, Security)
-- PostgreSQL
-- Flyway (migrations)
-- Spring Security + JWT (roles)
-- JUnit 5 + Mockito
-- Docker Compose (app + Postgres)
-- springdoc-openapi (Swagger UI)
-- Maven
+- Java 21 · Spring Boot 3 (Web, Validation, Data JPA, Security)
+- PostgreSQL · Flyway · Spring Security + JWT (roles)
+- JUnit 5 + Mockito · Docker Compose (app + Postgres)
+- springdoc-openapi · Maven
 
 ### Escopo mínimo hireable
 - ≥ 2 fluxos de negócio (não só CRUD)
@@ -67,7 +60,7 @@ Kafka, Kubernetes, microsserviços, Eureka, CQRS, GraphQL, Clean Architecture te
 - [ ] Testes passam
 - [ ] README legível em ~30–60s
 - [ ] Repo público e pinned
-- [ ] Você explica em 2 min: problema → stack → 1 decisão → 1 bug → próximo passo
+- [ ] Explica em 2 min: problema → stack → 1 decisão → 1 bug → próximo passo
 
 **Aí candidata estágio.** Não espera o Projeto 2.
 
@@ -78,42 +71,33 @@ Kafka, Kubernetes, microsserviços, Eureka, CQRS, GraphQL, Clean Architecture te
 
 ## Projeto 2 — Desafio estilo Itaú (transações + estatística)
 
-- [ ]
-
 ### Por quê
-Treina take-home de banco/fintech: API enxuta, validação, status HTTP, commits por feature. Combustível de entrevista / desempate — não pré-requisito para começar a aplicar.
+Treina take-home de banco/fintech: API enxuta, validação, status HTTP, commits por feature. Combustível de entrevista — não pré-requisito para aplicar.
 
 ### Stack
-- Java 21 · Spring Boot 3 · Web · Validation · JUnit
-- Em memória ou H2 leve (padrão desafio Itaú) — sem Postgres obrigatório
+Java 21 · Spring Boot 3 · Web · Validation · JUnit · em memória ou H2 (sem Postgres obrigatório).
 
 ### Escopo mínimo
-- `POST` / `DELETE` de transação
-- `GET` estatística (janela de tempo)
-- Validação + status HTTP corretos
-- Testes
-- README + exemplos `curl` + como rodar
-- Commits legíveis por feature
+- `POST` / `DELETE` de transação · `GET` estatística (janela de tempo)
+- Validação + status HTTP · testes · README + `curl` · commits por feature
 
 ### Não fazer
-Transformar em microsserviço; Kafka “pra parecer sênior”.
+Microsserviço; Kafka “pra parecer sênior”.
 
 ### Pronto quando
-Sobe local, testes verdes, README com `curl`, histórico de commits claro.
+Sobe local, testes verdes, README com `curl`, histórico claro.
 
 ---
 
 ## Projeto 3 — Diferencial (opcional)
 
-- [ ]
-
 Só depois de candidatar com #1 (e idealmente #2). Escolher **um**:
 
 | Opção | O quê | Por quê |
 |---|---|---|
-| **A** | Job CSV → validar → persistir → relatório de falhas | Parece trabalho júnior corporativo; pouco concorrido |
-| **B** | Evoluir o #1: GitHub Actions + Testcontainers + 1 query/relatório SQL documentado | Sinal de CI e SQL além do CRUD |
-| **C** | N+1 de propósito + JOIN FETCH / `@EntityGraph` com README antes/depois | Mostra consciência de performance JPA |
+| **A** | Job CSV → validar → persistir → relatório de falhas | Parece trabalho júnior corporativo |
+| **B** | Evoluir o #1: GitHub Actions + Testcontainers + 1 query SQL documentada | CI + SQL além do CRUD |
+| **C** | N+1 de propósito + JOIN FETCH / `@EntityGraph` com README antes/depois | Consciência de performance JPA |
 
 ### Não fazer
 Fila + Redis + cloud tudo junto; terceiro monólito CRUD paralelo.
@@ -122,16 +106,12 @@ Fila + Redis + cloud tudo junto; terceiro monólito CRUD paralelo.
 
 ## Checklist GitHub / README (olhada de 30s)
 
-- [ ]
-
 ### Perfil
 - Bio: `Backend Java/Spring · buscando estágio`
-- README de perfil
-- Top Languages = Java
-- 1–2 repos pinned
+- README de perfil · Top Languages = Java · 1–2 repos pinned
 
 ### README do repo (nessa ordem)
-1. Título + 2–3 linhas do problema (badges só se verdadeiros)
+1. Título + 2–3 linhas do problema
 2. Demo: Swagger / `curl` / Postman
 3. Funcionalidades (3–6 bullets)
 4. Stack real com versões
@@ -142,32 +122,22 @@ Fila + Redis + cloud tudo junto; terceiro monólito CRUD paralelo.
 9. 2–5 decisões técnicas honestas
 10. Limitações + próximos passos
 
-Sugestão de frase no README: monólito modular; microsserviços fora do v1.
-
 ### Mata em 30s
-README só com lista de libs · um commit `final` · sem como rodar · só H2 sem Postgres no Compose (no Projeto 1).
+README só com lista de libs · um commit `final` · sem como rodar · só H2 sem Postgres no Compose (Projeto 1).
 
 ---
 
 ## O que não fazer (global)
 
-- [ ]
-
-- 10 repos abandonados
-- Wall de badges
-- Listar Kafka/K8s sem código
-- Parecer pleno sem base
-- Python/IA antes de 1–2 repos Java vivos
-- Fragmentar foco em 3 projetos ao mesmo tempo
-- Certificados antes do Projeto 1 hireable
+- 10 repos abandonados · wall de badges · listar Kafka/K8s sem código
+- Parecer pleno sem base · Python/IA antes de 1–2 repos Java vivos
+- Fragmentar foco em 3 projetos ao mesmo tempo · certificados antes do Projeto 1 hireable
 
 ---
 
 ## Próximo passo concreto
 
-- [ ]
-
-1. Escolher domínio do Projeto 1: **A (pedidos/estoque)** ou **B (reembolso)**.
+1. Escolher domínio do Projeto 1 (**A** ou **B** — ainda pendente).
 2. Criar o repositório e o README esqueleto.
-3. Entregar o escopo mínimo hireable acima.
+3. Entregar o escopo mínimo hireable.
 4. Pinar e candidatar.

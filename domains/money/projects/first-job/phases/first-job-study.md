@@ -1,23 +1,20 @@
 # Estudo — Java + Spring (1ª vaga)
 
 **Objetivo:** aprender o mais rápido possível **com excelência** — YouTube primeiro; fontes em inglês ok (e preferíveis quando forem melhores).  
-**Rotina:** você define. Este doc só diz *onde*.  
-**Fora do escopo:** Kafka, K8s, microsserviços, React, Python/IA, certificados, roadmaps gigantes.
+**Rotina:** você define. Este doc só diz *onde* (método: [learning-method](../../../resources/learning-method.md)).  
+**Fora do escopo neste ciclo:** Kafka, K8s, microsserviços, React, Python/IA, certificados, roadmaps gigantes.
 
-Fonte: Mentor de Estudos v2 (set/2026). Mapa anterior com viés PT-BR descartado.  
-Nota: as **fontes** são em inglês; o **texto deste arquivo** é em português.
+Fonte: Mentor de Estudos v2 (set/2026). Fontes em inglês; texto deste arquivo em português.
 
 ---
 
 ## Princípios
 
-- [ ]
-
 - **1 principal + no máximo 1 complementar** por tópico.
 - Mão no teclado — prática > binge.
-- Pule GUI, Kafka, K8s, microsserviços, React, Python/IA em qualquer vídeo.
+- Pule GUI e itens fora de escopo em qualquer vídeo (lista no topo).
 - Prefira inglês quando a fonte for melhor (você é fluente).
-- Um mini-repo acumulativo; cada tópico acrescenta uma fatia.
+- Um mini-repo acumulativo; cada tópico acrescenta uma fatia. Escopo amplo: [análise](../analysis/first-job-analysis.md).
 
 ---
 
