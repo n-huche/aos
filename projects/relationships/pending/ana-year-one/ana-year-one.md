@@ -16,7 +16,7 @@ Produzir texto e selecionar fotos para cada dia que passaram juntos.
 [desenvolvimento do site](phases/ay1-02-site.md)  
 **Status:** não iniciado
 
-Desenvolver o site com imagens/textos no repositório (Cursor).
+Desenvolver o site com imagens/textos no repositório (Cursor). Organização content/repo: ver seção no AY1-02 (recomendação Pesquisa).
 
 ### AY1-03-video
 [vídeo ao ar livre](phases/ay1-03-video.md)  

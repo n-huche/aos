@@ -4,9 +4,26 @@
 **Status:** não iniciado  
 **Projeto:** [Ana Year One](../ana-year-one.md)
 
-## Nota
+## Organização no repositório
 
-Pesquisa está recomendando formato de organização content/repo; quando o Chefe encaminhar, acrescentar seção **Organização no repositório**.
+Fonte: recomendação do bot **Pesquisa** (formato content/repo para AY1-02).
+
+- **Spec fina** (1–3 MDs + schema) **separada** do conteúdo editorial.
+- Árvore `content/` no **repo do site** (não no vault Obsidian): pasta = hierarquia ≤3 níveis; item = `index.md` + imagens colocalizadas.
+- **JSON/YAML** só para config (paleta, nav, Spotify IDs) — não para prosa longa.
+- Esqueleto sugerido:
+  - `docs/ay1-02-spec.md`
+  - `schema/content.schema.json`
+  - `content/{inicio,diario,memorias,playlist}/`
+  - `scripts/process-images`
+  - `src/`
+  - `public/media`
+- **Frontmatter:**
+  - Diário: `date` + `image`
+  - Memórias: `title` + `date` + `images`
+  - Playlist: `spotify`
+  - Início: blocos em Markdown
+- **Fotos** no git do site (ou Git LFS) — **não** no vault.
 
 ---
 
