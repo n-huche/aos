@@ -24,6 +24,7 @@ Ver também [grok-bot](../grok-bot.md) · [team](../team.md).
 | Vagas estágio/júnior; requisitos e mercado | **Radar de Vagas** |
 | Projetos GitHub / portfólio 1ª vaga Java+Spring | **Arquiteto de Portfólio** |
 | Como aprender + fontes de estudo | **Mentor de Estudos** |
+| Textos ana-year-one (legendas, diário, Início) | **Escritor** |
 | Planilha financeira Canva | **fora de escopo** por enquanto ([ops/planilha](./planilha.md)) |
 | Nenhum bot cobre | **CreateAgent** → criar especialista → delegar |
 

@@ -23,7 +23,7 @@ Uma mesma competência pode aparecer em mais de um domínio (ex.: leitura social
 
 #### Relationships
 
---
+- [Ana Year One](relationships/pending/ana-year-one/ana-year-one.md) — site + vídeo presente 1 ano
 
 #### Body
 

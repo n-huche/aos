@@ -19,6 +19,10 @@
 - Presentes combinados para o encontro presencial: **10/09**
 - Meta de conclusão do material: até **09/09**
 
+## Projeto no vault
+
+- [Ana Year One](../../projects/relationships/pending/ana-year-one/ana-year-one.md) — site estático + vídeo ao ar livre (fases AY1-01…04).
+
 ## Notas
 
 _Nada além do acima por enquanto._

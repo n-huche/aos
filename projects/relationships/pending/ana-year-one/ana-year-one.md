@@ -1,0 +1,31 @@
+# Ana Year One
+
+**Objetivo:** site estático (só frontend) de presente de 1 ano + vídeo ao ar livre sobre o site e improvisos.  
+**Status geral:** não iniciado  
+**Análise:** _(ainda não)_
+
+## Fases
+
+### AY1-01-days
+[texto e fotos dos dias juntos](phases/ay1-01-days.md)  
+**Status:** não iniciado
+
+Produzir texto e selecionar fotos para cada dia que passaram juntos.
+
+### AY1-02-site
+[desenvolvimento do site](phases/ay1-02-site.md)  
+**Status:** não iniciado
+
+Desenvolver o site com imagens/textos no repositório (Cursor).
+
+### AY1-03-video
+[vídeo ao ar livre](phases/ay1-03-video.md)  
+**Status:** não iniciado
+
+Gravar vídeo espontâneo ao ar livre falando do site e improvisos.
+
+### AY1-04-diary
+[diário 16/08→10/09 no site](phases/ay1-04-diary.md)  
+**Status:** não iniciado
+
+Terminar diário escrito desde 16/08 (última entrada 10/09) e incluir no site.

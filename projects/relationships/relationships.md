@@ -12,7 +12,7 @@ Nesta pasta: `pending/` · `in-progress/` · `completed/`. Índice dos três eix
 
 ## Pending
 
---
+- [Ana Year One](pending/ana-year-one/ana-year-one.md) — site + vídeo presente 1 ano
 
 ## Completed
 

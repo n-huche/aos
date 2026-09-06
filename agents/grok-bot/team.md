@@ -8,6 +8,7 @@ Coordenados pelo **Chefe de gabinete**. Usados sobretudo via Grok Bot para pesqu
 | Arquiteto de Portfólio | Projetos GitHub que maximizam 1ª vaga Java+Spring |
 | Mentor de Estudos | Aprendizagem (como) + fontes (YouTube-first) |
 | Pesquisa | Pesquisa geral sob demanda (preço, qualidade, proximidade) |
+| Escritor | Textos do projeto ana-year-one (legendas, diário, Início) / gabinete |
 | **docs** | Administra este vault (`n-huche/docs`), pasta `agents/grok-bot/` |
 
 Chefe de gabinete: **só orquestra e delega** (não faz o trabalho operacional). Regra: [ops/delegacao](./ops/delegacao.md). Cota limitada para chamadas sob demanda.
