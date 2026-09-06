@@ -23,7 +23,7 @@ Completo → lacuna → sozinho sem vídeo → próximo feature similar do zero.
 
 ## Parar e ir para FJ-02 quando
 
-Gates em [fj-01-learning § Implicações](analysis/fj-01-learning.md): app sobe, fatias essenciais no repo, JWT path A básico, sem reassistir trilhas inteiras.
+Gate único em [fj-01-learning — Critério de sucesso](analysis/fj-01-learning.md): `mvn` + Compose, 1 resource+JWT-A+Flyway+1 teste sem vídeo, fluxo HTTP→JSON em ~2 min. Buracos ok — abrir FJ-02.
 
 ## Sessão longa (opcional)
 

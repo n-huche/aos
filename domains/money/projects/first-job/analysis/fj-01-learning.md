@@ -96,15 +96,22 @@ Assiste pedaço → completa o próximo passo sozinho → implementa **sem** ví
 
 ### Critérios de saída (gate FJ-02) — por tipo
 
-| Tipo | “Chega” quando… |
-|---|---|
-| Java / OOP | Escreve classes/enums do domínio do P1 closed-book; sabe equals/hashCode o suficiente para entidades |
-| Git / Maven / Compose | Fluxo sozinho no *seu* repo (`commit`, `mvn test`, `compose up`) |
-| HTTP / SQL | Contratos REST + schema/migrations mínimos do P1 sem tutorial aberto |
-| Spring (Boot, JPA, Validation, JWT-A, OpenAPI) | Sobe app; 1 resource vivo; DTO≠entity; path A JWT nas rotas; Flyway ligado — **sem** reassistir curso inteiro |
-| Testes | 1–N testes de service/regra que falham pelo motivo certo |
+| Tópico | Já sabe o suficiente quando… | Skim / pular |
+|---|---|---|
+| Java básico | Variáveis, if/loops, métodos, classes, ArrayList, try/catch; classe de domínio simples closed-book | Swing/GUI, threads, genéricos profundos |
+| OOP | Encapsulamento + interface; uso no domínio do P1; equals/hashCode básico se precisar | GoF, reflection |
+| Git/GitHub | init/add/commit/branch/push no mini-repo | rebase avançado, hooks |
+| Maven | Lê `pom.xml`, `mvn test`/`package`, adiciona 1 dep | multi-module |
+| SQL | CRUD + JOIN + PK/FK no Postgres do repo | triggers, procedures |
+| HTTP/REST/JSON | Verbos, status, JSON; curl em 1 endpoint | HTTP/2–3, Node do vídeo |
+| Spring Boot | App sobe; Controller + Service + DI + yml | módulos laterais |
+| JPA+Flyway | 1 entity + repo + 1 migration; `ddl-auto` não é estratégia final | N+1 “curso”, cloud do vídeo |
+| Validation/DTO/Advice | `@Valid` + DTO≠entity + erro JSON mínimo | groups/custom complexos |
+| Security JWT-A | Emite JWT + filtro + 401 em rota protegida | OAuth2, path B |
+| JUnit/Mockito | 1 teste de service com mock; `mvn test` verde | Testcontainers agora |
+| Docker Compose | Compose sobe Postgres (+ app se der) | K8s/Swarm |
+| OpenAPI | springdoc abre nos endpoints existentes | codegen, Springfox |
 
-**Quando abrir FJ-02:** checklist acima no essencial (não perfeição); Security só path A; fora de escopo (Kafka/K8s/React/Resource Server) continua fora.
 
 ### Anti-padrões a cortar
 
@@ -119,4 +126,41 @@ Binge sem commit · copiar projeto do YouTube · digitar *com* o vídeo o tempo 
 
 ## Critério de sucesso
 
-Em ≤ o tempo que você alocar para FJ-01, você: (1) tem mini-repo acumulativo com fatias dos tópicos do mapa; (2) passa nos gates da tabela sem reabrir os cursos; (3) **abre FJ-02** e começa o esqueleto do Projeto 1 na mesma semana em que o gate fecha — sem “mais um vídeo” de atraso.
+**Gate único para abrir FJ-02** (mesmo com buracos):
+
+1. Mini-repo sobe com `./mvnw` + Postgres via Compose (ou caminho documentado).
+2. Sem vídeo, você esboça e implementa: 1 resource REST + service + entity/DTO separado + 1 migration Flyway + login JWT path A protegendo 1 rota + 1 teste de service.
+3. Explica em ~2 min: `HTTP → filter JWT → @Valid → service → JPA → JSON`.
+4. **Não** exige: equals perfeito, JPA avançado, Resource Server, cobertura alta, OpenAPI completo, “terminar” os vídeos do mapa.
+
+Quando o gate for verdade, o mapa vira referência on-demand durante o P1 — não trilha a completar. KPI = P1 destravado, não retenção de syllabus.
+
+## Bibliografia (DOIs / URLs)
+
+### CS education / WE / programação
+- Margulieux, Morrison & Decker (2020): https://doi.org/10.1186/s40594-020-00222-7
+- Margulieux, Guzdial & Catrambone (2012): https://doi.org/10.1145/2361276.2361291
+- Margulieux, Morrison & Decker (2019): https://doi.org/10.1145/3304221.3319756
+- Muldner, Jennings & Chiarelli (TOCE): https://doi.org/10.1145/3560266
+- Gray et al. (2007): https://doi.org/10.1145/1288580.1288594
+- Renkl, Atkinson & Große (2004): https://doi.org/10.1023/B:TRUC.0000021815.74806.f6
+- Kalyuga et al. (2003) expertise reversal: https://doi.org/10.1207/S15326985EP3801_4
+- Kalyuga (2007): https://doi.org/10.1007/s10648-007-9054-3
+- van Merriënboer & de Croock (1992): https://doi.org/10.2190/MJDX-9PP4-KFMT-09PM
+- Shin, Jung, Zumbach & Yi (2023): https://doi.org/10.1177/07356331231174454
+- Shin, Jung & Lee (2024): https://doi.org/10.1007/s11409-023-09362-x
+- Faded WE (Tech Know Learn 2025): https://doi.org/10.1007/s10758-025-09901-2
+- Buffardi & Wang (2022): https://doi.org/10.1145/3502718.3524778
+- Video software training Educ Sci (2023): https://doi.org/10.3390/educsci13060602
+- YeckehZaare et al. (2019): https://doi.org/10.1145/3291279.3339411
+- Edwards et al. / CodeWorkout (2019): https://doi.org/10.1145/3300115.3309525
+- Tshukudu et al.: https://doi.org/10.1145/3488042.3488050
+
+### Vídeo / cognitivos (traduzir com cuidado)
+- Mayer, Fiorella & Stull (2020) PDF: https://learningglass.eu/en/wp-content/uploads/sites/2/Mayer2020_5-ways-to-increase-the-effectiveness-of-instructional-video.pdf
+- Roediger & Karpicke (2006) testing: https://doi.org/10.1111/j.1467-9280.2006.01693.x
+- Cepeda et al. (2006) spacing: https://doi.org/10.1037/0033-2909.132.3.354
+- Dunlosky et al. (2013): https://doi.org/10.1177/1529100612453266
+- Ericsson et al. (1993): https://doi.org/10.1037/0033-295X.100.3.363
+- Slamecka & Graf (1978): https://doi.org/10.1037/0278-7393.4.6.592
+- Rohrer et al. (2015) interleaving: https://doi.org/10.1037/edu0000001
