@@ -53,7 +53,20 @@ Síntese ancorada em **aprender programação / tutoriais de software** e só en
 - **Utilidade relativa (síntese ampla):** practice testing e distributed practice = alta utilidade; highlighting/rereading = baixa ([Dunlosky et al., 2013](https://doi.org/10.1177/1529100612453266)).
 - **Deliberate practice:** meta estreita, fora da zona de conforto, feedback rápido ([Ericsson et al., 1993](https://doi.org/10.1037/0033-295X.100.3.363)). Feedback no FJ-01 = compila / curl / teste / commit — não “terminei o vídeo”.
 
-### 4. Lacunas (honestas)
+### 4. Addendum CS-ed (reforço)
+
+- Com vídeo e exercícios em links separados, alunos assistem e pulam o código; prática **acoplada** ao vídeo aumenta engajamento conjunto ([Buffardi & Wang, ITiCSE 2022](https://doi.org/10.1145/3502718.3524778)) → repo ao lado / commit no mesmo bloco.
+- Atividade **generativa** durante o vídeo (pausar, self-explain, imitar) > só assistir ([Mayer, Fiorella & Stull, ETR&D 2020](https://learningglass.eu/en/wp-content/uploads/sites/2/Mayer2020_5-ways-to-increase-the-effectiveness-of-instructional-video.pdf)).
+- Fading orientado a **conceito/subgoal** (não só apagar a última linha) melhora near/far transfer (Shin et al., linha 2023/24) → fade por subgoal do endpoint (JWT/JPA).
+- Retrieval espaçado/intercalado prediz desempenho em CS ([YeckehZaare et al., ICER 2019](https://doi.org/10.1145/3291279.3339411)) → review ~48h closed-book no mini-repo.
+- Prática curta + feedback imediato prediz exam (Edwards / CodeWorkout, CompEd 2019) → curl/teste verde como critério da fatia.
+- Transfer entre contextos precisa *bridging* explícito (Tshukudu et al.) → periodicamente 1 feature com os **mesmos subgoals**, domínio do P1.
+- Síntese WE em programação: [Muldner et al., TOCE](https://doi.org/10.1145/3560266).
+
+**Sessão longa opcional (~75–90 min):** subgoals → vídeo segmentado → implementar/fade → variante → retrieval → testes + nota “o que falharia no P1” → +48h spaced 15–20 min.
+
+### 5. Lacunas (honestas)
+
 
 - Poucos RCTs em crash courses YouTube long-form de Spring Boot; ponte por mecanismo (CLT, WE, fading, prática intercalada).
 - “Tutorial hell” é bem explicado cognitivamente; o rótulo popular é menos paper-formal.

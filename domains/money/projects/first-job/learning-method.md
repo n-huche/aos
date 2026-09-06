@@ -24,3 +24,7 @@ Completo → lacuna → sozinho sem vídeo → próximo feature similar do zero.
 ## Parar e ir para FJ-02 quando
 
 Gates em [fj-01-learning § Implicações](analysis/fj-01-learning.md): app sobe, fatias essenciais no repo, JWT path A básico, sem reassistir trilhas inteiras.
+
+## Sessão longa (opcional)
+
+~75–90 min: subgoals → vídeo segmentado → fade/implementar → variante → retrieval → testes → review spaced ~48h (15–20 min). Detalhe na analysis.
