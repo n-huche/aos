@@ -1,9 +1,8 @@
 # Estudar OpenAPI / Swagger
 
-**Domínio:** Dinheiro  
-**Fase:** [FJ-01](../../../../../../projects/money/first-job/phases/fj-01-study.md)  
+**Fase:** [FJ-01](../../../../../../projects/first-job/phases/fj-01-study.md)  
 **Prazo:** não definido  
-**Status:** não iniciado
+**Status:** pending
 
 ## O quê
 

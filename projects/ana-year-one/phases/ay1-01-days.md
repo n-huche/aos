@@ -1,7 +1,7 @@
 # AY1-01 — texto e fotos dos dias juntos
 
 **Objetivo:** produzir texto e selecionar fotos para cada dia que Nicolas e Ana passaram juntos.  
-**Status:** não iniciado  
+**Status:** pendente  
 **Prazo:** não definido  
 **Projeto:** [Ana Year One](../ana-year-one.md)
 
@@ -16,5 +16,5 @@ Texto por dia (legendas / entradas no formato do site — [AY1-03](ay1-03-site.m
 
 ## Tarefas
 
-- [Escrever textos e escolher fotos dos dias juntos](../../../../tasks/pending/undefined/project-tasks/ana-year-one/ay1-01-days/write-days-text-and-pick-photos.md)
+- [Escrever textos e escolher fotos dos dias juntos](../../../tasks/pending/undefined/project-tasks/ana-year-one/ay1-01-days/write-days-text-and-pick-photos.md)
 

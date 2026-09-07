@@ -1,7 +1,7 @@
 # AY1-02 — playlist (10 faixas)
 
 **Objetivo:** selecionar o link de 10 músicas e escrever um texto curto em cada dizendo como aquela música lembra Ana.  
-**Status:** não iniciado  
+**Status:** pendente  
 **Prazo:** não definido  
 **Projeto:** [Ana Year One](../ana-year-one.md)
 
@@ -16,5 +16,5 @@
 
 ## Tarefas
 
-- [Escolher 10 faixas e escrever os textos](../../../../tasks/pending/undefined/project-tasks/ana-year-one/ay1-02-playlist/pick-ten-tracks-and-write-notes.md)
+- [Escolher 10 faixas e escrever os textos](../../../tasks/pending/undefined/project-tasks/ana-year-one/ay1-02-playlist/pick-ten-tracks-and-write-notes.md)
 

@@ -1,7 +1,7 @@
 # {{Nome do projeto}}
 
 **Objetivo:** _uma frase_  
-**Status:** não iniciado | em andamento | pausado | concluído  
+**Status:** pendente | em andamento | pausado | concluído  
 **Prazo:** YYYY-MM-DD | não definido  
 **Análise:** _(ainda não)_
 
@@ -9,7 +9,7 @@
 
 ### {{PREFIXO}}-{{nn}}-{{slug-fase}}
 [{{nome}}](phases/{{prefixo}}-{{nn}}-{{slug-fase}}.md)  
-**Status:** não iniciado | em andamento | pausado | concluído  
+**Status:** pendente | em andamento | pausado | concluído  
 **Prazo:** YYYY-MM-DD | não definido
 
 _Uma frase: o que esta fase entrega._

@@ -1,9 +1,8 @@
 # Criar o repositório e o README esqueleto
 
-**Domínio:** Dinheiro  
-**Fase:** [FJ-02](../../../../../../projects/money/first-job/phases/fj-02-projects.md)  
+**Fase:** [FJ-02](../../../../../../projects/first-job/phases/fj-02-projects.md)  
 **Prazo:** não definido  
-**Status:** não iniciado
+**Status:** pending
 
 ## O quê
 

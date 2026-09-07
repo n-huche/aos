@@ -1,8 +1,7 @@
 # Trocar bateria do iPhone 12
 
-**Domínio:** Relacionamentos  
 **Prazo:** não definido  
-**Status:** não iniciado
+**Status:** pending
 
 ## O quê
 

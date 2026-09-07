@@ -1,9 +1,8 @@
 # Desenvolver o site estático
 
-**Domínio:** Relacionamentos  
-**Fase:** [AY1-03](../../../../../../projects/relationships/ana-year-one/phases/ay1-03-site.md)  
+**Fase:** [AY1-03](../../../../../../projects/ana-year-one/phases/ay1-03-site.md)  
 **Prazo:** não definido  
-**Status:** não iniciado
+**Status:** pending
 
 ## O quê
 

@@ -1,8 +1,8 @@
 # {{Título}}
 
 **Fase:** [{{PREFIXO}}-{{nn}}](../../../../../../projects/{slug}/phases/{prefixo}-{nn}-{slug-fase}.md)  
-**Prazo:** YYYY-MM-DD | não definido  
-**Status:** não iniciado | em andamento | concluído | recorrente
+**Prazo:** YYYY-MM-DD | não definido | none  
+**Status:** pending | completed | recurring
 
 ## O quê
 
@@ -15,7 +15,7 @@
 
 ## Quando
 
-- _datas / horários; se recorrente: cadência + até quando ou indefinidamente_
+- _datas / horários; se recurring: cadência + até quando ou none_
 
 ## Onde, se relevante
 
@@ -27,4 +27,4 @@ _Detalhes, opções, contatos — só o necessário._
 
 ---
 
-Obs: **Fase:** só em tarefa de fase (link relativo). Independente: omitir o campo. **Prazo:** de fase = copiar o da fase; independente = `não definido` se o usuário não der data. **Quando** não vira Prazo. Não copiar heading vazio. Tarefa de fase **não traz nada de novo** — compacta Entrega + Como da fase. Se a fase não disser, não entra aqui.
+Obs: **Fase:** só em tarefa de fase (link relativo). Independente: omitir o campo. **Prazo:** de fase = copiar o da fase; independente `pending` = `não definido` se o usuário não der data. `recurring` sem fim = `none`. **Quando** não vira Prazo. Não copiar heading vazio. Tarefa de fase **não traz nada de novo** — compacta Entrega + Como da fase. Se a fase não disser, não entra aqui.

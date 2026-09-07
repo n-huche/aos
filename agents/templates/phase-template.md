@@ -1,7 +1,7 @@
 # {{PREFIXO}}-{{nn}} — {{nome em português}}
 
 **Objetivo:** _uma frase_  
-**Status:** não iniciado | em andamento | pausado | concluído  
+**Status:** pendente | em andamento | pausado | concluído  
 **Prazo:** YYYY-MM-DD | não definido  
 **Projeto:** [{{Nome}}](../{{slug}}.md)
 

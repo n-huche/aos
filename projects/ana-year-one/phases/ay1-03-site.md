@@ -1,7 +1,7 @@
 # AY1-03 — desenvolvimento do site
 
 **Objetivo:** desenvolver o site estático (só frontend) com imagens e textos no repositório, usando o Cursor.  
-**Status:** não iniciado  
+**Status:** pendente  
 **Prazo:** não definido  
 **Projeto:** [Ana Year One](../ana-year-one.md)
 
@@ -16,7 +16,7 @@ Cursor. Spec fina em `docs/` + schema, separada do editorial. Árvore `content/`
 
 ## Tarefas
 
-- [Desenvolver o site estático](../../../../tasks/pending/undefined/project-tasks/ana-year-one/ay1-03-site/build-anniversary-static-site.md)
+- [Desenvolver o site estático](../../../tasks/pending/undefined/project-tasks/ana-year-one/ay1-03-site/build-anniversary-static-site.md)
 
 ## Organização no repositório
 

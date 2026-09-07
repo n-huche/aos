@@ -1,7 +1,7 @@
 # FJ-02 — projetos (Backend Java + Spring, 1ª vaga)
 
 **Objetivo:** maximizar chance de estágio/júnior backend o mais rápido possível.  
-**Status:** não iniciado  
+**Status:** pendente  
 **Prazo:** não definido  
 **Projeto:** [First Job](../first-job.md)  
 **Stack alvo:** Java 21 · Spring Boot 3 · SQL · REST · Git  
@@ -20,8 +20,8 @@ Um projeto por vez; candidatar quando o Projeto 1 estiver hireable. Stack, escop
 
 ## Tarefas
 
-- [Escolher domínio da API âncora](../../../../tasks/pending/undefined/project-tasks/first-job/fj-02-projects/choose-anchor-api-domain.md)
-- [Criar o repositório e o README esqueleto](../../../../tasks/pending/undefined/project-tasks/first-job/fj-02-projects/create-anchor-api-repo.md)
+- [Escolher domínio da API âncora](../../../tasks/pending/undefined/project-tasks/first-job/fj-02-projects/choose-anchor-api-domain.md)
+- [Criar o repositório e o README esqueleto](../../../tasks/pending/undefined/project-tasks/first-job/fj-02-projects/create-anchor-api-repo.md)
 
 ## Ordem de execução
 

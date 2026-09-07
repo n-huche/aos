@@ -1,49 +1,18 @@
 # Projects
 
-Três eixos por **finalidade**. Descrições (cabe / não cabe): [glossário](../AGENTS.md).
-
-`projects/{domínio}/{slug}/` — status só no markdown do hub.
+`projects/{slug}/` — status só no markdown do hub (herdado da fase atual).
 
 ## Status
 
-### Não iniciado / pausado
+### Pendente / pausado
 
-#### Dinheiro
-
-- [First Job](money/first-job/first-job.md) — estágio/júnior backend
-
-#### Relacionamentos
-
-- [Ana Year One](relationships/ana-year-one/ana-year-one.md) — site + vídeo presente 1 ano
-
-#### Corpo
-
---
+- [First Job](first-job/first-job.md) — estágio/júnior backend
+- [Ana Year One](ana-year-one/ana-year-one.md) — site + vídeo presente 1 ano
 
 ### Em andamento
-
-#### Dinheiro
-
---
-
-#### Relacionamentos
-
---
-
-#### Corpo
 
 --
 
 ### Concluído
-
-#### Dinheiro
-
---
-
-#### Relacionamentos
-
---
-
-#### Corpo
 
 --

@@ -1,7 +1,7 @@
 # AY1-04 — vídeo ao ar livre
 
 **Objetivo:** gravar vídeo espontâneo ao ar livre falando do site e improvisos.  
-**Status:** não iniciado  
+**Status:** pendente  
 **Prazo:** não definido  
 **Projeto:** [Ana Year One](../ana-year-one.md)
 
@@ -16,5 +16,5 @@ Ao ar livre, tom espontâneo, sem roteiro rígido. Falar do site e improvisos.
 
 ## Tarefas
 
-- [Gravar o vídeo ao ar livre](../../../../tasks/pending/undefined/project-tasks/ana-year-one/ay1-04-video/record-outdoor-anniversary-video.md)
+- [Gravar o vídeo ao ar livre](../../../tasks/pending/undefined/project-tasks/ana-year-one/ay1-04-video/record-outdoor-anniversary-video.md)
 

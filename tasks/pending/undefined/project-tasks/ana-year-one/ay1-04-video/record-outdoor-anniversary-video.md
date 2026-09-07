@@ -1,9 +1,8 @@
 # Gravar o vídeo ao ar livre
 
-**Domínio:** Relacionamentos  
-**Fase:** [AY1-04](../../../../../../projects/relationships/ana-year-one/phases/ay1-04-video.md)  
+**Fase:** [AY1-04](../../../../../../projects/ana-year-one/phases/ay1-04-video.md)  
 **Prazo:** não definido  
-**Status:** não iniciado
+**Status:** pending
 
 ## O quê
 

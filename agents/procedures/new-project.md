@@ -5,19 +5,19 @@ Não inventar datas, pessoas nem fases. Sem `.gitkeep`. Hub a partir de [project
 ## Antes de criar
 
 1. Confirmar que não existe o mesmo projeto (buscar slug, nome, pasta). Se existir, atualizar o que já está — não duplicar.
-2. Se faltar **objetivo em uma frase**, **slug** ou **fases**, perguntar. Default de **Status:** `não iniciado`. Default de **Prazo:** `não definido` — não inventar data. Projeto **não** usa `não planejado` — isso é só fase. Análise: só se a complexidade de uma fase justificar (usuário pediu ou já trouxe a decisão) — **antes** dessa fase.
+2. Se faltar **objetivo em uma frase**, **slug** ou **fases**, perguntar. Default de **Status:** `pendente` (herdado: nenhuma fase `em andamento` nem `concluído`). Default de **Prazo:** `não definido` — não inventar data. Projeto **não** usa `não planejado` — isso é só fase. Análise: só se a complexidade de uma fase justificar (usuário pediu ou já trouxe a decisão) — **antes** dessa fase.
 3. Slug da pasta = slug do hub = inglês, kebab-case, ASCII. Título do hub pode ser o nome falado (ex.: First Job, Ana Year One). Textos em português.
 4. Prefixo de fase: sigla curta em maiúsculas (ex.: `FJ`, `AY1`). Heading no hub **e** arquivo: `{PREFIXO}-{nn}-{slug-fase}` / `{prefixo}-{nn}-{slug-fase}.md` — slug da fase em inglês nos dois.
 
 ## Criar
 
 1. Pasta `projects/{slug}/`.
-2. Hub `{slug}.md` pelo template. Preencher objetivo, **Status** e **Prazo**. **Análise:** `_(ainda não)_` até existir nota; slug curto **sem** id de fase (`fj-stack.md`). Não criar `analysis/` vazia nem `{{slug}}-analysis.md` placeholder.
+2. Hub `{slug}.md` pelo template. Preencher objetivo, **Status** (`pendente` até haver fase `em andamento` ou `concluído`) e **Prazo**. **Análise:** `_(ainda não)_` até existir nota; slug curto **sem** id de fase (`fj-stack.md`). Não criar `analysis/` vazia nem `{{slug}}-analysis.md` placeholder.
 3. Análise, se necessária: nota em `analysis/` ([analysis-template](../templates/analysis-template.md)); slug **sem** id de fase. Pasta `analysis/` nasce com o primeiro arquivo. Implicações = o quê/como da fase.
-4. Cada fase **planejada** (`não iniciado` ou além): nota em `phases/{prefixo}-{nn}-{slug-fase}.md` (copiar [phase-template](../templates/phase-template.md); **Entrega** + **Como**; **Prazo** = copiar o do projeto; campos extras só se o usuário trouxe conteúdo) e entrada no hub (mesmo **Status** e **Prazo**). Se o Como não der para derivar tarefas sem inventar, perguntar — não criar as tarefas ainda. Depois **≥1 tarefa** (seguir [new-task](new-task.md); compactar a fase, não inventar). Fase `não planejado`: só heading + **Status** + **Prazo** no hub — **sem arquivo nem tarefas**. **Prazo** da fase não planejada = copiar o do projeto.
+4. Cada fase **planejada** (`pendente` ou além): nota em `phases/{prefixo}-{nn}-{slug-fase}.md` (copiar [phase-template](../templates/phase-template.md); **Entrega** + **Como**; **Prazo** = copiar o do projeto; campos extras só se o usuário trouxe conteúdo) e entrada no hub (mesmo **Status** e **Prazo**). Se o Como não der para derivar tarefas sem inventar, perguntar — não criar as tarefas ainda. Depois **≥1 tarefa** (seguir [new-task](new-task.md); compactar a fase, não inventar). Fase `não planejado`: só heading + **Status** + **Prazo** no hub — **sem arquivo nem tarefas**. **Prazo** da fase não planejada = copiar o do projeto.
 5. Conteúdo longo fica na fase, não no hub.
 6. Não criar `learning-method.md`, spec extra, nem outras notas “por se acaso”. Itens de portfólio (se houver) ficam no **corpo da fase**, não em nota à parte.
-7. Em [projects](../../projects/projects.md): na seção de status, item `- [{Nome}]({slug}/{slug}.md) — {blurb}`. Trocar `--` se a seção estava vazia.
+7. Em [projects](../../projects/projects.md): na seção de status (**Pendente / pausado**, **Em andamento**, **Concluído**), item `- [{Nome}]({slug}/{slug}.md) — {blurb}`. Trocar `--` se a seção estava vazia.
 8. Links `[nome](caminho relativo)` — não `[[wiki]]`. Buscar no vault menções ao tema e apontar para o hub quando fizer sentido.
 
 Mudança de status ou prazo **depois** de criado: [status-change](status-change.md).
