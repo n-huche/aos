@@ -1,7 +1,7 @@
 # {{Título}}
 
 **Domínio:** Dinheiro | Relacionamentos | Corpo  
-**Fase:** [{{PREFIXO}}-{{nn}}](../../projects/{status}/{domínio}/{slug}/phases/{prefixo}-{nn}-{slug-fase}.md)  
+**Fase:** [{{PREFIXO}}-{{nn}}](../../../../../projects/{status}/{domínio}/{slug}/phases/{prefixo}-{nn}-{slug-fase}.md)  
 **Status:** não iniciado | em andamento | concluído | recorrente
 
 ## O quê

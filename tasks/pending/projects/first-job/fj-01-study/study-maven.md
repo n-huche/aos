@@ -1,12 +1,12 @@
-# Estudar Java básico
+# Estudar Maven
 
 **Domínio:** Dinheiro  
-**Fase:** [FJ-01](../../projects/pending/money/first-job/phases/fj-01-study.md)  
+**Fase:** [FJ-01](../../../../../projects/pending/money/first-job/phases/fj-01-study.md)  
 **Status:** não iniciado
 
 ## O quê
 
-1. Tópico 1 do mapa da FJ-01 (Java básico) — Principal, Cobrir, Pular.
+1. Tópico 6 do mapa da FJ-01 (Maven) — Principal, Cobrir, Pular.
 2. Como da fase: loop/fade/commit no mesmo mini-repo.
 
 ## Por quê

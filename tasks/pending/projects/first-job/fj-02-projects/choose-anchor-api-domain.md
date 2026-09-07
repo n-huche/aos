@@ -1,7 +1,7 @@
 # Escolher domínio da API âncora
 
 **Domínio:** Dinheiro  
-**Fase:** [FJ-02](../../projects/pending/money/first-job/phases/fj-02-projects.md)  
+**Fase:** [FJ-02](../../../../../projects/pending/money/first-job/phases/fj-02-projects.md)  
 **Status:** não iniciado
 
 ## O quê

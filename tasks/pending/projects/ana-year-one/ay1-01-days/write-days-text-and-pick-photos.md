@@ -1,7 +1,7 @@
 # Escrever textos e escolher fotos dos dias juntos
 
 **Domínio:** Relacionamentos  
-**Fase:** [AY1-01](../../projects/pending/relationships/ana-year-one/phases/ay1-01-days.md)  
+**Fase:** [AY1-01](../../../../../projects/pending/relationships/ana-year-one/phases/ay1-01-days.md)  
 **Status:** não iniciado
 
 ## O quê

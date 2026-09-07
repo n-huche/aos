@@ -19,8 +19,8 @@ Um projeto por vez; candidatar quando o Projeto 1 estiver hireable. Stack, escop
 
 ## Tarefas
 
-- [Escolher domínio da API âncora](../../../../../tasks/pending/choose-anchor-api-domain.md)
-- [Criar o repositório e o README esqueleto](../../../../../tasks/pending/create-anchor-api-repo.md)
+- [Escolher domínio da API âncora](../../../../../tasks/pending/projects/first-job/fj-02-projects/choose-anchor-api-domain.md)
+- [Criar o repositório e o README esqueleto](../../../../../tasks/pending/projects/first-job/fj-02-projects/create-anchor-api-repo.md)
 
 ## Ordem de execução
 

@@ -1,7 +1,7 @@
 # Escolher 10 faixas e escrever os textos
 
 **Domínio:** Relacionamentos  
-**Fase:** [AY1-02](../../projects/pending/relationships/ana-year-one/phases/ay1-02-playlist.md)  
+**Fase:** [AY1-02](../../../../../projects/pending/relationships/ana-year-one/phases/ay1-02-playlist.md)  
 **Status:** não iniciado
 
 ## O quê

@@ -15,5 +15,5 @@
 
 ## Tarefas
 
-- [Escolher 10 faixas e escrever os textos](../../../../../tasks/pending/pick-ten-tracks-and-write-notes.md)
+- [Escolher 10 faixas e escrever os textos](../../../../../tasks/pending/projects/ana-year-one/ay1-02-playlist/pick-ten-tracks-and-write-notes.md)
 

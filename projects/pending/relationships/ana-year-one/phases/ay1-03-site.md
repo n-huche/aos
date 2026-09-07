@@ -15,7 +15,7 @@ Cursor. Spec fina em `docs/` + schema, separada do editorial. Árvore `content/`
 
 ## Tarefas
 
-- [Desenvolver o site estático](../../../../../tasks/pending/build-anniversary-static-site.md)
+- [Desenvolver o site estático](../../../../../tasks/pending/projects/ana-year-one/ay1-03-site/build-anniversary-static-site.md)
 
 ## Organização no repositório
 

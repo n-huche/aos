@@ -14,7 +14,7 @@
 
 ## Tarefas
 
-- [{{Título}}](../../../../../tasks/pending/{{slug}}.md)
+- [{{Título}}](../../../../../tasks/pending/projects/{{slug-projeto}}/{{prefixo}}-{{nn}}-{{slug-fase}}/{{slug}}.md)
 
 ---
 

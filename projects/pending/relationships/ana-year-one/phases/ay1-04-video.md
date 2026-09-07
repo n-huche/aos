@@ -15,5 +15,5 @@ Ao ar livre, tom espontâneo, sem roteiro rígido. Falar do site e improvisos.
 
 ## Tarefas
 
-- [Gravar o vídeo ao ar livre](../../../../../tasks/pending/record-outdoor-anniversary-video.md)
+- [Gravar o vídeo ao ar livre](../../../../../tasks/pending/projects/ana-year-one/ay1-04-video/record-outdoor-anniversary-video.md)
 

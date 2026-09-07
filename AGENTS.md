@@ -9,7 +9,7 @@ Qualquer agente segue este arquivo, `agents/procedures/` e `agents/templates/`. 
 - Idioma dos **textos** do usuário: **português**.
 - Nomes de **pastas e arquivos**: **inglês**, kebab-case, ASCII, sem espaços.
 - Completo, mas enxuto; uma fonte da verdade por tema (não duplicar tabelas/rosters).
-- Nunca usar `.gitkeep` nem placeholder para pasta vazia. Pasta só entra no git quando tiver nota.
+- Nunca usar `.gitkeep` nem placeholder para pasta vazia. No git, pasta só entra com nota. `tasks/{status}/` (`pending`, `completed`, `recurring`) existem **localmente** mesmo vazios (criar se faltar; não commitar vazios). `projects/`, `independent/` e pastas de projeto/fase em `tasks/` só existem se tiverem nota.
 - Links: `[nome](caminho relativo)` — não `[[wiki]]`.
 - Ambiguidade factual ou de decisão → perguntar; não inventar dados pessoais.
 - Nota de tipo conhecido: copiar o template em `agents/templates/`; não inventar outro esqueleto.
@@ -66,7 +66,7 @@ Nota de **decisão**: responde qualquer pergunta. Fonte das seções: [analysis-
 
 Unidade de execução: **ação concreta, específica, no máximo algumas horas**. **Não traz nada de novo** — compacta e estrutura o que a fase (ou, se independente, a própria nota) já decidiu, visando fazer: o mínimo de pensar.
 
-Pode ser **independente** (não depende de projeto) ou **relacionada a uma fase**. Fase planejada tem ≥1 tarefa; não é 1:1. Campo **Domínio** = finalidade da ação (não há `tasks/money/`). Campo **Fase:** só se for de fase (link relativo). Itens em `tasks/pending/`, `tasks/completed/` ou `tasks/recurring/`. Template [task-template](agents/templates/task-template.md) — o mesmo para pontual e recorrente. Criar: [new-task](agents/procedures/new-task.md).
+Pode ser **independente** (não depende de projeto) ou **relacionada a uma fase**. Fase planejada tem ≥1 tarefa; não é 1:1. Campo **Domínio** = finalidade da ação (não há `tasks/money/`). Campo **Fase:** só se for de fase (link relativo). Independente: `tasks/{status}/independent/{slug}.md`. De fase: `tasks/{status}/projects/{projeto}/{fase}/{slug}.md`. `pending/` · `completed/` · `recurring/` existem **localmente** mesmo vazios. `projects/`, `independent/`, `{projeto}/` e `{fase}/` só se houver tarefa. Template [task-template](agents/templates/task-template.md) — o mesmo para pontual e recorrente. Criar: [new-task](agents/procedures/new-task.md).
 
 Tarefa de fase em três lugares: o arquivo, um link em `{fase}.md`, um checkbox em [tasks](tasks/tasks.md). Independente: sem **Fase:**. Checkbox só no índice. **O quê** = passos extraídos da Entrega + Como da fase. Se a fase não disser, não entra na tarefa.
 
@@ -84,7 +84,7 @@ Campo no markdown **e** pasta. Mudar projeto ou tarefa: [status-change](agents/p
 
 Projeto: `não iniciado` | `em andamento` | `concluído` | `pausado`. Fase: os mesmos **e** `não planejado`. Tarefa: `não iniciado` | `em andamento` | `concluído` | `recorrente`.
 
-Projeto `projects/{status}/{domínio}/{slug}/`: `pending/` (`não iniciado`, `pausado`) · `in-progress/` (`em andamento`) · `completed/` (`concluído`). Tarefa: `tasks/pending/` (`não iniciado` | `em andamento`) · `tasks/completed/` (`concluído`) · `tasks/recurring/` (`recorrente`).
+Projeto `projects/{status}/{domínio}/{slug}/`: `pending/` (`não iniciado`, `pausado`) · `in-progress/` (`em andamento`) · `completed/` (`concluído`). Tarefa: `tasks/{status}/independent/{slug}.md` ou `tasks/{status}/projects/{projeto}/{fase}/{slug}.md`. Status: `pending/` (`não iniciado` | `em andamento`) · `completed/` (`concluído`) · `recurring/` (`recorrente`).
 
 `não planejado` = só **fase**: ainda não vale arquivo nem tarefas (heading no hub, sem nota em `phases/`). `pausado` = já vale, mas parou.
 

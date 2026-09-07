@@ -1,7 +1,7 @@
 # Estudar Docker Compose
 
 **Domínio:** Dinheiro  
-**Fase:** [FJ-01](../../projects/pending/money/first-job/phases/fj-01-study.md)  
+**Fase:** [FJ-01](../../../../../projects/pending/money/first-job/phases/fj-01-study.md)  
 **Status:** não iniciado
 
 ## O quê
