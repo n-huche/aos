@@ -2,7 +2,7 @@
 
 Três eixos por **finalidade**. Descrições (cabe / não cabe): [glossário](../AGENTS.md).
 
-`projects/{status}/{domínio}/{slug}/` — status: `pending` | `in-progress` | `completed`
+`projects/{domínio}/{slug}/` — status só no markdown do hub.
 
 ## Status
 
@@ -10,11 +10,11 @@ Três eixos por **finalidade**. Descrições (cabe / não cabe): [glossário](..
 
 #### Dinheiro
 
-- [First Job](pending/money/first-job/first-job.md) — estágio/júnior backend
+- [First Job](money/first-job/first-job.md) — estágio/júnior backend
 
 #### Relacionamentos
 
-- [Ana Year One](pending/relationships/ana-year-one/ana-year-one.md) — site + vídeo presente 1 ano
+- [Ana Year One](relationships/ana-year-one/ana-year-one.md) — site + vídeo presente 1 ano
 
 #### Corpo
 

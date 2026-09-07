@@ -1,7 +1,7 @@
 # {{Título}}
 
-**Domínio:** Dinheiro | Relacionamentos | Corpo  
-**Fase:** [{{PREFIXO}}-{{nn}}](../../../../../projects/{status}/{domínio}/{slug}/phases/{prefixo}-{nn}-{slug-fase}.md)  
+**Fase:** [{{PREFIXO}}-{{nn}}](../../../../../../projects/{slug}/phases/{prefixo}-{nn}-{slug-fase}.md)  
+**Prazo:** YYYY-MM-DD | não definido  
 **Status:** não iniciado | em andamento | concluído | recorrente
 
 ## O quê
@@ -27,4 +27,4 @@ _Detalhes, opções, contatos — só o necessário._
 
 ---
 
-Obs: **Fase:** só em tarefa de fase (link relativo). Independente: omitir o campo. Não copiar heading vazio. Tarefa de fase **não traz nada de novo** — compacta Entrega + Como da fase. Se a fase não disser, não entra aqui.
+Obs: **Fase:** só em tarefa de fase (link relativo). Independente: omitir o campo. **Prazo:** de fase = copiar o da fase; independente = `não definido` se o usuário não der data. **Quando** não vira Prazo. Não copiar heading vazio. Tarefa de fase **não traz nada de novo** — compacta Entrega + Como da fase. Se a fase não disser, não entra aqui.

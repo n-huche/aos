@@ -9,38 +9,12 @@ Qualquer agente segue este arquivo, `agents/procedures/` e `agents/templates/`. 
 - Idioma dos **textos** do usuário: **português**.
 - Nomes de **pastas e arquivos**: **inglês**, kebab-case, ASCII, sem espaços.
 - Completo, mas enxuto; uma fonte da verdade por tema (não duplicar tabelas/rosters).
-- Nunca usar `.gitkeep` nem placeholder para pasta vazia. No git, pasta só entra com nota. `tasks/{status}/` (`pending`, `completed`, `recurring`) existem **localmente** mesmo vazios (criar se faltar; não commitar vazios). `projects/`, `independent/` e pastas de projeto/fase em `tasks/` só existem se tiverem nota.
+- Nunca usar `.gitkeep` nem placeholder para pasta vazia. No git, pasta só entra com nota. `tasks/{status}/` (`pending`, `completed`, `recurring`), `pending/{prazo}/`, `independent-tasks/`, `project-tasks/` e pastas de projeto/fase em `tasks/` só existem se tiverem nota.
 - Links: `[nome](caminho relativo)` — não `[[wiki]]`.
 - Ambiguidade factual ou de decisão → perguntar; não inventar dados pessoais.
 - Nota de tipo conhecido: copiar o template em `agents/templates/`; não inventar outro esqueleto.
 
 ## Glossário
-
-### Domínio
-
-Eixo por **finalidade**, não por tema. Três: Dinheiro (`money`), Relacionamentos (`relationships`), Corpo (`body`).
-
-O lugar de um projeto ou tarefa é **a que fim a ação serve**. A mesma competência pode aparecer em mais de um eixo; a fonte fica no da finalidade principal, o outro só aponta.
-
-Objetivo de um domínio = concluir os seus projetos. Sem `{domínio}.md`; projetos em `projects/{status}/{domínio}/{slug}/`. Índice só em [projects](projects/projects.md).
-
-#### Dinheiro
-
-Ganho financeiro, patrimônio ou ativos — o que entra no bolso, gera renda ou reduz custo de forma duradoura.
-
-Cabe: emprego e carreira, skills com valor de mercado, produtos, investimentos, modelos mentais **quando o uso declarado for dinheiro**. Não cabe: o vínculo em si; treino ou aparência pelo fim estético ou de saúde.
-
-#### Relacionamentos
-
-O vínculo entre pessoas — como começa, se mantém, se repara ou se encerra.
-
-Cabe: namoro e amizade, família, comportamento em relação (presentes, cuidados pontuais, conversas difíceis). Não cabe: charme ou rede só para fechar vaga ou venda; disciplina de treino ou higiene pelo próprio corpo.
-
-#### Corpo
-
-O organismo e como ele aparece — saúde, força, higiene, estilo, expressão física.
-
-Cabe: treino, alimentação, sono, aparência, roupa e postura **quando o fim é o corpo**. Não cabe: academia como networking para emprego; gesto cujo fim é o vínculo.
 
 ### Projeto
 
@@ -48,13 +22,13 @@ Resultado maior, partido em fases, objetivo em uma frase. **Não se executa** �
 
 Não é 1:1 com tarefa nem com fase: uma fase pode caber numa única tarefa ou pedir dezenas. O projeto acaba quando o objetivo é verdadeiro.
 
-Pasta: `projects/{status}/{domínio}/{slug}/` (`{slug}.md`, `analysis/`, `phases/{prefixo}-{nn}-{slug-fase}.md`). Hub `{slug}.md` a partir de [project-template](agents/templates/project-template.md). Criar: [new-project](agents/procedures/new-project.md). **Status geral** e pasta coincidem ([status-change](agents/procedures/status-change.md)).
+Pasta: `projects/{slug}/` (`{slug}.md`, `analysis/`, `phases/{prefixo}-{nn}-{slug-fase}.md`). Hub `{slug}.md` a partir de [project-template](agents/templates/project-template.md). Criar: [new-project](agents/procedures/new-project.md). **Status** e **Prazo** só no markdown — a pasta não muda ([status-change](agents/procedures/status-change.md)). Todas as tarefas da fase `concluído` → fase `concluído`. Todas as fases do hub `concluído` → projeto `concluído`. Fase `não planejado` **bloqueia** o projeto.
 
 ### Fase
 
-Recorte com **uma entrega**. Status próprio; mudar o status da fase **não** move a pasta do projeto.
+Recorte com **uma entrega**. Status e prazo próprios no markdown; nenhum dos dois move a pasta do projeto.
 
-Planejada (`não iniciado` ou além): nota em `phases/{prefixo}-{nn}-{slug-fase}.md` ([phase-template](agents/templates/phase-template.md)), entrada no hub e **≥1 tarefa**. A nota traz **Entrega** (o quê) e **Como** (método, fontes, restrições) — escrita de forma que as tarefas derivadas já estejam definidas. Se o Como não der para derivar tarefas sem inventar, não criar as tarefas: analisar (se a complexidade justificar) ou perguntar. `não planejado`: só heading + status no hub — sem arquivo nem tarefas. Heading e arquivo usam o mesmo slug em inglês.
+Planejada (`não iniciado` ou além): nota em `phases/{prefixo}-{nn}-{slug-fase}.md` ([phase-template](agents/templates/phase-template.md)), entrada no hub e **≥1 tarefa**. A nota traz **Entrega** (o quê) e **Como** (método, fontes, restrições) — escrita de forma que as tarefas derivadas já estejam definidas. Se o Como não der para derivar tarefas sem inventar, não criar as tarefas: analisar (se a complexidade justificar) ou perguntar. `não planejado`: só heading + status + prazo no hub — sem arquivo nem tarefas. Heading e arquivo usam o mesmo slug em inglês.
 
 Relação com tarefas não é 1:1: a fase decide o que fica pronto e como; as tarefas só compactam isso em ações de algumas horas. Uma fase planejada pode ter uma ou dezenas de tarefas.
 
@@ -66,13 +40,19 @@ Nota de **decisão**: responde qualquer pergunta. Fonte das seções: [analysis-
 
 Unidade de execução: **ação concreta, específica, no máximo algumas horas**. **Não traz nada de novo** — compacta e estrutura o que a fase (ou, se independente, a própria nota) já decidiu, visando fazer: o mínimo de pensar.
 
-Pode ser **independente** (não depende de projeto) ou **relacionada a uma fase**. Fase planejada tem ≥1 tarefa; não é 1:1. Campo **Domínio** = finalidade da ação (não há `tasks/money/`). Campo **Fase:** só se for de fase (link relativo). Independente: `tasks/{status}/independent/{slug}.md`. De fase: `tasks/{status}/projects/{projeto}/{fase}/{slug}.md`. `pending/` · `completed/` · `recurring/` existem **localmente** mesmo vazios. `projects/`, `independent/`, `{projeto}/` e `{fase}/` só se houver tarefa. Template [task-template](agents/templates/task-template.md) — o mesmo para pontual e recorrente. Criar: [new-task](agents/procedures/new-task.md).
+Pode ser **independente** (não depende de projeto) ou **relacionada a uma fase**. Fase planejada tem ≥1 tarefa; não é 1:1. Campo **Prazo:** data `YYYY-MM-DD` ou `não definido` (**Quando** no corpo não vira Prazo). Tarefa de fase: default = copiar o prazo da fase. Independente: `não definido` se o usuário não der data. Campo **Fase:** só se for de fase (link relativo). Pendente: `tasks/pending/{prazo}/independent-tasks/{slug}.md` ou `tasks/pending/{prazo}/project-tasks/{projeto}/{fase}/{slug}.md`. Concluída: `tasks/completed/…` (sem `{prazo}/`). Recorrente: `tasks/recurring/…` (sem `{prazo}/`). `{prazo}`: `late` · `today` · `three-days` · `one-week` · `one-month` · `long-time` · `undefined`. Template [task-template](agents/templates/task-template.md) — o mesmo para pontual e recorrente. Criar: [new-task](agents/procedures/new-task.md).
 
 Tarefa de fase em três lugares: o arquivo, um link em `{fase}.md`, um checkbox em [tasks](tasks/tasks.md). Independente: sem **Fase:**. Checkbox só no índice. **O quê** = passos extraídos da Entrega + Como da fase. Se a fase não disser, não entra na tarefa.
 
+### Prazo
+
+Campo em projeto, fase e tarefa: `YYYY-MM-DD` ou `não definido`. Pai da fase = projeto. Pai da tarefa de fase = fase. Independente não herda. Criar filho: copiar o prazo do pai. Override: o usuário (ou pedido ao agente) põe outro valor no filho. Mudar o prazo do pai: cascatear só nos filhos cujo prazo é **igual ao valor antigo do pai** ou **`não definido`**; depois, nas tarefas elegíveis dessas fases. Filho com data diferente não mexe. **Prazo específico na fase:** as tarefas dessa fase **sem** prazo próprio (`não definido` ou ainda igual ao prazo antigo da fase) herdam a data; tarefa com data diferente não mexe. **Quando** não vira Prazo.
+
+Em **tarefa** pendente, o prazo também escolhe a pasta **dentro de** `pending/`. Sem data → `undefined/`. Com data, dias até ela (hoje = 0; atrasada negativa): `< 0` `late/` · `0` `today/` · `1–3` `three-days/` · `4–7` `one-week/` · `8–30` `one-month/` · `> 30` `long-time/`. Recalcular vs hoje ao criar, ao mudar Prazo/Status, ou ao usar a lista. Concluir ou tornar recorrente: sair de `pending/{prazo}/`. Voltar a pendente: recalcular o balde. Projeto e fase **não** têm pasta de prazo.
+
 ### Tarefa recorrente
 
-Todos, ou quase todos, os dias, até uma data, um acontecimento, ou indefinidamente. Status `recorrente`; pasta `tasks/recurring/`. Deixar de ser recorrente = sai de `recurring/` e segue [status-change](agents/procedures/status-change.md).
+Todos, ou quase todos, os dias, até uma data, um acontecimento, ou indefinidamente. Status `recorrente`; pasta `tasks/recurring/` (sem `{prazo}/`). Deixar de ser recorrente = sai de `recurring/` e segue [status-change](agents/procedures/status-change.md).
 
 ### Daily
 
@@ -80,11 +60,13 @@ Notas diárias (em construção). Pasta `daily/`. Template: [day-template](agent
 
 ### Status
 
-Campo no markdown **e** pasta. Mudar projeto ou tarefa: [status-change](agents/procedures/status-change.md).
+Projeto e fase: só o campo no markdown (e o heading no hub). Tarefa: campo **e** pasta. Mudar: [status-change](agents/procedures/status-change.md).
 
 Projeto: `não iniciado` | `em andamento` | `concluído` | `pausado`. Fase: os mesmos **e** `não planejado`. Tarefa: `não iniciado` | `em andamento` | `concluído` | `recorrente`.
 
-Projeto `projects/{status}/{domínio}/{slug}/`: `pending/` (`não iniciado`, `pausado`) · `in-progress/` (`em andamento`) · `completed/` (`concluído`). Tarefa: `tasks/{status}/independent/{slug}.md` ou `tasks/{status}/projects/{projeto}/{fase}/{slug}.md`. Status: `pending/` (`não iniciado` | `em andamento`) · `completed/` (`concluído`) · `recurring/` (`recorrente`).
+Tarefa: `pending/` (`não iniciado` | `em andamento`, com `{prazo}/`) · `completed/` (`concluído`) · `recurring/` (`recorrente`). Status e pasta coincidem **só** na tarefa.
+
+Todas as tarefas de uma fase `concluído` → fase `concluído` (nota + hub). Todas as fases do hub `concluído` → projeto `concluído` (índice). Fase `não planejado` bloqueia o projeto. Não auto-`em andamento`.
 
 `não planejado` = só **fase**: ainda não vale arquivo nem tarefas (heading no hub, sem nota em `phases/`). `pausado` = já vale, mas parou.
 
