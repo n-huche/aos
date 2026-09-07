@@ -60,7 +60,7 @@ Relação com tarefas não é 1:1: a fase diz o que tem de ficar pronto; as tare
 
 ### Análise
 
-Nota de **decisão**: responde qualquer pergunta. Template [analysis-template](agents/templates/analysis-template.md) (pergunta, opções, achados, decisão — as mesmas seções para qualquer objeto). Opcional. Pasta `analysis/` só nasce com arquivo. Slug **sem** id de fase (`fj-stack.md`, não `fj-01-stack.md`).
+Nota de **decisão**: responde qualquer pergunta. Fonte das seções: [analysis-template](agents/templates/analysis-template.md) (as mesmas para qualquer objeto; nem toda análise preenche todas). Opcional. Pasta `analysis/` só nasce com arquivo. Slug **sem** id de fase (`fj-stack.md`, não `fj-01-stack.md`).
 
 ### Tarefa
 

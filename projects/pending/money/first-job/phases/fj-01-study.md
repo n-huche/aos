@@ -1,6 +1,6 @@
 # FJ-01 — estudo (Java + Spring, 1ª vaga)
 
-**Objetivo:** aprender o mais rápido possível **com excelência** — YouTube primeiro; fontes em inglês ok (e preferíveis quando forem melhores).  
+**Objetivo:** prontidão mínima para abrir a FJ-02 — não domínio profundo.  
 **Status:** não iniciado  
 **Projeto:** [First Job](../first-job.md)  
 **Rotina:** você define. Este doc só diz *onde* (análise: [fj-learning](../analysis/fj-learning.md)).  

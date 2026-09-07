@@ -1,6 +1,6 @@
 # Tasks
 
-Pendentes em `tasks/pending/`. Concluídos em `tasks/completed/`. Recorrentes em `tasks/recurring/`.
+Pendentes em `tasks/pending/`. Concluídas em `tasks/completed/`. Recorrentes em `tasks/recurring/`.
 
 ## Recorrentes
 

@@ -1,10 +1,10 @@
 # AY1-05 — diário 16/08→10/09 no site
 
-**Objetivo:** terminar o diário escrito desde 16/08 (última entrada 10/09) e incluir no site.  
+**Objetivo:** terminar o diário escrito desde 16/08 até o prazo 10/09 e incluir no site.  
 **Status:** não iniciado  
 **Projeto:** [Ana Year One](../ana-year-one.md)
 
 ## Entrega
 
-- Completar entradas do período 16/08 → 10/09.
+- Completar entradas do período 16/08 → 10/09 (prazo).
 - Incluir no Diário do site (AY1-03).

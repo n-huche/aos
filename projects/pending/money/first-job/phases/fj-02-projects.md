@@ -31,7 +31,7 @@ Cobre o que as vagas pedem: Java, Spring Boot, REST, SQL, Git; e o que júnior q
 
 ### Domínio
 
-**Status:** pendente — escolher **um**:
+Escolher **um**:
 
 | Opção | Regra de negócio que prova | Preferência |
 |---|---|---|

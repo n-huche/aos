@@ -2,55 +2,48 @@
 
 Três eixos por **finalidade**. Descrições (cabe / não cabe): [glossário](../AGENTS.md).
 
-| Eixo | Pasta |
-|---|---|
-| Dinheiro | `money` |
-| Relacionamentos | `relationships` |
-| Corpo | `body` |
-
 `projects/{status}/{domínio}/{slug}/` — status: `pending` | `in-progress` | `completed`
 
 ## Status
 
-### Pending
+### Não iniciado / pausado
 
-#### Money
+#### Dinheiro
 
 - [First Job](pending/money/first-job/first-job.md) — estágio/júnior backend
-- [Roadmap Backend](pending/money/roadmap.sh/backend/README.md) — dominar backend
 
-#### Relationships
+#### Relacionamentos
 
 - [Ana Year One](pending/relationships/ana-year-one/ana-year-one.md) — site + vídeo presente 1 ano
 
-#### Body
+#### Corpo
 
 --
 
-### In progress
+### Em andamento
 
-#### Money
-
---
-
-#### Relationships
+#### Dinheiro
 
 --
 
-#### Body
+#### Relacionamentos
 
 --
 
-### Completed
-
-#### Money
+#### Corpo
 
 --
 
-#### Relationships
+### Concluído
+
+#### Dinheiro
 
 --
 
-#### Body
+#### Relacionamentos
+
+--
+
+#### Corpo
 
 --

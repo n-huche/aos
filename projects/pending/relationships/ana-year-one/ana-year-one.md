@@ -34,4 +34,4 @@ Gravar vídeo espontâneo ao ar livre falando do site e improvisos.
 [diário 16/08→10/09 no site](phases/ay1-05-diary.md)  
 **Status:** não iniciado
 
-Terminar diário escrito desde 16/08 (última entrada 10/09) e incluir no site.
+Terminar diário escrito desde 16/08 até o prazo 10/09 e incluir no site.

@@ -2,11 +2,7 @@
 
 **Objetivo:** conquistar o primeiro emprego na área de tecnologia (estágio/júnior backend).  
 **Status geral:** não iniciado  
-**Análises:** [stack](analysis/fj-stack.md) · [como estudar / gate FJ-02](analysis/fj-learning.md)
-
-## Funil
-
-Currículo → Portfólio (projetos) → Entrevista → Emprego
+**Análise:** [stack](analysis/fj-stack.md) · [como estudar / gate FJ-02](analysis/fj-learning.md)
 
 ## Fases
 
@@ -16,13 +12,13 @@ Currículo → Portfólio (projetos) → Entrevista → Emprego
 
 Mapa de fontes e método. Pré-requisito de FJ-02. Alvo = prontidão mínima para FJ-02, não domínio profundo.
 
-### FJ-02-projetos
+### FJ-02-projects
 [projetos](phases/fj-02-projects.md)  
 **Status:** não iniciado
 
-Projetos para portfólio e currículo (entrada do funil).
+Projetos para portfólio e currículo.
 
-### FJ-03-entrevista
+### FJ-03-interview
 **Status:** não planejado
 
 Técnicas e preparação para entrevistas.
