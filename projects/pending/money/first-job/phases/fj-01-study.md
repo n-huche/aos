@@ -13,19 +13,37 @@ Fonte: mapa YouTube-first (set/2026). Fontes em inglês; texto deste arquivo em 
 - Mapa de fontes (1 principal + no máximo 1 complementar por tópico) e mini-repo acumulativo.
 - Prontidão mínima para abrir [FJ-02](fj-02-projects.md) — não domínio profundo.
 
-## Princípios
+## Como
+
+Método: [fj-learning](../analysis/fj-learning.md) — YouTube = exemplo; loop 25–50 min (meta → trecho → pause + predict → explicar sem olhar → fatia no mesmo mini-repo); fade; sessão só conta com explicar sem olhar + commit. Parar no gate, não maestria.
 
 - **1 principal + no máximo 1 complementar** por tópico.
 - Mão no teclado — prática > binge.
 - Pule GUI e itens fora de escopo em qualquer vídeo (lista no topo).
 - Prefira inglês quando a fonte for melhor (você é fluente).
 - Um mini-repo acumulativo; cada tópico acrescenta uma fatia. Escopo amplo: [análise](../analysis/fj-stack.md).
+- Gate: mini-repo sobe com `./mvnw` + Postgres via Compose; sem vídeo: 1 REST + service + entity/DTO + 1 Flyway + JWT numa rota + 1 teste de service. Buracos ok; não exige terminar os vídeos.
+
+## Tarefas
+
+- [Estudar Java básico](../../../../../tasks/pending/study-java-basics.md)
+- [Estudar OOP](../../../../../tasks/pending/study-oop.md)
+- [Estudar Git e GitHub](../../../../../tasks/pending/study-git-github.md)
+- [Estudar SQL](../../../../../tasks/pending/study-sql.md)
+- [Estudar HTTP, REST e JSON](../../../../../tasks/pending/study-http-rest-json.md)
+- [Estudar Maven](../../../../../tasks/pending/study-maven.md)
+- [Estudar Spring Boot](../../../../../tasks/pending/study-spring-boot.md)
+- [Estudar JPA, PostgreSQL e Flyway](../../../../../tasks/pending/study-jpa-postgres-flyway.md)
+- [Estudar validação, ControllerAdvice e DTO](../../../../../tasks/pending/study-validation-dto.md)
+- [Estudar Spring Security e JWT](../../../../../tasks/pending/study-spring-security-jwt.md)
+- [Estudar JUnit e Mockito](../../../../../tasks/pending/study-junit-mockito.md)
+- [Estudar Docker Compose](../../../../../tasks/pending/study-docker-compose.md)
+- [Estudar OpenAPI / Swagger](../../../../../tasks/pending/study-openapi-swagger.md)
+- [Montar o mini-repo acumulativo](../../../../../tasks/pending/build-cumulative-mini-repo.md)
 
 ---
 
 ## 1. Java básico
-
-- [ ]
 
 Variáveis, tipos, if/loops, métodos, classes, List/ArrayList, exceções.
 
@@ -40,8 +58,6 @@ Variáveis, tipos, if/loops, métodos, classes, List/ArrayList, exceções.
 
 ## 2. OOP
 
-- [ ]
-
 Encapsulamento, herança, interface, equals/hashCode.
 
 | | |
@@ -55,8 +71,6 @@ Encapsulamento, herança, interface, equals/hashCode.
 
 ## 3. Git + GitHub
 
-- [ ]
-
 | | |
 |---|---|
 | **Principal** | [freeCodeCamp — Git & GitHub Crash Course for Beginners](https://www.youtube.com/watch?v=mAFoROnOfHs) |
@@ -67,8 +81,6 @@ Encapsulamento, herança, interface, equals/hashCode.
 ---
 
 ## 4. SQL
-
-- [ ]
 
 CRUD, JOIN, PK/FK, índices básicos.
 
@@ -83,8 +95,6 @@ CRUD, JOIN, PK/FK, índices básicos.
 
 ## 5. HTTP + REST + JSON
 
-- [ ]
-
 | | |
 |---|---|
 | **Principal** | [Traversy Media — HTTP Crash Course](https://www.youtube.com/watch?v=iYM2zFP3Zn0) — Express é só demo; **ignore Node**, foque no protocolo |
@@ -96,8 +106,6 @@ CRUD, JOIN, PK/FK, índices básicos.
 
 ## 6. Maven
 
-- [ ]
-
 | | |
 |---|---|
 | **Principal** | [Programming Techie — Maven Complete Tutorial with IntelliJ](https://www.youtube.com/watch?v=JhSBS2OpGdU) (~38 min) |
@@ -108,8 +116,6 @@ CRUD, JOIN, PK/FK, índices básicos.
 ---
 
 ## 7. Spring Boot
-
-- [ ]
 
 Controllers, services, DI, application.yml.
 
@@ -124,8 +130,6 @@ Controllers, services, DI, application.yml.
 
 ## 8. Spring Data JPA + PostgreSQL + Flyway
 
-- [ ]
-
 |                  |                                                                                                                                          |
 | ---------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
 | **Principal**    | [Amigoscode — Spring Boot Full Course 2025](https://www.youtube.com/watch?v=Cw0J6jYJtzw) — Boot + Postgres via Docker + JPA              |
@@ -137,8 +141,6 @@ Controllers, services, DI, application.yml.
 
 ## 9. Validation + ControllerAdvice + DTO ≠ entity
 
-- [ ]
-
 | | |
 |---|---|
 | **Principal** | [CodeSnippet — RestControllerAdvice / Exception Handling](https://www.youtube.com/watch?v=IdHHwZg3v58) |
@@ -149,8 +151,6 @@ Controllers, services, DI, application.yml.
 ---
 
 ## 10. Spring Security + JWT
-
-- [ ]
 
 **Decisão:** caminho **A** — a API **emite** JWT (`JwtAuthenticationFilter` + **JJWT**). Caminho **B** fica **opcional depois** (não estudar agora).
 
@@ -165,8 +165,6 @@ Controllers, services, DI, application.yml.
 
 ## 11. JUnit + Mockito
 
-- [ ]
-
 | | |
 |---|---|
 | **Principal** | [Amigoscode — Software Testing Tutorial](https://www.youtube.com/watch?v=Geq60OVyBPg) |
@@ -177,8 +175,6 @@ Controllers, services, DI, application.yml.
 ---
 
 ## 12. Docker Compose (app + Postgres)
-
-- [ ]
 
 | | |
 |---|---|
@@ -191,8 +187,6 @@ Controllers, services, DI, application.yml.
 
 ## 13. OpenAPI / Swagger
 
-- [ ]
-
 | | |
 |---|---|
 | **Principal** | [springdoc.org](https://springdoc.org/) — melhor que tutoriais aleatórios: `springdoc-openapi-starter-webmvc-ui`, `/swagger-ui.html`, `/v3/api-docs` |
@@ -203,7 +197,5 @@ Controllers, services, DI, application.yml.
 ---
 
 ## Mini-projeto acumulativo
-
-- [ ]
 
 Uma API REST (tarefas/contatos): DTOs validados, entities JPA ≠ DTOs, PostgreSQL + Flyway, JWT, testes, Compose, springdoc — depois sobe pro **Projeto 1** (API âncora com regra de negócio) do doc de projetos.

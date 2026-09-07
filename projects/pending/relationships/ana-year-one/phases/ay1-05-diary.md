@@ -8,3 +8,13 @@
 
 - Completar entradas do período 16/08 → 10/09 (prazo).
 - Incluir no Diário do site (AY1-03).
+
+## Como
+
+Completar entradas 16/08 → 10/09 (prazo). Incluir no Diário do site ([AY1-03](ay1-03-site.md)): frontmatter `date` + `image`.
+
+## Tarefas
+
+- [Terminar o diário até 10/09](../../../../../tasks/pending/finish-diary-to-sep-10.md)
+- [Incluir o diário no site](../../../../../tasks/pending/add-diary-to-site.md)
+

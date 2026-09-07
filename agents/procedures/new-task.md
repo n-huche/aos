@@ -1,6 +1,6 @@
 # Nova tarefa
 
-Não inventar domínio, datas nem pessoas. Sem `.gitkeep`. Nota a partir de [tasks-template](../templates/tasks-template.md). Pasta só com nota dentro.
+Não inventar domínio, datas nem pessoas. Sem `.gitkeep`. Nota a partir de [task-template](../templates/task-template.md). Pasta só com nota dentro.
 
 | Campo | Pasta |
 |---|---|
@@ -13,14 +13,14 @@ Não inventar domínio, datas nem pessoas. Sem `.gitkeep`. Nota a partir de [tas
 ## Antes de criar
 
 1. Confirmar que não existe a mesma nota (buscar título, slug, pasta). Se existir, atualizar — não duplicar.
-2. Se faltar **título**, **domínio**, **o quê** ou **status**, perguntar. Default: `não iniciado` → `pending/`. `recorrente` → `recurring/`.
+2. Se faltar **título**, **domínio**, **o quê** ou **status**, perguntar. Default: `não iniciado` → `pending/`. `recorrente` → `recurring/`. Tarefa de fase: se faltar a fase, ou se a fase não tiver Entrega + Como suficientes, perguntar — não inventar o como.
 3. Arquivo: inglês, kebab-case, ASCII (`replace-iphone-12-battery.md`). Título e corpo em português.
 
 ## Criar
 
-1. `{pasta}/{slug}.md` pelo template. Preencher **Domínio** (um dos três nomes), **Status**, **O quê**, **Por quê**. **Quando** e **Onde** só com dado real. **Notas** só se houver detalhe necessário.
-2. Se o usuário nomeou projeto e/ou fase, acrescentar na nota um bloco com links relativos — não copiar o plano do projeto. Se não nomeou, não inventar o bloco.
-3. Em [tasks](../../tasks/tasks.md): na seção **Pendentes** ou **Recorrentes**, item `- [ ] [{Título}]({pasta}/{slug}.md)`. Trocar `--` se a seção estava vazia. `concluído` não entra no índice.
+1. `{pasta}/{slug}.md` pelo template. Preencher **Domínio** (um dos três nomes), **Status**, **O quê**, **Por quê**. **O quê** de tarefa de fase = passos compactos extraídos da Entrega + Como da fase (nada de novo). Independente: o como fica nesta nota. **Quando** e **Onde** só com dado real. **Notas** só se houver detalhe necessário. Independente: omitir **Fase:**.
+2. Se for de fase: **Fase:** com link relativo para a nota da fase; em `{fase}.md`, em `## Tarefas`, item `- [{Título}]({caminho relativo})` (criar o heading se ainda não existir). Não copiar o plano da fase. Fase `não planejado` não recebe tarefas.
+3. Em [tasks](../../tasks/tasks.md): na seção **Pendentes** ou **Recorrentes**, item `- [ ] [{Título}]({pasta}/{slug}.md)`. Trocar `--` se a seção estava vazia. `concluído` não entra no índice. Checkbox só aqui.
 4. Links `[nome](caminho relativo)` — não `[[wiki]]`. Buscar no vault o caminho antigo só se estiver substituindo nota existente.
 
 Mudança de status **depois** de criado: [status-change](status-change.md).

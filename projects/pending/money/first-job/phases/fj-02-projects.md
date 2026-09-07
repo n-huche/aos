@@ -13,6 +13,15 @@ Decisões de stack/mercado: [análise](../analysis/fj-stack.md). Fontes: [estudo
 - Projeto 1 hireable (API âncora com regra de negócio) e candidatura a estágio — não esperar o Projeto 2.
 - Projeto 2 (desafio estilo Itaú) e, se ainda precisar de sinal, Projeto 3 (diferencial).
 
+## Como
+
+Um projeto por vez; candidatar quando o Projeto 1 estiver hireable. Stack, escopo mínimo, o que não fazer e ordem do README: seções abaixo. Decisões de stack: [fj-stack](../analysis/fj-stack.md). Fontes: [estudo](fj-01-study.md).
+
+## Tarefas
+
+- [Escolher domínio da API âncora](../../../../../tasks/pending/choose-anchor-api-domain.md)
+- [Criar o repositório e o README esqueleto](../../../../../tasks/pending/create-anchor-api-repo.md)
+
 ## Ordem de execução
 
 1. **Projeto 1 — API âncora** (obrigatório)

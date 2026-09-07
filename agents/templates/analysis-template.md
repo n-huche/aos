@@ -40,4 +40,4 @@ _Condição verificável de que a decisão está funcionando._
 
 ---
 
-Obs: Análise responde **qualquer** pergunta. Slug **sem** id de fase (`fj-stack.md`, não `fj-01-stack.md`). Linguagem simples; sem literatura excessiva. Flexível: nem toda análise preenche todas as seções.
+Obs: Análise responde **qualquer** pergunta. Slug **sem** id de fase (`fj-stack.md`, não `fj-01-stack.md`). Linguagem simples; sem literatura excessiva. Flexível: nem toda análise preenche todas as seções. Só quando a complexidade da fase justifica; normalmente **antes** da fase a que serve. **Implicações** = o quê/como que passam a valer **na fase** (não na tarefa).

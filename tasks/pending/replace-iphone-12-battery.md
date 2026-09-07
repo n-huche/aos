@@ -5,7 +5,8 @@
 
 ## O quê
 
-- Trocar a bateria do iPhone 12 de Ana em um técnico
+1. Entre 14/09 e 18/09, das 9h às 16h, a partir da Escola de Referência em Ensino Médio Sizenando Silveira.
+2. Escolher técnico pela tabela em Notas e trocar a bateria do iPhone 12 da Ana.
 
 ## Por quê
 

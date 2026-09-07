@@ -54,19 +54,21 @@ Pasta: `projects/{status}/{domínio}/{slug}/` (`{slug}.md`, `analysis/`, `phases
 
 Recorte com **uma entrega**. Status próprio; mudar o status da fase **não** move a pasta do projeto.
 
-Planejada (`não iniciado` ou além): nota em `phases/{prefixo}-{nn}-{slug-fase}.md` ([phases-template](agents/templates/phases-template.md)) e entrada no hub. `não planejado`: só heading + status no hub — sem arquivo nem tarefas. Heading e arquivo usam o mesmo slug em inglês.
+Planejada (`não iniciado` ou além): nota em `phases/{prefixo}-{nn}-{slug-fase}.md` ([phase-template](agents/templates/phase-template.md)), entrada no hub e **≥1 tarefa**. A nota traz **Entrega** (o quê) e **Como** (método, fontes, restrições) — escrita de forma que as tarefas derivadas já estejam definidas. Se o Como não der para derivar tarefas sem inventar, não criar as tarefas: analisar (se a complexidade justificar) ou perguntar. `não planejado`: só heading + status no hub — sem arquivo nem tarefas. Heading e arquivo usam o mesmo slug em inglês.
 
-Relação com tarefas não é 1:1: a fase diz o que tem de ficar pronto; as tarefas dizem o que fazer nas próximas horas.
+Relação com tarefas não é 1:1: a fase decide o que fica pronto e como; as tarefas só compactam isso em ações de algumas horas. Uma fase planejada pode ter uma ou dezenas de tarefas.
 
 ### Análise
 
-Nota de **decisão**: responde qualquer pergunta. Fonte das seções: [analysis-template](agents/templates/analysis-template.md) (as mesmas para qualquer objeto; nem toda análise preenche todas). Opcional. Pasta `analysis/` só nasce com arquivo. Slug **sem** id de fase (`fj-stack.md`, não `fj-01-stack.md`).
+Nota de **decisão**: responde qualquer pergunta. Fonte das seções: [analysis-template](agents/templates/analysis-template.md) (as mesmas para qualquer objeto; nem toda análise preenche todas). **Só quando a complexidade da fase justifica.** Uma ou mais, **normalmente antes** da fase a que servem: dados e pesquisa → o quê e o como que a fase descreve. Opcional. Pasta `analysis/` só nasce com arquivo. Slug **sem** id de fase (`fj-stack.md`, não `fj-01-stack.md`).
 
 ### Tarefa
 
-Unidade de execução: **ação concreta, específica, no máximo algumas horas**.
+Unidade de execução: **ação concreta, específica, no máximo algumas horas**. **Não traz nada de novo** — compacta e estrutura o que a fase (ou, se independente, a própria nota) já decidiu, visando fazer: o mínimo de pensar.
 
-Pode ser **independente** (não depende de projeto) ou **relacionada a uma fase** — não 1:1. Campo **Domínio** = finalidade da ação (não há `tasks/money/`). Itens em `tasks/pending/`, `tasks/completed/` ou `tasks/recurring/`. Template [tasks-template](agents/templates/tasks-template.md) — o mesmo para pontual e recorrente. Criar: [new-task](agents/procedures/new-task.md).
+Pode ser **independente** (não depende de projeto) ou **relacionada a uma fase**. Fase planejada tem ≥1 tarefa; não é 1:1. Campo **Domínio** = finalidade da ação (não há `tasks/money/`). Campo **Fase:** só se for de fase (link relativo). Itens em `tasks/pending/`, `tasks/completed/` ou `tasks/recurring/`. Template [task-template](agents/templates/task-template.md) — o mesmo para pontual e recorrente. Criar: [new-task](agents/procedures/new-task.md).
+
+Tarefa de fase em três lugares: o arquivo, um link em `{fase}.md`, um checkbox em [tasks](tasks/tasks.md). Independente: sem **Fase:**. Checkbox só no índice. **O quê** = passos extraídos da Entrega + Como da fase. Se a fase não disser, não entra na tarefa.
 
 ### Tarefa recorrente
 

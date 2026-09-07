@@ -8,3 +8,12 @@
 
 - Vídeo ao ar livre, tom espontâneo.
 - Falar do site e improvisos (sem roteiro rígido).
+
+## Como
+
+Ao ar livre, tom espontâneo, sem roteiro rígido. Falar do site e improvisos.
+
+## Tarefas
+
+- [Gravar o vídeo ao ar livre](../../../../../tasks/pending/record-outdoor-anniversary-video.md)
+

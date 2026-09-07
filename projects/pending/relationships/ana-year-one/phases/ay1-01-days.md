@@ -8,3 +8,12 @@
 
 - Texto por dia juntos (legendas / entradas conforme o formato do site).
 - Seleção de fotos alinhada a cada dia / momento.
+
+## Como
+
+Texto por dia (legendas / entradas no formato do site — [AY1-03](ay1-03-site.md)). Fotos alinhadas a cada dia / momento.
+
+## Tarefas
+
+- [Escrever textos e escolher fotos dos dias juntos](../../../../../tasks/pending/write-days-text-and-pick-photos.md)
+

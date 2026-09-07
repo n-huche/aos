@@ -8,3 +8,12 @@
 
 - 10 links de faixa (não álbum, playlist ou artista).
 - Um texto curto por faixa: como a música lembra Ana.
+
+## Como
+
+10 links de **faixa** (não álbum, playlist ou artista). Um texto curto por faixa: como a música lembra Ana.
+
+## Tarefas
+
+- [Escolher 10 faixas e escrever os textos](../../../../../tasks/pending/pick-ten-tracks-and-write-notes.md)
+

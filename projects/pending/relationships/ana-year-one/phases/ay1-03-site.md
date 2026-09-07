@@ -9,6 +9,14 @@
 - Site estático (só frontend) no repositório, com imagens e textos, layout e seções definidos na construção.
 - Playlist: conteúdo de [AY1-02](ay1-02-playlist.md).
 
+## Como
+
+Cursor. Spec fina em `docs/` + schema, separada do editorial. Árvore `content/` no **repo do site** (não no vault). Detalhe: Organização e Conteúdo da página abaixo.
+
+## Tarefas
+
+- [Desenvolver o site estático](../../../../../tasks/pending/build-anniversary-static-site.md)
+
 ## Organização no repositório
 
 Fonte: formato content/repo para AY1-03.
