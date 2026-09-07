@@ -1,6 +1,6 @@
 # Escrever textos e escolher fotos dos dias juntos
 
-**Fase:** [AY1-01](../../../../../../projects/ana-year-one/phases/ay1-01-days.md)  
+**Fase:** [AY1-01](../../../../../../projects/pending/ana-year-one/phases/ay1-01-days.md)  
 **Prazo:** não definido  
 **Status:** pending
 

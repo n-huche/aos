@@ -1,6 +1,6 @@
 # Incluir o diário no site
 
-**Fase:** [AY1-05](../../../../../../projects/ana-year-one/phases/ay1-05-diary.md)  
+**Fase:** [AY1-05](../../../../../../projects/pending/ana-year-one/phases/ay1-05-diary.md)  
 **Prazo:** não definido  
 **Status:** pending
 

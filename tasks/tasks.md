@@ -2,34 +2,6 @@
 
 Pendentes em `tasks/pending/{prazo}/`. Concluídas em `tasks/completed/`. Recorrentes em `tasks/recurring/`. De fase: `project-tasks/{projeto}/{fase}/{slug}.md`. Independente: `independent-tasks/{slug}.md`.
 
-## Recorrentes
-
---
-
-## Atrasadas
-
---
-
-## Hoje
-
---
-
-## Três dias
-
---
-
-## Uma semana
-
---
-
-## Um mês
-
---
-
-## Longo prazo
-
---
-
 ## Sem prazo
 
 - [ ] [Trocar bateria do iPhone 12](pending/undefined/independent-tasks/replace-iphone-12-battery.md)

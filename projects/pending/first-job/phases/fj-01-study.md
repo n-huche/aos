@@ -27,20 +27,20 @@ Método: [fj-learning](../analysis/fj-learning.md) — YouTube = exemplo; loop 2
 
 ## Tarefas
 
-- [Estudar Java básico](../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-java-basics.md)
-- [Estudar OOP](../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-oop.md)
-- [Estudar Git e GitHub](../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-git-github.md)
-- [Estudar SQL](../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-sql.md)
-- [Estudar HTTP, REST e JSON](../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-http-rest-json.md)
-- [Estudar Maven](../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-maven.md)
-- [Estudar Spring Boot](../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-spring-boot.md)
-- [Estudar JPA, PostgreSQL e Flyway](../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-jpa-postgres-flyway.md)
-- [Estudar validação, ControllerAdvice e DTO](../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-validation-dto.md)
-- [Estudar Spring Security e JWT](../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-spring-security-jwt.md)
-- [Estudar JUnit e Mockito](../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-junit-mockito.md)
-- [Estudar Docker Compose](../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-docker-compose.md)
-- [Estudar OpenAPI / Swagger](../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-openapi-swagger.md)
-- [Montar o mini-repo acumulativo](../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/build-cumulative-mini-repo.md)
+- [Estudar Java básico](../../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-java-basics.md)
+- [Estudar OOP](../../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-oop.md)
+- [Estudar Git e GitHub](../../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-git-github.md)
+- [Estudar SQL](../../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-sql.md)
+- [Estudar HTTP, REST e JSON](../../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-http-rest-json.md)
+- [Estudar Maven](../../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-maven.md)
+- [Estudar Spring Boot](../../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-spring-boot.md)
+- [Estudar JPA, PostgreSQL e Flyway](../../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-jpa-postgres-flyway.md)
+- [Estudar validação, ControllerAdvice e DTO](../../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-validation-dto.md)
+- [Estudar Spring Security e JWT](../../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-spring-security-jwt.md)
+- [Estudar JUnit e Mockito](../../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-junit-mockito.md)
+- [Estudar Docker Compose](../../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-docker-compose.md)
+- [Estudar OpenAPI / Swagger](../../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/study-openapi-swagger.md)
+- [Montar o mini-repo acumulativo](../../../../tasks/pending/undefined/project-tasks/first-job/fj-01-study/build-cumulative-mini-repo.md)
 
 ---
 

@@ -1,6 +1,6 @@
 # Desenvolver o site estático
 
-**Fase:** [AY1-03](../../../../../../projects/ana-year-one/phases/ay1-03-site.md)  
+**Fase:** [AY1-03](../../../../../../projects/pending/ana-year-one/phases/ay1-03-site.md)  
 **Prazo:** não definido  
 **Status:** pending
 

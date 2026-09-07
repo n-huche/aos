@@ -1,6 +1,6 @@
 # Estudar Maven
 
-**Fase:** [FJ-01](../../../../../../projects/first-job/phases/fj-01-study.md)  
+**Fase:** [FJ-01](../../../../../../projects/pending/first-job/phases/fj-01-study.md)  
 **Prazo:** não definido  
 **Status:** pending
 
