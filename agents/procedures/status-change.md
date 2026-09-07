@@ -4,7 +4,7 @@ Pasta e campo no markdown têm de coincidir. Sem `.gitkeep`.
 
 | Projeto (`Status geral`) | Pasta |
 |---|---|
-| `não iniciado` \| `não planejado` \| `pausado` | `projects/pending/{domínio}/` |
+| `não iniciado` \| `pausado` | `projects/pending/{domínio}/` |
 | `em andamento` | `projects/in-progress/{domínio}/` |
 | `concluído` | `projects/completed/{domínio}/` |
 

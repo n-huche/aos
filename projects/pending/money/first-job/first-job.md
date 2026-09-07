@@ -10,8 +10,8 @@ Currículo → Portfólio (projetos) → Entrevista → Emprego
 
 ## Fases
 
-### FJ-01-estudo
-[estudo](phases/fj-01-study.md) · [método](learning-method.md)  
+### FJ-01-study
+[estudo](phases/fj-01-study.md)  
 **Status:** não iniciado
 
 Mapa de fontes e método. Pré-requisito de FJ-02. Alvo = prontidão mínima para FJ-02, não domínio profundo.

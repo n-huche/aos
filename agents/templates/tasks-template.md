@@ -1,6 +1,6 @@
 # {{Título}}
 
-**Domínio:** Dinheiro | Relacionamentos | Corpo — [glossário](../../AGENTS.md)  
+**Domínio:** Dinheiro | Relacionamentos | Corpo  
 **Status:** não iniciado | em andamento | concluído | recorrente
 
 ## O quê
@@ -13,7 +13,7 @@
 
 ## Quando
 
-- _datas / horários_
+- _datas / horários; se recorrente: cadência + até quando ou indefinidamente_
 
 ## Onde, se relevante
 
@@ -22,3 +22,7 @@
 ## Notas, opcional
 
 _Detalhes, opções, contatos — só o necessário._
+
+---
+
+Obs: Se o usuário nomeou projeto e/ou fase, acrescentar um bloco com links relativos. Não copiar heading vazio.

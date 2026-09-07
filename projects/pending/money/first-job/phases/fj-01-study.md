@@ -3,7 +3,7 @@
 **Objetivo:** aprender o mais rápido possível **com excelência** — YouTube primeiro; fontes em inglês ok (e preferíveis quando forem melhores).  
 **Status:** não iniciado  
 **Projeto:** [First Job](../first-job.md)  
-**Rotina:** você define. Este doc só diz *onde* (método: [learning-method](../learning-method.md) · análise: [fj-learning](../analysis/fj-learning.md)).  
+**Rotina:** você define. Este doc só diz *onde* (análise: [fj-learning](../analysis/fj-learning.md)).  
 **Fora do escopo neste ciclo:** Kafka, K8s, microsserviços, React, Python/IA, certificados, roadmaps gigantes.
 
 Fonte: mapa YouTube-first (set/2026). Fontes em inglês; texto deste arquivo em português.

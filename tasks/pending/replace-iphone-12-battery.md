@@ -1,6 +1,6 @@
 # Trocar bateria do iPhone 12
 
-**Domínio:** Relacionamentos — [glossário](../../AGENTS.md)  
+**Domínio:** Relacionamentos  
 **Status:** não iniciado
 
 ## O quê

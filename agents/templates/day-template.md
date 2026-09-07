@@ -1,17 +1,19 @@
-# {{data}}
+# {{YYYY-MM-DD}}
 
-**Horas produtivas:** _intervalo(s) de tempo_
-**Tarefas recorrentes:** completas | incompletas | fracasso
-**Tarefas únicas:** _tarefas concluídas ou avançadas_
+**Horas produtivas:** _intervalo(s) de tempo_  
+**Tarefas recorrentes:** completo | incompleto | fracasso  
+**Tarefas únicas:** _o que avançou ou concluiu_
 
-## _Tarefas recorrente não completadas_
+completo = tudo o que cabia no dia. incompleto = pelo menos uma coisa, mas não tudo. fracasso = absolutamente nada.
 
-**Motivo:**
+## Motivo
 
-## _Taferas únicas concluídas ou avançada_
+_se incompleto ou fracasso_
 
-_avanço feito | declaração de conclusão_
+## Únicas
 
-## _Notas, opcional_
+_avanço | declaração de conclusão_
+
+## Notas, opcional
 
 _detalhes_

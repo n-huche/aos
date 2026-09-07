@@ -48,19 +48,19 @@ Resultado maior, partido em fases, objetivo em uma frase. **Não se executa** �
 
 Não é 1:1 com tarefa nem com fase: uma fase pode caber numa única tarefa ou pedir dezenas. O projeto acaba quando o objetivo é verdadeiro.
 
-Pasta: `projects/{status}/{domínio}/{slug}/` (`{slug}.md`, `analysis/`, `phases/{id}-{slug-fase}.md`). Hub `{slug}.md` a partir de [project-template](agents/templates/project-template.md). Criar: [new-project](agents/procedures/new-project.md). **Status geral** e pasta coincidem ([status-change](agents/procedures/status-change.md)).
+Pasta: `projects/{status}/{domínio}/{slug}/` (`{slug}.md`, `analysis/`, `phases/{prefixo}-{nn}-{slug-fase}.md`). Hub `{slug}.md` a partir de [project-template](agents/templates/project-template.md). Criar: [new-project](agents/procedures/new-project.md). **Status geral** e pasta coincidem ([status-change](agents/procedures/status-change.md)).
 
 ### Fase
 
 Recorte com **uma entrega**. Status próprio; mudar o status da fase **não** move a pasta do projeto.
 
-Planejada (`não iniciado` ou além): nota em `phases/{id}-{slug-fase}.md` ([phases-template](agents/templates/phases-template.md)) e entrada no hub. `não planejado`: só heading + status no hub — sem arquivo nem tarefas.
+Planejada (`não iniciado` ou além): nota em `phases/{prefixo}-{nn}-{slug-fase}.md` ([phases-template](agents/templates/phases-template.md)) e entrada no hub. `não planejado`: só heading + status no hub — sem arquivo nem tarefas. Heading e arquivo usam o mesmo slug em inglês.
 
 Relação com tarefas não é 1:1: a fase diz o que tem de ficar pronto; as tarefas dizem o que fazer nas próximas horas.
 
 ### Análise
 
-Nota de **decisão**, não de execução (pergunta, opções, achados, escolha). Opcional. Template [analysis-template](agents/templates/analysis-template.md). Pasta `analysis/` só nasce com arquivo. Slug **sem** id de fase (`fj-stack.md`, não `fj-01-stack.md`).
+Nota de **decisão**: responde qualquer pergunta. Template [analysis-template](agents/templates/analysis-template.md) (pergunta, opções, achados, decisão — as mesmas seções para qualquer objeto). Opcional. Pasta `analysis/` só nasce com arquivo. Slug **sem** id de fase (`fj-stack.md`, não `fj-01-stack.md`).
 
 ### Tarefa
 
@@ -80,11 +80,11 @@ Notas diárias (em construção). Pasta `daily/`. Template: [day-template](agent
 
 Campo no markdown **e** pasta. Mudar projeto ou tarefa: [status-change](agents/procedures/status-change.md).
 
-Projeto/fase: `não iniciado` | `em andamento` | `concluído` | `não planejado` | `pausado`. Tarefa: `não iniciado` | `em andamento` | `concluído` | `recorrente`.
+Projeto: `não iniciado` | `em andamento` | `concluído` | `pausado`. Fase: os mesmos **e** `não planejado`. Tarefa: `não iniciado` | `em andamento` | `concluído` | `recorrente`.
 
-Projeto `projects/{status}/{domínio}/{slug}/`: `pending/` (`não iniciado`, `não planejado`, `pausado`) · `in-progress/` (`em andamento`) · `completed/` (`concluído`). Tarefa: `tasks/pending/` (`não iniciado` | `em andamento`) · `tasks/completed/` (`concluído`) · `tasks/recurring/` (`recorrente`).
+Projeto `projects/{status}/{domínio}/{slug}/`: `pending/` (`não iniciado`, `pausado`) · `in-progress/` (`em andamento`) · `completed/` (`concluído`). Tarefa: `tasks/pending/` (`não iniciado` | `em andamento`) · `tasks/completed/` (`concluído`) · `tasks/recurring/` (`recorrente`).
 
-`não planejado` = ainda não vale arquivo/trabalho. `pausado` = já vale, mas parou.
+`não planejado` = só **fase**: ainda não vale arquivo nem tarefas (heading no hub, sem nota em `phases/`). `pausado` = já vale, mas parou.
 
 ### Índice e hub
 

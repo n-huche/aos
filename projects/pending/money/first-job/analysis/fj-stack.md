@@ -36,7 +36,7 @@ Python fica para quando o alvo for IA — não agora.
 
 ## Implicações
 
-- Fontes: [estudo](../phases/fj-01-study.md) · método: [learning-method](../learning-method.md)
+- Fontes: [estudo](../phases/fj-01-study.md) · método: [fj-learning](../analysis/fj-learning.md)
 - Portfólio: [projetos](../phases/fj-02-projects.md) — candidatar estágio assim que o Projeto 1 estiver hireable, sem esperar o #2
 - Estudo com o Nicolas
 

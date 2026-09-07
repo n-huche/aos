@@ -8,7 +8,7 @@ Não inventar domínio, datas nem pessoas. Sem `.gitkeep`. Nota a partir de [tas
 | `concluído` | `tasks/completed/` |
 | `recorrente` | `tasks/recurring/` |
 
-**Domínio** no template: Dinheiro · Relacionamentos · Corpo — [glossário](../../AGENTS.md). Um só.
+**Domínio** no template: Dinheiro · Relacionamentos · Corpo. Um só, sem link.
 
 ## Antes de criar
 
@@ -18,7 +18,7 @@ Não inventar domínio, datas nem pessoas. Sem `.gitkeep`. Nota a partir de [tas
 
 ## Criar
 
-1. `{pasta}/{slug}.md` pelo template. Preencher **Domínio** (um link), **Status**, **O quê**, **Por quê**. **Quando** e **Onde** só com dado real. **Notas** só se houver detalhe necessário.
+1. `{pasta}/{slug}.md` pelo template. Preencher **Domínio** (um dos três nomes), **Status**, **O quê**, **Por quê**. **Quando** e **Onde** só com dado real. **Notas** só se houver detalhe necessário.
 2. Se o usuário nomeou projeto e/ou fase, acrescentar na nota um bloco com links relativos — não copiar o plano do projeto. Se não nomeou, não inventar o bloco.
 3. Em [tasks](../../tasks/tasks.md): na seção **Pendentes** ou **Recorrentes**, item `- [ ] [{Título}]({pasta}/{slug}.md)`. Trocar `--` se a seção estava vazia. `concluído` não entra no índice.
 4. Links `[nome](caminho relativo)` — não `[[wiki]]`. Buscar no vault o caminho antigo só se estiver substituindo nota existente.

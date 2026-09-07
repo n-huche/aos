@@ -40,4 +40,4 @@ _Condição verificável de que a decisão está funcionando._
 
 ---
 
-Obs: Flexível, nem toda análise preenche todas essas seções.
+Obs: Análise responde **qualquer** pergunta. Slug **sem** id de fase (`fj-stack.md`, não `fj-01-stack.md`). Linguagem simples; sem literatura excessiva. Flexível: nem toda análise preenche todas as seções.

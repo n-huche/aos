@@ -2,12 +2,17 @@
 
 **Objetivo:** _uma frase_  
 **Status geral:** não iniciado | em andamento | pausado | concluído  
-**Análise:** [análise](analysis/{{slug}}-analysis.md)
+**Análise:** _(ainda não)_
 
 ## Fases
 
-### {{ID}}-{{slug-fase}}
-[{{nome}}](phases/{{slug}}-{{slug-fase}}.md)  
-**Status:** não iniciado | em andamento | concluído | não planejado
+### {{PREFIXO}}-{{nn}}-{{slug-fase}}
+[{{nome}}](phases/{{prefixo}}-{{nn}}-{{slug-fase}}.md)  
+**Status:** não iniciado | em andamento | pausado | concluído
 
 _Uma frase: o que esta fase entrega._
+
+### {{PREFIXO}}-{{nn}}-{{slug-fase}}
+**Status:** não planejado
+
+_Uma frase. Sem arquivo até a fase ser planejada._
