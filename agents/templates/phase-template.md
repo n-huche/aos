@@ -19,4 +19,4 @@
 
 ---
 
-Obs: Entrega = o quê. Como = o como. Se o Como não der para derivar tarefas, não criar as tarefas: análise (se a complexidade justificar) ou perguntar. **Prazo** default = copiar o do projeto. Prazo específico nesta fase: tarefas sem prazo próprio herdam. Em `## Tarefas`, `completed/` e `recurring/` omitem `{prazo}/` (`../../../../tasks/completed/project-tasks/…`).
+Obs: Entrega = o quê. Como = o como. Se o Como não der para derivar tarefas, não criar as tarefas: análise (se a complexidade justificar) ou perguntar. **Prazo** default = copiar o do projeto. Prazo específico nesta fase: tarefas sem prazo próprio herdam. Em `## Tarefas`, contar `../` até a raiz do vault; `completed/` e `recurring/` omitem `{prazo}/`.

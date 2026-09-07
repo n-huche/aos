@@ -7,21 +7,21 @@
 
 ## Fases
 
-### FJ-01-study
+### FJ-01 — estudo
 [estudo](phases/fj-01-study.md)  
 **Status:** pendente  
 **Prazo:** não definido
 
 Mapa de fontes e método. Pré-requisito de FJ-02. Alvo = prontidão mínima para FJ-02, não domínio profundo.
 
-### FJ-02-projects
+### FJ-02 — projetos
 [projetos](phases/fj-02-projects.md)  
 **Status:** pendente  
 **Prazo:** não definido
 
 Projetos para portfólio e currículo.
 
-### FJ-03-interview
+### FJ-03 — entrevistas
 **Status:** não planejado  
 **Prazo:** não definido
 

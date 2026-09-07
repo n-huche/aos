@@ -1,8 +1,8 @@
 # Escolher 10 faixas e escrever os textos
 
-**Fase:** [AY1-02](../../../../../../projects/pending/ana-year-one/phases/ay1-02-playlist.md)  
+**Fase:** [AY1-01](../../../../../../projects/pending/ana-year-one/phases/ay1-01-content.md)  
 **Prazo:** não definido  
-**Status:** pending
+**Status:** pendente
 
 ## O quê
 
@@ -11,4 +11,4 @@
 
 ## Por quê
 
-- Entrega da AY1-02
+- Entrega da AY1-01

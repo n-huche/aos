@@ -7,14 +7,14 @@
 
 ## Fases
 
-### {{PREFIXO}}-{{nn}}-{{slug-fase}}
+### {{PREFIXO}}-{{nn}} — {{nome em português}}
 [{{nome}}](phases/{{prefixo}}-{{nn}}-{{slug-fase}}.md)  
 **Status:** pendente | em andamento | pausado | concluído  
 **Prazo:** YYYY-MM-DD | não definido
 
 _Uma frase: o que esta fase entrega._
 
-### {{PREFIXO}}-{{nn}}-{{slug-fase}}
+### {{PREFIXO}}-{{nn}} — {{nome em português}}
 **Status:** não planejado  
 **Prazo:** YYYY-MM-DD | não definido
 

@@ -1,8 +1,8 @@
 # Terminar o diário até 10/09
 
-**Fase:** [AY1-05](../../../../../../projects/pending/ana-year-one/phases/ay1-05-diary.md)  
+**Fase:** [AY1-03](../../../../../../projects/pending/ana-year-one/phases/ay1-03-diary.md)  
 **Prazo:** não definido  
-**Status:** pending
+**Status:** pendente
 
 ## O quê
 
@@ -10,4 +10,4 @@
 
 ## Por quê
 
-- Entrega da AY1-05
+- Entrega da AY1-03

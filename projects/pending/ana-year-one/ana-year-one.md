@@ -7,37 +7,30 @@
 
 ## Fases
 
-### AY1-01-days
-[texto e fotos dos dias juntos](phases/ay1-01-days.md)  
+### AY1-01 — conteúdo
+[conteúdo](phases/ay1-01-content.md)  
 **Status:** pendente  
 **Prazo:** não definido
 
-Produzir texto e selecionar fotos para cada dia que passaram juntos.
+Textos e fotos dos dias juntos + playlist de 10 faixas.
 
-### AY1-02-playlist
-[playlist — 10 faixas](phases/ay1-02-playlist.md)  
+### AY1-02 — desenvolvimento do site
+[desenvolvimento do site](phases/ay1-02-site.md)  
 **Status:** pendente  
 **Prazo:** não definido
 
-Selecionar 10 links de música e um texto curto em cada sobre como a faixa lembra Ana.
+Desenvolver o site com imagens/textos no repositório (Cursor). Organização content/repo: ver seção no AY1-02.
 
-### AY1-03-site
-[desenvolvimento do site](phases/ay1-03-site.md)  
+### AY1-03 — diário 16/08→10/09 no site
+[diário 16/08→10/09 no site](phases/ay1-03-diary.md)  
 **Status:** pendente  
 **Prazo:** não definido
 
-Desenvolver o site com imagens/textos no repositório (Cursor). Organização content/repo: ver seção no AY1-03.
+Terminar diário escrito desde 16/08 até o prazo 10/09 e incluir no site.
 
-### AY1-04-video
+### AY1-04 — vídeo ao ar livre
 [vídeo ao ar livre](phases/ay1-04-video.md)  
 **Status:** pendente  
 **Prazo:** não definido
 
 Gravar vídeo espontâneo ao ar livre falando do site e improvisos.
-
-### AY1-05-diary
-[diário 16/08→10/09 no site](phases/ay1-05-diary.md)  
-**Status:** pendente  
-**Prazo:** não definido
-
-Terminar diário escrito desde 16/08 até o prazo 10/09 e incluir no site.

@@ -2,7 +2,7 @@
 
 **Fase:** [FJ-01](../../../../../../projects/pending/first-job/phases/fj-01-study.md)  
 **Prazo:** não definido  
-**Status:** pending
+**Status:** pendente
 
 ## O quê
 
