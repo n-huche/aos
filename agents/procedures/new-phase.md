@@ -1,29 +1,73 @@
 # Nova fase
 
-Não criar o projeto — se não existir, [new-project](new-project.md). Não inventar datas, pessoas nem o Como. Sem `.gitkeep`. Fase a partir de [phase-template](../templates/phase-template.md). Tarefas: [new-task](new-task.md).
+Não inventar datas, pessoas nem o Como. Pasta só com nota.
 
-## Antes
+1. `{projeto}`
 
-1. Confirmar o projeto (`projects/{pending|in-progress|paused|completed}/{slug}/{slug}.md`). Se não existir, parar.
-2. Se faltar **slug da fase** (arquivo, inglês) ou **nome do heading** (português), ou se é planejada vs `não planejado`, perguntar. Planejada: falta **Entrega** + **Como** → perguntar; não inventar. Análise só se a complexidade justificar, **antes** desta fase ([analysis-template](../templates/analysis-template.md)).
-3. Prefixo: o das fases já no hub (`FJ`, `AY1`). Se o hub ainda não tem prefixo, perguntar.
-4. **nn:** próximo número no hub (`01` se ainda não há fases). Não duplicar heading. Se o pedido for **planejar** um heading `não planejado` já existente, usar esse nn e o slug do arquivo — não criar outro.
-5. Default de **Status** da fase nova: `pendente` (ou `não planejado`). Pode nascer `pendente` mesmo com nn menores ainda não `concluído`. **Não** pôr `em andamento`, `pausado` ou `concluído` a menos que todas as nn menores estejam `concluído` — recusar e criar como `pendente`. Recorrente sem fim não entra em fase.
-6. **Prazo:** copiar o do projeto, salvo override do usuário. Não inventar data.
+   Se o chamador é [new-project](new-project.md): o hub já existe.
+   Senão: achar `projects/{pending|in-progress|paused|completed}/{slug}/{slug}.md`.
+   Não achar → [new-project](new-project.md); parar.
 
-## Criar
+2. Identidade
 
-### `não planejado`
+   Faltar `{slug-fase}` (arquivo, inglês), `{nome}` (heading, português) ou se é planejada vs `não planejado` → perguntar; não gravar.
+   `{PREFIXO}`: o das fases no hub, ou o campo **Prefixo:**. Hub sem prefixo → perguntar.
+   `{nn}`: próximo no hub (`01` se vazio). Heading duplicado → parar.
+   Pedido = planejar um heading `não planejado` já no hub: esse `{nn}` — não criar outro.
 
-1. Só heading no hub em português: `### {PREFIXO}-{nn} — {nome}`, **Status:** `não planejado`, **Prazo**, uma frase. Sem link, sem arquivo em `phases/`, sem tarefas.
+3. `{status}`
 
-### Planejada (`pendente` ou além)
+   Pedido `não planejado` → `{status}` = `não planejado`.
+   Senão `{status}` = `pendente`, salvo o pedido ter dado outro.
+   `{status}` ∈ {`em andamento`, `pausado`, `concluído`}: se alguma `{nn}` menor ≠ `concluído` → recusar; dizer qual falta; `{status}` = `pendente`.
+   Pode nascer `pendente` com `{nn}` menores ainda não `concluído`.
+   Não pôr `em andamento` / `pausado` / `concluído` sem esse gate.
 
-1. Nota `projects/{status}/{slug}/phases/{prefixo}-{nn}-{slug-fase}.md` (copiar o template; `{status}` = pasta atual do projeto). Pasta `phases/` nasce com o primeiro arquivo. Preencher **Entrega** + **Como**, **Projeto:** `[Nome](../{slug}.md)`, **Status**, **Prazo**. Conteúdo longo fica aqui, não no hub.
-2. Heading no hub em português: link para a nota, mesmo **Status** e **Prazo**, uma frase.
-3. Se o Como não der para derivar tarefas sem inventar, perguntar — não criar as tarefas ainda. Depois **≥1 tarefa** ([new-task](new-task.md); compactar a fase, não inventar).
-4. Recalcular o **Status** do projeto só se esta fase nascer já `em andamento`, `pausado` ou `concluído` (e o gate das anteriores estiver ok) — [status-change](status-change.md). `pendente` / `não planejado` no meio da fila não mudam a herança.
+4. `{prazo}`
 
-Links `[nome](caminho relativo)` — não `[[wiki]]`.
+   Copiar o do projeto, salvo o pedido ter data. Não inventar.
 
-Mudança de status ou prazo **depois** de criada: [status-change](status-change.md).
+5. Recorrente sem fim
+
+   Cadência (`todo` / `cada`) sem data de fim: não entra na fase — não chamar [new-task](new-task.md) para essa ação. Se o pedido queria essa ação na fase → perguntar a data de fim; não gravar essa ação.
+
+6. Arquivo
+
+   `{pasta}` = pasta atual do projeto (`pending` | `in-progress` | `paused` | `completed`).
+
+   Se `{status}` = `não planejado`:
+   Só heading no hub: `### {PREFIXO}-{nn} — {nome}`, **Status:** `não planejado`, **Prazo:** `{prazo}`, uma frase. Sem link, sem `phases/`, sem tarefas.
+
+   Senão:
+   a. Sem **Entrega** ou sem **Como** → perguntar; não gravar.
+   b. Nota `projects/{pasta}/{slug}/phases/{prefixo}-{nn}-{slug-fase}.md` a partir de [phase-template](../templates/phase-template.md). Pasta `phases/` nasce com o primeiro arquivo. Preencher **Entrega**, **Como**, **Projeto:** `[{Nome}](../{slug}.md)`, **Status**, **Prazo**, **Objetivo** (uma frase da Entrega se o pedido não deu outra). Conteúdo longo aqui, não no hub.
+   c. Heading no hub: `### {PREFIXO}-{nn} — {nome}`, link para a nota, mesmo **Status** e **Prazo**, uma frase.
+   d. Se **Entrega** + **Como** não derem para derivar ≥1 tarefa sem inventar → perguntar; não chamar [new-task](new-task.md).
+   e. Senão: cada ação extraída desta fase → [new-task](new-task.md) (≥1). Compactar; não inventar.
+
+   Extração: se o pedido trouxe `{ações}`, uma nota por ação nessa ordem. Senão, Entrega+Como como um procedimento único → uma nota compactada (Como = passos da fase; O quê ≠ Título; Por quê = objetivo do projeto se o pedido não deu). Cadência (`todo` / `cada`) sem data de fim: não entra; perguntar a data de fim; não chamar new-task para essa ação. Zero ações deriváveis sem inventar → perguntar; não chamar new-task.
+
+7. **Status da fase ← tarefas**
+
+   Só planejada. Gate do passo 3 para o status resultante: falhou → não mudar para `em andamento` / `pausado` / `concluído`.
+   Pela ordem de `## Tarefas`:
+   - primeira `concluído` e ainda há outra não `concluído` → `{status}` = `em andamento`
+   - todas `concluído` (recorrente com data conta) → `{status}` = `concluído` (uma só tarefa: `pendente` → `concluído`)
+   - `pausado` só se o pedido pediu (mesmo gate)
+   Atualizar a nota em `phases/` e o heading no hub.
+
+8. **Herança**
+
+   No hub, por `{nn}`: primeira fase ≠ `concluído`:
+   - `em andamento` | `pausado` | `pendente` → `{status-projeto}` = esse
+   - `não planejado` → `{status-projeto}` = `pendente`
+   - todas `concluído` e nenhum heading `não planejado` → `{status-projeto}` = `concluído`
+   Projeto nunca usa `não planejado`.
+
+   Pasta: `pendente` `pending` · `em andamento` `in-progress` · `pausado` `paused` · `concluído` `completed`.
+   Atualizar **Status** no hub.
+   Pasta 1:1 — se mudou: mover `projects/{antigo}/{slug}/` → `projects/{novo}/{slug}/`.
+   Em [projects](../../projects/projects.md): o item deste projeto só na seção do `{status-projeto}` (`- [{Nome}]({status}/{slug}/{slug}.md) — {blurb}` com `{blurb}` = objetivo). **Pendente · Em andamento · Pausado · Concluído**; criar `##` se faltar; apagar `##` vazio. Sem `--`. `##` só com item.
+   Links *dentro* do projeto não mudam. Buscar no vault `projects/{antigo}/{slug}` e atualizar (incl. **Fase:** nas tarefas).
+
+Pedido posterior de status/prazo: passos 3, 7 e 8. De `não planejado` para planejada: este procedimento desde o passo 2.

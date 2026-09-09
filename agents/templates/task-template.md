@@ -6,25 +6,29 @@
 
 ## O quê
 
-1. _passo extraído da fase_
-2. _…
+1. _esta execução_
 
 ## Por quê
 
-- _motivo já decidido na fase (ou nesta nota, se independente)_
+- _motivo_
+
+## Como
+
+1. _instrução concreta_
+2. _…_
 
 ## Quando
 
-- _datas / horários; se recorrente: cadência + até quando ou none_
+- _datas / horários / cadência_
 
-## Onde, se relevante
+## Onde
 
-- _local_
+- _lugar + endereço_
+
+## Com quem
+
+- _pessoa citada_
 
 ## Notas, opcional
 
-_Detalhes, opções, contatos — só o necessário._
-
----
-
-Obs: **Fase:** só em tarefa de fase (link relativo). Independente: omitir o campo. Contar `../` até a raiz do vault; depois `projects/{status}/{slug}/phases/…`. `{status}` = pasta do projeto. **Prazo:** de fase = copiar o da fase; independente `pendente` = `não definido` se o usuário não der data. `recorrente` sem fim = `none` (só independente). **Quando** não vira Prazo. Não copiar heading vazio. Tarefa de fase **não traz nada de novo** — compacta Entrega + Como da fase. Se a fase não disser, não entra aqui.
+_Detalhes extras só se necessários._

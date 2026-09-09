@@ -3,6 +3,7 @@
 **Objetivo:** _uma frase_  
 **Status:** pendente | em andamento | pausado | concluído  
 **Prazo:** YYYY-MM-DD | não definido  
+**Prefixo:** {{PREFIXO}}  
 **Análise:** _(ainda não)_
 
 ## Fases
@@ -18,4 +19,4 @@ _Uma frase: o que esta fase entrega._
 **Status:** não planejado  
 **Prazo:** YYYY-MM-DD | não definido
 
-_Uma frase. Sem arquivo até a fase ser planejada._
+_Uma frase._

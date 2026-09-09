@@ -1,19 +1,17 @@
 # {{YYYY-MM-DD}}
 
-**Horas produtivas:** _intervalo(s) de tempo_  
-**Tarefas recorrentes:** completo | incompleto | fracasso  
-**Tarefas únicas:** _o que avançou ou concluiu_
+**Resultado:** sucesso | satisfatório | fracasso
 
-completo = tudo o que cabia no dia. incompleto = pelo menos uma coisa, mas não tudo. fracasso = absolutamente nada.
+## Tarefas Concluídas
 
-## Motivo
+_todas as tarefas que foram feitas_
 
-_se incompleto ou fracasso_
+## Tarefas Fracassadas
 
-## Únicas
-
-_avanço | declaração de conclusão_
+_Tarefas que eram para hoje que não foram feitas, se não houverem, não criar essa seção_
 
 ## Notas, opcional
 
-_detalhes_
+_O usuário coloca manualmente ou pede explicitamente para o agente colocar_
+
+Obs: sucesso = tudo que precisava ser feito hoje foi feito e tarefas de outros dias foram adiantadas. satisfatório = tudo que precisava ser feito hoje foi feito. fracasso = alguma tarefa que precisava ser feita hoje não foi.
