@@ -1,0 +1,17 @@
+{
+  "name": "docs-vault",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Tooling for a Markdown knowledge vault (tasks, projects, daily notes) — validator and preview server.",
+  "scripts": {
+    "validate": "node scripts/validate-vault.mjs",
+    "lint:md": "markdownlint-cli2 \"**/*.md\"",
+    "check": "npm run validate && npm run lint:md",
+    "preview": "node scripts/preview-server.mjs"
+  },
+  "devDependencies": {
+    "marked": "^14.1.4",
+    "markdownlint-cli2": "^0.15.0"
+  }
+}

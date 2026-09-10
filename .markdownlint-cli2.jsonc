@@ -1,0 +1,22 @@
+{
+  // Markdown hygiene for the vault. Rules that conflict with the vault's own
+  // authoring style (procedures, templates, tables, hard breaks) are relaxed;
+  // the vault-specific conventions live in scripts/validate-vault.mjs.
+  "globs": ["**/*.md"],
+  "ignores": ["node_modules", ".git", ".obsidian", ".cursor"],
+  "config": {
+    "default": true,
+    "MD013": false, // line length: prose/tables can be long
+    "MD007": false, // list indentation varies
+    "MD012": false, // occasional double blank line before trailing content
+    "MD022": false, // hubs intentionally put the link line directly under ### headings
+    "MD024": false, // templates repeat placeholder phase headings
+    "MD029": false, // ordered-list numbering style varies in procedures
+    "MD032": false, // lists sit directly under headings by design
+    "MD033": false, // inline HTML allowed
+    "MD034": false, // bare tokens like {slug} are not URLs
+    "MD036": false, // templates use italic placeholder lines
+    "MD038": false, // deliberate spacing inside code spans in procedures
+    "MD041": false // some notes lead with front-matter-style bold fields
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "name": "docs vault",
+  "install": "npm ci",
+  "terminals": [
+    {
+      "name": "preview",
+      "command": "npm run preview",
+      "description": "Markdown preview server for the vault. Browse notes, projects, and tasks at http://localhost:8080."
+    }
+  ],
+  "ports": [
+    {
+      "name": "preview",
+      "port": 8080
+    }
+  ]
+}
