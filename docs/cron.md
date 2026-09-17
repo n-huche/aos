@@ -35,4 +35,4 @@ Comando:
 /workspace/aos/scripts/aos up
 ```
 
-Não entra em `/home/box/start.sh`. Depois de Update da VM do Grok Bot: o disco `/workspace/aos` tende a ficar; `cron` e o spool podem sumir. O primeiro `aos up` (chat/hatch ou o minuto do cron, se o daemon voltar) reconstrói crontab, fecha dias perdidos e sobe o watch.
+Cold start da VM: `/home/box/start.sh` vem do repo [n-huche/box-infra](https://github.com/n-huche/box-infra) (Tailscale + sshd). Sobe os watchdogs em `/home/box/infra/` e chama `aos up` quando reboot ou Update não reiniciaram os processos. Depois de Update: o disco `/workspace/aos` tende a ficar; `cron` e o spool podem sumir. O `aos up` do `start.sh` (ou o minuto do cron, se o daemon voltar) reconstrói crontab, fecha dias perdidos e sobe o watch.

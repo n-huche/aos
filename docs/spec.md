@@ -156,7 +156,7 @@ Recorrente `user/tasks/recurring/{slug}.md`
 
 Pasta só com nota. Links `[texto](relativo)` — nunca wiki.
 
-`git init` no bootstrap. Sem remote. `.gitignore`: `.obsidian/`, `__pycache__/`, `.DS_Store`. Não alterar `git config`.
+Repo git. `origin` = `https://github.com/n-huche/aos.git` (privado) — durabilidade contra Update/reset desta VM. Sync e daily-close fazem push se `origin` existir. `.gitignore`: `.obsidian/`, `__pycache__/`, `.DS_Store`. Não alterar `git config`.
 
 ---
 
@@ -368,7 +368,7 @@ Fuso `America/Sao_Paulo`. D = dia que **acabou**. Relógio do reindex seguinte =
 
 Cron **não** completa unique. **Não** move project. Until **evento** e encerrar maintenance: só comando à IA.
 
-`daily-close` também pode ser chamado à mão. Documentar crontab em `docs/cron.md`. Watch é processo separado, mantido por `aos up` (babá a cada minuto; `@reboot` best-effort).
+`daily-close` também pode ser chamado à mão. Documentar crontab em `docs/cron.md`. Watch é processo separado, mantido por `aos up` (babá a cada minuto; `@reboot` best-effort). Cold start da VM (`/home/box/start.sh`) também chama `aos up` após reboot ou Update que não reiniciaram os processos.
 
 Se o processo ficou morto enquanto o calendário andou, `aos up` faz **catch-up** antes de subir o watch:
 
@@ -471,7 +471,7 @@ Arquivos em `docs/templates/`. Corpo igual às seções 4.x + headings listados.
 2. `docs/spec.md` = esta lei; `AGENTS.md`; templates; `docs/cron.md`.
 3. Os comandos funcionam (`reindex`, `watch`, `sync`, `daily-close`, `validate`, `up`).
 4. Testes em `scripts/tests/` (não em `user/`): unique, daily, weekdays, interval, until data — seções vazias omitidas; Overdue só unique; `x` em 1 day de recorrente revertido; `x` unique move + `completed_on` + commit; `x` recorrente Today preenche `done_on`; `daily-close` until sem x → completed + daily fracasso; schedule passado some; catch-up fecha dias perdidos sem crédito e aplica `[x]` no dia da volta.
-5. Sem remote, sem project real.
+5. `origin` no GitHub; `user/` sem project/task de vida real.
 
 ---
 
@@ -482,5 +482,5 @@ Arquivos em `docs/templates/`. Corpo igual às seções 4.x + headings listados.
 - Prazo é cálculo, não pasta.
 - Unique: `x` move arquivo. Recorrente: `x` (só Today) registra ocorrência.
 - Cron: índice + daily + schedule passado; completa recorrente só no `until` data.
-- `aos up` é a babá: crontab no repo, catch-up de dias perdidos, watch de pé, sem systemd. `@reboot` é best-effort.
+- `aos up` é a babá: crontab no repo, catch-up de dias perdidos, watch de pé, sem systemd. `@reboot` é best-effort. `/home/box/start.sh` chama `aos up` no cold start da VM.
 - IA não substitui o goal nem o `x`.
