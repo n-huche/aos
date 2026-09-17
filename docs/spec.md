@@ -156,7 +156,7 @@ Recorrente `user/tasks/recurring/{slug}.md`
 
 Pasta só com nota. Links `[texto](relativo)` — nunca wiki.
 
-Repo git. `origin` = `https://github.com/n-huche/aos.git` (privado) — durabilidade contra Update/reset desta VM. Sync e daily-close fazem push se `origin` existir. `.gitignore`: `.obsidian/`, `__pycache__/`, `.DS_Store`. Não alterar `git config`.
+Repo git. `origin` = `https://github.com/n-huche/aos.git` (privado) — durabilidade contra Update/reset desta box. Sync e daily-close fazem push se `origin` existir. `.gitignore`: `.obsidian/`, `__pycache__/`, `.DS_Store`. Não alterar `git config`.
 
 ---
 
@@ -368,7 +368,7 @@ Fuso `America/Sao_Paulo`. D = dia que **acabou**. Relógio do reindex seguinte =
 
 Cron **não** completa unique. **Não** move project. Until **evento** e encerrar maintenance: só comando à IA.
 
-`daily-close` também pode ser chamado à mão. Documentar crontab em `docs/cron.md`. Watch é processo separado, mantido por `aos up` (babá a cada minuto; `@reboot` best-effort). Cold start da VM (`/home/box/start.sh`) também chama `aos up` após reboot ou Update que não reiniciaram os processos.
+`daily-close` também pode ser chamado à mão. Documentar crontab em `docs/cron.md`. Watch é processo separado, mantido por `aos up` (babá a cada minuto; `@reboot` best-effort). Cold start da box (`/home/box/start.sh`) também chama `aos up` após reboot ou Update que não reiniciaram os processos.
 
 Se o processo ficou morto enquanto o calendário andou, `aos up` faz **catch-up** antes de subir o watch:
 
@@ -482,5 +482,5 @@ Arquivos em `docs/templates/`. Corpo igual às seções 4.x + headings listados.
 - Prazo é cálculo, não pasta.
 - Unique: `x` move arquivo. Recorrente: `x` (só Today) registra ocorrência.
 - Cron: índice + daily + schedule passado; completa recorrente só no `until` data.
-- `aos up` é a babá: crontab no repo, catch-up de dias perdidos, watch de pé, sem systemd. `@reboot` é best-effort. `/home/box/start.sh` chama `aos up` no cold start da VM.
+- `aos up` é a babá: crontab no repo, catch-up de dias perdidos, watch de pé, sem systemd. `@reboot` é best-effort. `/home/box/start.sh` chama `aos up` no cold start da box.
 - IA não substitui o goal nem o `x`.
