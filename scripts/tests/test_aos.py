@@ -117,7 +117,7 @@ def write_recurring(
     unit: str | None = None,
     anchor: str | None = None,
     done_on: list[str] | None = None,
-    type_: str = "recurrent-independent",
+    type_: str = "recurring-independent",
     folder: str = "recurring",
     status: str = "recurring",
 ) -> Path:
@@ -478,7 +478,7 @@ class AOSTest(unittest.TestCase):
         bad = self.root / "user/tasks/recurring/bad.md"
         bad.write_text(
             """---
-type: recurrent-independent
+type: recurring-independent
 status: recurring
 until: 2026-12-01
 until_event: alguma coisa

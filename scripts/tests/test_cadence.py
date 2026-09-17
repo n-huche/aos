@@ -45,7 +45,7 @@ class CadenceTest(unittest.TestCase):
 
     def test_done_on_roundtrip(self) -> None:
         data = {
-            "type": "recurrent-independent",
+            "type": "recurring-independent",
             "status": "recurring",
             "done_on": [date(2026, 9, 16)],
             "cadence": {"kind": "daily"},

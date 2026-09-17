@@ -73,14 +73,14 @@ def _validate_recurrence(path: Path, data: dict, t: str) -> list[str]:
     until = as_date(data.get("until"))
     until_event = data.get("until_event")
     event_set = until_event not in (None, "", False)
-    if t in {"recurrent-independent", "recurrent-project"}:
+    if t in {"recurring-independent", "recurring-project"}:
         if bool(until is not None) == bool(event_set):
             errors.append(
-                f"{path}: recurrent needs until XOR until_event"
+                f"{path}: recurring needs until XOR until_event"
             )
-    if t == "recurrent-project":
+    if t == "recurring-project":
         if not data.get("project") or not data.get("phase"):
-            errors.append(f"{path}: recurrent-project needs project and phase")
+            errors.append(f"{path}: recurring-project needs project and phase")
     cad = cadence_of(data)
     kind = str(cad.get("kind") or "").strip().lower()
     if kind not in CADENCE_KINDS:

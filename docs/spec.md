@@ -84,12 +84,12 @@ Bloco `## Condition` na phase e no hub. Sem métricas obrigatórias na v1. **Só
 
 ### 2.5 Task: class vs folder
 
-`type`: `unique-independent` · `unique-project` · `recurrent-independent` · `recurrent-project` · `maintenance`
+`type`: `unique-independent` · `unique-project` · `recurring-independent` · `recurring-project` · `maintenance`
 
 | Pasta | Quem |
 |---|---|
 | `pending/` | unique não feitas, arquivos **soltos** |
-| `recurring/` | recurrent-* e maintenance, **soltos**; classe só no YAML |
+| `recurring/` | recurring-* e maintenance, **soltos**; classe só no YAML |
 | `completed/` | unique feitas; recorrente com ciclo **terminado** |
 | `obsolete/` | não foi necessária |
 | `canceled/` | abortada pelo usuário |
@@ -97,7 +97,7 @@ Bloco `## Condition` na phase e no hub. Sem métricas obrigatórias na v1. **Só
 Sem `ongoing` em unique. Sem subpasta `maintenance/` nem buckets de prazo em disco.
 
 - Unique: `due` data ou `null`.
-- `recurrent-independent` / `recurrent-project`: `until` **XOR** `until_event` obrigatório.
+- `recurring-independent` / `recurring-project`: `until` **XOR** `until_event` obrigatório.
 - `maintenance`: sem fim até o usuário mandar.
 
 Slug de task **global**.
@@ -183,11 +183,11 @@ Corpo: H1 = título (é o rótulo do índice). `## What` · `## How` · `## When
 
 ```yaml
 ---
-type: maintenance            # ou recurrent-independent | recurrent-project
+type: maintenance            # ou recurring-independent | recurring-project
 status: recurring
 until: 2026-12-01            # XOR until_event; omitir em maintenance
 until_event: null
-project: my-project          # se recurrent-project
+project: my-project          # se recurring-project
 phase: my-phase
 done_on: []                  # ocorrências cumpridas, YYYY-MM-DD
 cadence:

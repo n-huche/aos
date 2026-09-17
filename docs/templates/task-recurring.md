@@ -1,9 +1,9 @@
 ---
-type: maintenance            # or recurrent-independent | recurrent-project
+type: maintenance            # or recurring-independent | recurring-project
 status: recurring
 until: 2026-12-01            # XOR until_event; omit on maintenance
 until_event: null
-project: my-project          # if recurrent-project
+project: my-project          # if recurring-project
 phase: my-phase
 done_on: []                  # completed occurrences, YYYY-MM-DD
 cadence:

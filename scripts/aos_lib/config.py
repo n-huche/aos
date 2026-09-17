@@ -13,7 +13,7 @@ PROJECT_STATUSES = ("pending", "ongoing", "completed", "canceled")
 
 UNIQUE_TYPES = frozenset({"unique-independent", "unique-project"})
 RECURRING_TYPES = frozenset(
-    {"recurrent-independent", "recurrent-project", "maintenance"}
+    {"recurring-independent", "recurring-project", "maintenance"}
 )
 ALL_TYPES = UNIQUE_TYPES | RECURRING_TYPES
 
