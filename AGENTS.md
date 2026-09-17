@@ -1,47 +1,52 @@
 # AGENTS
 
-## Convenções
+Contrato da IA para o Agency Operating System (AOS). A lei completa está em [docs/spec.md](docs/spec.md).
 
-- Idioma dos **textos** do usuário: **português**.
-- Nomes de **pastas e arquivos**: **inglês**, kebab-case, ASCII, sem espaços.
-- Links: `[nome](caminho relativo)` — não `[[wiki]]`.
-- Ambiguidade factual ou de decisão → perguntar; não inventar dados pessoais.
-- Relógio dos procedimentos: `{hoje}` (e hora na atualização diária). Não inventar datas.
-- Pastas operacionais: `tasks/`, `projects/`, `daily/`. Pasta só com nota.
+Talk to the user in Portuguese. Folder names, file names, and frontmatter keys: English, kebab-case, ASCII. Timezone: `America/Sao_Paulo`. Section headings (`##`) in notes: English.
 
-## Glossário
+Markdown is the source of truth. After creating or editing tasks/projects, run `aos reindex`.
 
-### Tarefa
+## Goal
 
-Pode ser independente ou de projeto, única ou recorrente. É a única forma de execução de todo o sistema. Deve descrever uma ação concreta, específica e realizável em no máximo poucas horas. Sua proposta é tornar a execução limpa e mecânica.
+- Só o usuário cria e muda o goal.
+- Não declarar condition verdadeira.
 
-| Tarefa       | Única                                                             | Recorrente                                                                                                  |
-| ------------ | ----------------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Independente | Ação única que realiza um objetivo simples                        | Ação que deve ser executada recorrentemente para realizar um objetivo simples                               |
-| De projeto   | Ação única que contribui com a realização de um objetivo complexo | Ação que para contribuir com um objetivo complexo deve ser realizada recorrentemente até uma data ou evento |
+## When to write
 
-### Projeto
+- Escrever project/task só se ele pediu.
+- Só o goal → planejar phases/tasks e escrever.
+- Ele trouxe o plano → escrever e sugerir; não substituir o plano.
+- Editar phase/task existente: conversa → acordo → aí muda.
+- Independent: ele dá o simple goal; montar a task; respeitar restrições em `user/schedule/constraints.md` se houver.
 
-Resultado maior, partido em fases, define o objetivo. Tem prazo, status e pode ter análises. Não se executa — o que se faz são tarefas.
+## Dates
 
-### Fase
+- Sem prazo: perguntar no fim, depois de escrito.
+- Só data final: perguntar início (obrigatório) → datar e preencher `user/schedule/YYYY/MM/DD.md`, lendo `constraints.md` e o que já cai em cada dia.
+- Só data início: perguntar final; se não der, sugerir e agendar.
+- Conflito schedule vs YAML da task → vale a task.
+- Planejar no dia que ele quiser. Domingo sem task só se ele pedir (constraints).
 
-Recorte do projeto com uma entrega necessária para a fase seguinte. Define o "o quê" e o "como" de uma etapa do projeto. Tem status e prazo próprios. As tarefas de projeto são unidades de ação definidas nas fases.
+## How and research
 
-### Análise
+- How vago → `user/research/{slug}.md`, não task.
+- Research aberto = `## Decision` vazia. Ordem: Object → Question → Options → Decision → Implications.
 
-Pesquisa feita quando o objetivo de um projeto ou de uma fase não tem um caminho claro para ação. Ajudam a descobrir o "o quê" e o "como".
+## Close, cancel, obsolete
 
-### Diário
+- Task inútil: ele diz + motivo → `{project}/notes.md` + mover para `user/tasks/obsolete/` + reescrever links.
+- Until evento / fim de maintenance / cancelar: só sob comando.
+- Cancelar project = mover `user/projects/{status}/{slug}/` → `user/projects/canceled/{slug}/`.
+- Goal atingido não vira maintenance sozinho. Se ele pedir, cria-se maintenance nova.
 
-Registro que responde se e quando tarefas foram executadas, ajuda na autoanálise a favor da consistência.
+## What the agent must not do
 
-## Procedimentos
+- Não inventar pessoas, endereços, datas pessoais, hábitos.
+- Não dar `x` no lugar do usuário.
+- Não completar unique via cron (e a IA não simula o cron).
+- Não mover project por conta própria sem pedido.
+- Quem muda status de project é o usuário/IA, nunca o cron.
 
-|Objetivo|Execute...|
-|---|---|
-|Criar nova tarefa|[new-task.md](agents/procedures/new-task.md)|
-|Criar novo projeto|[new-project.md](agents/procedures/new-project.md)|
-|Adicionar nova fase|[new-phase.md](agents/procedures/new-phase.md)|
-|Fazer nova análise|[new-analysis.md](agents/procedures/new-analysis.md)|
-|Atualização diária|[daily-update.md](agents/procedures/daily-update.md)|
+## After writing
+
+Rodar `aos reindex`.

@@ -1,0 +1,12 @@
+# Crontab canônico do AOS (instalado por `aos up`).
+# Não editar à mão no `crontab -e` — mude aqui e rode `aos up`,
+# ou deixe o `* * * * * aos up` regravar.
+
+CRON_TZ=America/Sao_Paulo
+MAILTO=""
+PATH=/usr/bin:/bin
+AOS_ROOT=/workspace/aos
+
+* * * * * /workspace/aos/scripts/aos up --quiet >> /workspace/aos/logs/up.log 2>&1
+0 0 * * * /workspace/aos/scripts/aos daily-close >> /workspace/aos/logs/daily-close.log 2>&1
+@reboot /workspace/aos/scripts/aos up --quiet >> /workspace/aos/logs/up.log 2>&1
