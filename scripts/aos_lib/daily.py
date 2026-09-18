@@ -39,8 +39,6 @@ def delete_past_schedule(root: Path, d: date) -> list[Path]:
     if not base.is_dir():
         return removed
     for path in list(base.rglob("*.md")):
-        if path.name == "constraints.md":
-            continue
         when = schedule_date_from_path(path, base)
         if when is None:
             continue

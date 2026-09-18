@@ -35,10 +35,10 @@ def origin_exists(root: Path) -> bool:
 
 
 def user_git_root(root: Path) -> Path:
-    """Repo that stores user/: nested vault if present, else AOS root."""
-    vault = root / "user"
-    if (vault / ".git").exists():
-        return vault
+    """Repo that stores user/: nested user git if present, else AOS root."""
+    nested = root / "user"
+    if (nested / ".git").exists():
+        return nested
     return root
 
 

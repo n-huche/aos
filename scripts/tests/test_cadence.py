@@ -53,11 +53,11 @@ class CadenceTest(unittest.TestCase):
         dumped = dump_yaml(data)
         parsed = parse_yaml(dumped)
         self.assertEqual(parsed["done_on"], [date(2026, 9, 16)])
-        text = join_frontmatter(data, "# Título\n")
+        text = join_frontmatter(data, "# Title\n")
         again, body = split_frontmatter(text)
         self.assertEqual(again["status"], "recurring")
         self.assertEqual(again["done_on"], [date(2026, 9, 16)])
-        self.assertIn("# Título", body)
+        self.assertIn("# Title", body)
 
 
 if __name__ == "__main__":

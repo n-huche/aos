@@ -42,7 +42,7 @@ def init_aos(root: Path) -> None:
     ):
         (root / rel).mkdir(parents=True, exist_ok=True)
     (root / "user/tasks/tasks.md").write_text("# Tasks\n", encoding="utf-8")
-    (root / "user/schedule/constraints.md").write_text("# Constraints\n", encoding="utf-8")
+    (root / "user/preferences.md").write_text("# Preferences\n", encoding="utf-8")
     _git(root, "init")
     _git(root, "add", "-A")
     subprocess.run(
@@ -89,15 +89,15 @@ completed_on: {completed_s}
 
 ## What
 
-fazer
+do it
 
 ## How
 
-passo a passo
+step by step
 
 ## Goal
 
-estado
+the state
 """,
         encoding="utf-8",
     )
@@ -153,11 +153,11 @@ def write_recurring(
     lines.append("")
     lines.append("## What")
     lines.append("")
-    lines.append("repetir")
+    lines.append("repeat")
     lines.append("")
     lines.append("## How")
     lines.append("")
-    lines.append("mecanicamente")
+    lines.append("mechanically")
     lines.append("")
     path = root / "user" / "tasks" / folder / f"{slug}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
@@ -228,14 +228,14 @@ class AOSTest(unittest.TestCase):
     def tasks_md(self) -> str:
         return (self.root / "user/tasks/tasks.md").read_text(encoding="utf-8")
 
-    def test_unique_buckets_and_indefinido(self) -> None:
-        write_unique(self.root, "overdue-one", "Atrasada", "2026-09-10")
-        write_unique(self.root, "today-one", "Hoje unique", "2026-09-16")
-        write_unique(self.root, "tomorrow-one", "Amanha", "2026-09-17")
-        write_unique(self.root, "week-one", "Na semana", "2026-09-21")
-        write_unique(self.root, "month-one", "No mes", "2026-09-30")
-        write_unique(self.root, "later-one", "Longe", "2026-11-01")
-        write_unique(self.root, "open-one", "Sem prazo", None)
+    def test_unique_buckets_and_undefined(self) -> None:
+        write_unique(self.root, "overdue-one", "Overdue one", "2026-09-10")
+        write_unique(self.root, "today-one", "Today unique", "2026-09-16")
+        write_unique(self.root, "tomorrow-one", "Tomorrow", "2026-09-17")
+        write_unique(self.root, "week-one", "This week", "2026-09-21")
+        write_unique(self.root, "month-one", "This month", "2026-09-30")
+        write_unique(self.root, "later-one", "Later", "2026-11-01")
+        write_unique(self.root, "open-one", "No due", None)
         self.aos("reindex")
         text = self.tasks_md()
         self.assertEqual(
@@ -263,7 +263,7 @@ class AOSTest(unittest.TestCase):
         write_recurring(
             self.root,
             "agua",
-            "Beber agua",
+            "Drink water",
             kind="daily",
             until="2026-12-01",
         )
@@ -280,7 +280,7 @@ class AOSTest(unittest.TestCase):
         write_recurring(
             self.root,
             "treino",
-            "Treino",
+            "Training",
             kind="weekdays",
             days=["wed", "thu"],
             until="2026-12-01",
@@ -297,7 +297,7 @@ class AOSTest(unittest.TestCase):
         write_recurring(
             self.root,
             "review-now",
-            "Review hoje",
+            "Review today",
             kind="interval",
             every=2,
             unit="months",
@@ -307,7 +307,7 @@ class AOSTest(unittest.TestCase):
         write_recurring(
             self.root,
             "review-y",
-            "Review ontem",
+            "Review yesterday",
             kind="interval",
             every=2,
             unit="months",
@@ -327,7 +327,7 @@ class AOSTest(unittest.TestCase):
         write_recurring(
             self.root,
             "short",
-            "Curta",
+            "Short",
             kind="weekdays",
             days=["wed", "thu"],
             until="2026-09-16",
@@ -338,34 +338,34 @@ class AOSTest(unittest.TestCase):
         self.assertNotIn("## 1 day", text)
 
     def test_empty_sections_omitted(self) -> None:
-        write_unique(self.root, "so-semana", "So semana", "2026-09-21")
+        write_unique(self.root, "so-semana", "This week only", "2026-09-21")
         self.aos("reindex")
         text = self.tasks_md()
         self.assertEqual(headings(text), ["4-7 days"])
         self.assertTrue(text.startswith("# Tasks\n"))
 
-    def test_atrasadas_only_unique(self) -> None:
-        write_unique(self.root, "atrasada", "Atrasada unique", "2026-09-10")
+    def test_overdue_only_unique(self) -> None:
+        write_unique(self.root, "atrasada", "Overdue unique", "2026-09-10")
         write_recurring(
             self.root,
             "diaria",
-            "Diaria",
+            "Daily",
             kind="daily",
             until="2026-12-01",
         )
         self.aos("reindex")
         text = self.tasks_md()
-        atrasadas = section_items(text, "Overdue")
-        self.assertEqual(len(atrasadas), 1)
-        self.assertIn("pending/atrasada.md", atrasadas[0])
-        self.assertNotIn("recurring/", " ".join(atrasadas))
+        overdue_items = section_items(text, "Overdue")
+        self.assertEqual(len(overdue_items), 1)
+        self.assertIn("pending/atrasada.md", overdue_items[0])
+        self.assertNotIn("recurring/", " ".join(overdue_items))
         self.assertIn("recurring/diaria.md", section_items(text, "Today")[0])
 
     def test_x_recurring_not_today_reverted(self) -> None:
         write_recurring(
             self.root,
             "agua",
-            "Beber agua",
+            "Drink water",
             kind="daily",
             until="2026-12-01",
         )
@@ -380,10 +380,10 @@ class AOSTest(unittest.TestCase):
         self.assertTrue((self.root / "user/tasks/recurring/agua.md").is_file())
         text = self.tasks_md()
         self.assertTrue(all("- [ ]" in ln or not ln.startswith("- [") for ln in text.splitlines()))
-        self.assertIn("- [ ] [Beber agua](recurring/agua.md)", section_items(text, "1 day"))
+        self.assertIn("- [ ] [Drink water](recurring/agua.md)", section_items(text, "1 day"))
 
     def test_x_unique_moves_completed_on_commit(self) -> None:
-        write_unique(self.root, "mandar-email", "Mandar email", "2026-09-18")
+        write_unique(self.root, "mandar-email", "Send email", "2026-09-18")
         self.aos("reindex")
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "2-3 days"), encoding="utf-8")
@@ -400,11 +400,11 @@ class AOSTest(unittest.TestCase):
         self.assertEqual(log.stdout.strip(), "aos: sync tasks")
         self.assertNotIn("mandar-email", self.tasks_md())
 
-    def test_x_recurring_hoje_fills_done_on(self) -> None:
+    def test_x_recurring_today_fills_done_on(self) -> None:
         write_recurring(
             self.root,
             "agua",
-            "Beber agua",
+            "Drink water",
             kind="daily",
             until="2026-12-01",
         )
@@ -427,7 +427,7 @@ class AOSTest(unittest.TestCase):
         write_recurring(
             self.root,
             "ciclo",
-            "Ciclo curto",
+            "Short cycle",
             kind="daily",
             until="2026-09-15",
         )
@@ -436,7 +436,7 @@ class AOSTest(unittest.TestCase):
             "# 2026-09-15\n\n- [x] leftover\n", encoding="utf-8"
         )
         (self.root / "user/schedule/2026/09/16.md").write_text(
-            "# 2026-09-16\n\n- [Ciclo](../../../tasks/recurring/ciclo.md)\n",
+            "# 2026-09-16\n\n- [Cycle](../../../tasks/recurring/ciclo.md)\n",
             encoding="utf-8",
         )
         self.aos("daily-close", "2026-09-15")
@@ -534,7 +534,7 @@ project: demo
 depends_on: []
 ---
 
-# Uma
+# One
 
 ## Condition
 
@@ -552,11 +552,11 @@ h
 
 ## Tasks
 
-- [Mandar](../../../../tasks/pending/mandar.md)
+- [Send](../../../../tasks/pending/mandar.md)
 """,
             encoding="utf-8",
         )
-        write_unique(self.root, "mandar", "Mandar", "2026-09-16")
+        write_unique(self.root, "mandar", "Send", "2026-09-16")
         self.aos("reindex")
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
@@ -566,7 +566,7 @@ h
         self.assertNotIn("tasks/pending/mandar.md", phase)
 
     def test_watch_syncs_unique_checkbox(self) -> None:
-        write_unique(self.root, "visto", "Visto", "2026-09-16")
+        write_unique(self.root, "visto", "Seen", "2026-09-16")
         self.aos("reindex")
         proc = subprocess.Popen(
             [sys.executable, str(BIN), "watch"],
@@ -657,11 +657,11 @@ h
     def test_catch_up_after_down_day_applies_leftover_x_as_today(self) -> None:
         from aos_lib.daily import catch_up
 
-        write_unique(self.root, "mandar-email", "Mandar email", "2026-09-15")
+        write_unique(self.root, "mandar-email", "Send email", "2026-09-15")
         write_recurring(
             self.root,
             "agua",
-            "Beber agua",
+            "Drink water",
             kind="daily",
             until="2026-12-01",
         )
@@ -704,7 +704,7 @@ h
             "# 2026-09-14\n\n**Result:** satisfactory\n",
             encoding="utf-8",
         )
-        write_unique(self.root, "hoje", "Hoje unique", "2026-09-16")
+        write_unique(self.root, "hoje", "Today unique", "2026-09-16")
         self.aos("reindex", today="2026-09-16")
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
@@ -725,7 +725,7 @@ h
             "# 2026-09-13\n\n**Result:** satisfactory\n",
             encoding="utf-8",
         )
-        write_unique(self.root, "carta", "Carta", "2026-09-14")
+        write_unique(self.root, "carta", "Letter", "2026-09-14")
         self.aos("reindex", today="2026-09-14")
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
@@ -752,7 +752,7 @@ h
         self.assertFalse((sched / "2026/09/15.md").exists())
         self.assertTrue((sched / "2026/09/16.md").exists())
 
-    def test_nested_vault_daily_close_does_not_commit_parent(self) -> None:
+    def test_nested_user_git_daily_close_does_not_commit_parent(self) -> None:
         (self.root / ".gitignore").write_text("/user/\n", encoding="utf-8")
         _git(self.root, "rm", "-r", "--cached", "user")
         _git(self.root, "add", ".gitignore")
@@ -786,7 +786,7 @@ h
                 "user.email=aos@localhost",
                 "commit",
                 "-m",
-                "vault: fixture",
+                "user: fixture",
             ],
             cwd=user,
             check=True,
@@ -794,7 +794,7 @@ h
             text=True,
         )
 
-        write_unique(self.root, "carta", "Carta", "2026-09-15")
+        write_unique(self.root, "carta", "Letter", "2026-09-15")
         self.aos("reindex")
         self.aos("daily-close", "2026-09-15")
 
