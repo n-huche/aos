@@ -1,10 +1,11 @@
 # Calendar crontab (installed by `aos up`).
 # Do not edit with `crontab -e` — change here and run `aos up`.
 # Host babysitting (cron daemon, watch process, reboot) is not AOS.
+# `{root}` is filled in at install time (AOS_ROOT or the repo that contains scripts/).
 
 CRON_TZ=America/Sao_Paulo
 MAILTO=""
 PATH=/usr/bin:/bin
-AOS_ROOT=/workspace/aos
+AOS_ROOT={root}
 
-0 0 * * * /workspace/aos/scripts/aos daily-close >> /workspace/aos/logs/daily-close.log 2>&1
+0 0 * * * {root}/scripts/aos daily-close >> {root}/logs/daily-close.log 2>&1

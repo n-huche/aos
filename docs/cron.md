@@ -4,15 +4,15 @@ Timezone: `America/Sao_Paulo`.
 
 AOS does not babysit the host. It exposes commands; whatever runs the machine starts them and keeps the `cron` daemon alive.
 
-The calendar crontab **lives in this repo** (`docs/crontab`). `aos up` installs it for the current user with a real `AOS_ROOT`.
+The calendar crontab **lives in this repo** (`docs/crontab`). `aos up` installs it for the current user, filling in the real repo root (`AOS_ROOT` or the directory that contains `scripts/`).
 
 ```cron
 CRON_TZ=America/Sao_Paulo
 MAILTO=""
 PATH=/usr/bin:/bin
-AOS_ROOT=/workspace/aos
+AOS_ROOT={root}
 
-0 0 * * * /workspace/aos/scripts/aos daily-close >> /workspace/aos/logs/daily-close.log 2>&1
+0 0 * * * {root}/scripts/aos daily-close >> {root}/logs/daily-close.log 2>&1
 ```
 
 - Midnight local: `aos daily-close`.
@@ -28,11 +28,11 @@ AOS_ROOT=/workspace/aos
 
 No daily in the vault: close yesterday only, not the whole history.
 
-Commands:
+Commands (from the repo root):
 
 ```text
-/workspace/aos/scripts/aos up
-/workspace/aos/scripts/aos up --watch-only
+scripts/aos up
+scripts/aos up --watch-only
 ```
 
 `--watch-only` is for whoever already ran catch-up and only needs the watch process alive.
