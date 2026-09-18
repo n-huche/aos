@@ -29,13 +29,13 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("validate", help="check types, slugs, cadence, links")
     up = sub.add_parser(
         "up",
-        help="crontab, cron daemon, catch-up missed days, start watch if dead",
+        help="install calendar crontab, catch-up missed days, start watch if dead",
     )
     up.add_argument("--quiet", action="store_true", help="no stdout on success")
     up.add_argument(
         "--watch-only",
         action="store_true",
-        help="do not touch cron/crontab (tests / manual)",
+        help="only ensure the watch process; no crontab or catch-up",
     )
     return p
 

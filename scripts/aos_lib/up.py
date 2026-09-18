@@ -38,9 +38,7 @@ def render_crontab(root: Path) -> str:
         f"PATH=/usr/bin:/bin\n"
         f"AOS_ROOT={root_s}\n"
         f"\n"
-        f"* * * * * {bin_s} up --quiet >> {root_s}/logs/up.log 2>&1\n"
         f"0 0 * * * {bin_s} daily-close >> {root_s}/logs/daily-close.log 2>&1\n"
-        f"@reboot {bin_s} up --quiet >> {root_s}/logs/up.log 2>&1\n"
     )
 
 
@@ -71,39 +69,6 @@ def install_crontab(root: Path) -> str:
             f"crontab install failed: {proc.stderr.strip() or proc.stdout.strip()}"
         )
     return "crontab-installed"
-
-
-def cron_daemon_running() -> bool:
-    proc_root = Path("/proc")
-    if not proc_root.is_dir():
-        return False
-    for entry in proc_root.iterdir():
-        if not entry.name.isdigit():
-            continue
-        try:
-            comm = (entry / "comm").read_text(encoding="utf-8").strip()
-        except OSError:
-            continue
-        if comm == "cron":
-            return True
-    return False
-
-
-def ensure_cron_daemon() -> str:
-    if cron_daemon_running():
-        return "cron-running"
-    candidates = ("/usr/sbin/cron", "/usr/sbin/crond", "cron")
-    last_err = ""
-    for cmd in candidates:
-        proc = subprocess.run(
-            [cmd] if cmd.startswith("/") else ["cron"],
-            capture_output=True,
-            text=True,
-        )
-        if proc.returncode == 0 or cron_daemon_running():
-            return "cron-started"
-        last_err = proc.stderr.strip() or proc.stdout.strip() or f"exit {proc.returncode}"
-    return f"cron-missing:{last_err}"
 
 
 def _cmdline_tokens(pid: int) -> list[str]:
@@ -251,8 +216,6 @@ def run_up(
     root = (root or get_root()).resolve()
     actions: list[str] = []
     if not watch_only:
-        cron_state = ensure_cron_daemon()
-        actions.append(cron_state)
         try:
             actions.append(install_crontab(root))
         except FileNotFoundError:

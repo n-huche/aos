@@ -122,7 +122,7 @@ Order: Object → Question → Options → Decision → Implications.
   docs/
     spec.md                 # esta lei, copiada para dentro do repo
     cron.md
-    crontab                 # modelo; `aos up` instala com AOS_ROOT real
+    crontab                 # calendário; `aos up` instala com AOS_ROOT real
     templates/              # § 12
   scripts/
     aos
@@ -368,7 +368,7 @@ Fuso `America/Sao_Paulo`. D = dia que **acabou**. Relógio do reindex seguinte =
 
 Cron **não** completa unique. **Não** move project. Until **evento** e encerrar maintenance: só comando à IA.
 
-`daily-close` também pode ser chamado à mão. Documentar crontab em `docs/cron.md`. Watch é processo separado, mantido por `aos up` (babá a cada minuto; `@reboot` best-effort). Cold start da box (`/home/box/start.sh`) também chama `aos up` após reboot ou Update que não reiniciaram os processos.
+`daily-close` também pode ser chamado à mão. Documentar crontab em `docs/cron.md`. Watch é processo separado: `aos up` sobe se estiver morto; quem o mantém no ar depois disso é o host, não o AOS.
 
 Se o processo ficou morto enquanto o calendário andou, `aos up` faz **catch-up** antes de subir o watch:
 
@@ -448,9 +448,9 @@ aos sync
 aos daily-close          # D = ontem no fuso, override por arg
 aos validate             # type vs pasta, slug único, XOR until,
                          # cadence válida, status vs pasta, links
-aos up                   # crontab + cron + catch-up + watch se morto
-aos up --quiet           # para o cron a cada minuto e @reboot
-aos up --watch-only      # só o watch (testes); sem catch-up
+aos up                   # crontab de calendário + catch-up + watch se morto
+aos up --quiet           # sem stdout em sucesso
+aos up --watch-only      # só o watch; sem crontab nem catch-up
 ```
 
 `reindex` não aplica `until` (só `daily-close` e o `x` do último dia).
@@ -482,5 +482,5 @@ Arquivos em `docs/templates/`. Corpo igual às seções 4.x + headings listados.
 - Prazo é cálculo, não pasta.
 - Unique: `x` move arquivo. Recorrente: `x` (só Today) registra ocorrência.
 - Cron: índice + daily + schedule passado; completa recorrente só no `until` data.
-- `aos up` é a babá: crontab no repo, catch-up de dias perdidos, watch de pé, sem systemd. `@reboot` é best-effort. `/home/box/start.sh` chama `aos up` no cold start da box.
+- `aos up` instala o crontab de calendário (`daily-close`), faz catch-up de dias perdidos e sobe o watch se estiver morto. Não sobe o daemon `cron` nem se reinstala a cada minuto. Persistência de processos é do host.
 - IA não substitui o goal nem o `x`.
