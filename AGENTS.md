@@ -1,53 +1,55 @@
 # AGENTS
 
-Contrato da IA para o Agency Operating System (AOS). A lei completa está em [docs/spec.md](docs/spec.md).
+AI contract for the Agency Operating System (AOS). The full law is [docs/spec.md](docs/spec.md).
 
-Talk to the user in Portuguese. Folder names, file names, and frontmatter keys: English, kebab-case, ASCII. Timezone: `America/Sao_Paulo`. Section headings (`##`) in notes: English.
+This repository is English. Folder names, file names, and frontmatter keys: English, kebab-case, ASCII. Timezone: `America/Sao_Paulo`. Section headings (`##`) in notes: English.
+
+Prose inside `user/` follows `user/preferences.md`. If that file does not set a language, use the language of the current conversation.
 
 Markdown is the source of truth. After creating or editing tasks/projects, run `aos reindex`.
 
 ## Goal
 
-- Só o usuário cria e muda o goal.
-- Não declarar condition verdadeira.
+- Only the user creates and changes the goal.
+- Do not declare a condition true.
 
 ## When to write
 
-- Escrever project/task só se ele pediu.
-- Só o goal → planejar phases/tasks e escrever.
-- Ele trouxe o plano → escrever e sugerir; não substituir o plano.
-- Editar phase/task existente: conversa → acordo → aí muda.
-- Independent: ele dá o simple goal; montar a task; respeitar restrições em `user/schedule/constraints.md` se houver.
+- Write a project/task only if they asked.
+- Goal only → plan phases/tasks and write.
+- They brought the plan → write and suggest; do not replace the plan.
+- Edit an existing phase/task: conversation → agreement → then change.
+- Independent: they give the simple goal; build the task; honor restrictions in `user/preferences.md` if present.
 
 ## Dates
 
-- Sem prazo: perguntar no fim, depois de escrito.
-- Unique com due: YAML `due` + **um** dia em `user/schedule/YYYY/MM/DD.md` (o due, se `due > hoje`). Não perguntar início. Não espalhar a task noutros dias.
-- Só data início: perguntar o due; se não der, sugerir e agendar no due.
-- Recorrente: o schedule lista o `until` se houver e for futuro — não cada ocorrência.
-- Conflito schedule vs YAML da task → vale a task.
-- Planejar no dia que ele quiser. Domingo sem task só se ele pedir (constraints).
+- No due: ask at the end, after writing.
+- Unique with due: YAML `due` + **one** day in `user/schedule/YYYY/MM/DD.md` (the due, if `due > today`). Do not ask for a start date. Do not spread the task across other days.
+- Start date only: ask for the due; if they will not give one, suggest and schedule on the due.
+- Recurring: the schedule lists `until` if it exists and is in the future — not every occurrence.
+- Schedule vs task YAML conflict → the task wins.
+- Plan on whichever day they want. No tasks on Sunday only if they ask (preferences).
 
 ## How and research
 
-- How vago → `user/research/{slug}.md`, não task.
-- Research aberto = `## Decision` vazia. Ordem: Object → Question → Options → Decision → Implications.
+- Vague how → `user/research/{slug}.md`, not a task.
+- Open research = empty `## Decision`. Order: Object → Question → Options → Decision → Implications.
 
 ## Close, cancel, obsolete
 
-- Task inútil: ele diz + motivo → `{project}/notes.md` + mover para `user/tasks/obsolete/` + reescrever links.
-- Until evento / fim de maintenance / cancelar: só sob comando.
-- Cancelar project = mover `user/projects/{status}/{slug}/` → `user/projects/canceled/{slug}/`.
-- Goal atingido não vira maintenance sozinho. Se ele pedir, cria-se maintenance nova.
+- Useless task: they say so + a reason → `{project}/notes.md` + move to `user/tasks/obsolete/` + rewrite links.
+- Until event / end of maintenance / cancel: only on command.
+- Cancel project = move `user/projects/{status}/{slug}/` → `user/projects/canceled/{slug}/`.
+- A reached goal does not become maintenance by itself. If they ask, a new maintenance is created.
 
 ## What the agent must not do
 
-- Não inventar pessoas, endereços, datas pessoais, hábitos.
-- Não dar `x` no lugar do usuário.
-- Não completar unique via cron (e a IA não simula o cron).
-- Não mover project por conta própria sem pedido.
-- Quem muda status de project é o usuário/IA, nunca o cron.
+- Do not invent people, addresses, personal dates, habits.
+- Do not check `x` in the user's place.
+- Do not complete a unique via cron (and the AI does not simulate cron).
+- Do not move a project on its own without being asked.
+- Who changes project status is the user/AI, never cron.
 
 ## After writing
 
-Rodar `aos reindex`.
+Run `aos reindex`.

@@ -26,7 +26,7 @@ AOS_ROOT={root}
 4. Applies leftover `[x]` as **today**.
 5. Reindexes today and starts `watch` if it is dead.
 
-No daily in the vault: close yesterday only, not the whole history.
+No daily under `user/`: close yesterday only, not the whole history.
 
 Commands (from the repo root):
 
