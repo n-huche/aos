@@ -752,6 +752,62 @@ h
         self.assertFalse((sched / "2026/09/15.md").exists())
         self.assertTrue((sched / "2026/09/16.md").exists())
 
+    def test_nested_vault_daily_close_does_not_commit_parent(self) -> None:
+        (self.root / ".gitignore").write_text("/user/\n", encoding="utf-8")
+        _git(self.root, "rm", "-r", "--cached", "user")
+        _git(self.root, "add", ".gitignore")
+        subprocess.run(
+            [
+                "git",
+                "-c",
+                "user.name=AOS",
+                "-c",
+                "user.email=aos@localhost",
+                "commit",
+                "-m",
+                "aos: ignore user",
+            ],
+            cwd=self.root,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+        parent_head = _git(self.root, "rev-parse", "HEAD").stdout.strip()
+
+        user = self.root / "user"
+        _git(user, "init")
+        _git(user, "add", "-A")
+        subprocess.run(
+            [
+                "git",
+                "-c",
+                "user.name=AOS",
+                "-c",
+                "user.email=aos@localhost",
+                "commit",
+                "-m",
+                "vault: fixture",
+            ],
+            cwd=user,
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+
+        write_unique(self.root, "carta", "Carta", "2026-09-15")
+        self.aos("reindex")
+        self.aos("daily-close", "2026-09-15")
+
+        self.assertEqual(
+            _git(self.root, "rev-parse", "HEAD").stdout.strip(),
+            parent_head,
+        )
+        self.assertEqual(_git(self.root, "status", "--porcelain").stdout.strip(), "")
+        log = _git(user, "log", "-1", "--pretty=%s")
+        self.assertEqual(log.stdout.strip(), "aos: daily-close 2026-09-15")
+        self.assertEqual(_git(user, "status", "--porcelain").stdout.strip(), "")
+        self.assertTrue((user / "daily/2026-09-15.md").is_file())
+
 
 if __name__ == "__main__":
     unittest.main()

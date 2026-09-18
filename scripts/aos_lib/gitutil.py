@@ -34,16 +34,29 @@ def origin_exists(root: Path) -> bool:
     return "origin" in remotes
 
 
+def user_git_root(root: Path) -> Path:
+    """Repo that stores user/: nested vault if present, else AOS root."""
+    vault = root / "user"
+    if (vault / ".git").exists():
+        return vault
+    return root
+
+
 def commit_user(root: Path, message: str) -> bool:
-    if not is_git_repo(root):
+    git_root = user_git_root(root)
+    if not is_git_repo(git_root):
         return False
-    git(root, "add", "-A", "--", "user")
-    status = git(root, "status", "--porcelain", "--", "user")
+    if git_root == root:
+        git(root, "add", "-A", "--", "user")
+        status = git(root, "status", "--porcelain", "--", "user")
+    else:
+        git(git_root, "add", "-A")
+        status = git(git_root, "status", "--porcelain")
     if not status.stdout.strip():
         return False
     proc = subprocess.run(
         ["git", *_identity_args(), "commit", "-m", message],
-        cwd=root,
+        cwd=git_root,
         capture_output=True,
         text=True,
     )
@@ -55,8 +68,9 @@ def commit_user(root: Path, message: str) -> bool:
 
 
 def push_if_origin(root: Path) -> None:
-    if not origin_exists(root):
+    git_root = user_git_root(root)
+    if not origin_exists(git_root):
         return
-    proc = git(root, "push")
+    proc = git(git_root, "push")
     if proc.returncode != 0:
         raise RuntimeError(f"git push failed: {proc.stderr.strip() or proc.stdout.strip()}")
