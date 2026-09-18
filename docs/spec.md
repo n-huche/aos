@@ -156,7 +156,9 @@ Recorrente `user/tasks/recurring/{slug}.md`
 
 Pasta só com nota. Links `[texto](relativo)` — nunca wiki.
 
-Repo git. `origin` = `https://github.com/n-huche/aos.git` (privado) — durabilidade contra Update/reset desta box. Sync e daily-close fazem push se `origin` existir. `.gitignore`: `.obsidian/`, `__pycache__/`, `.DS_Store`. Não alterar `git config`.
+Dois gits, um disco. O repo desta lei (`scripts/`, `docs/`) é público; `origin` = `https://github.com/n-huche/aos.git`. A vida (`user/`) é um git **nested** em `user/.git` — repo privado, não submodule, não `AOS_ROOT`. O clone público gitignora `/user/` e não traz project/task reais. No disco a raiz ainda precisa de `user/`: clone o vault privado para dentro de `user/`, ou monte a árvore vazia deste § 3.
+
+`commit_user` / `push_if_origin`: se `user/.git` existe, add/commit/push **lá**. Senão (fixtures de teste) o pai faz `git add user`. Sync e daily-close fazem push se o `origin` **desse** git existir. `.gitignore` do pai: `.obsidian/`, `__pycache__/`, `.DS_Store`, `logs/`, `/user/`. Não alterar `git config`.
 
 ---
 
@@ -473,8 +475,8 @@ Arquivos em `docs/templates/`. Corpo igual às seções 4.x + headings listados.
 1. Árvore § 3; `user/` sem vida real; `constraints.md` vazio ok.
 2. `docs/spec.md` = esta lei; `AGENTS.md`; templates; `docs/cron.md`.
 3. Os comandos funcionam (`reindex`, `watch`, `sync`, `daily-close`, `validate`, `up`).
-4. Testes em `scripts/tests/` (não em `user/`): unique, daily, weekdays, interval, until data — seções vazias omitidas; Overdue só unique; `x` em 1 day de recorrente revertido; `x` unique move + `completed_on` + commit; `x` recorrente Today preenche `done_on`; `daily-close` until sem x → completed + daily fracasso; schedule passado some; catch-up fecha dias perdidos sem crédito e aplica `[x]` no dia da volta.
-5. `origin` no GitHub; `user/` sem project/task de vida real.
+4. Testes em `scripts/tests/` (não em `user/`): unique, daily, weekdays, interval, until data — seções vazias omitidas; Overdue só unique; `x` em 1 day de recorrente revertido; `x` unique move + `completed_on` + commit; `x` recorrente Today preenche `done_on`; `daily-close` until sem x → completed + daily fracasso; schedule passado some; catch-up fecha dias perdidos sem crédito e aplica `[x]` no dia da volta; com `user/.git`, daily-close commit no vault e o git pai fica limpo.
+5. `origin` no GitHub; tree pública sem project/task de vida real (`/user/` no gitignore).
 
 ---
 
