@@ -146,7 +146,7 @@ aos/                        # raiz do repo (onde estiver)
     research/
     schedule/
       constraints.md
-      YYYY/MM/DD.md         # só data > hoje
+      YYYY/MM/DD.md         # unique: o due; recorrente: o until; só se > hoje
 ```
 
 Hub `user/projects/{status}/{slug}/{slug}.md`  
@@ -308,6 +308,8 @@ Intervalo 2 meses, âncora hoje → Today + +30 days. Âncora ontem → só +30 
 
 `user/schedule/YYYY/MM/DD.md` só se `DD > hoje`. Corpo = links. Cron apaga data ≤ dia que fechou.
 
+Unique: **só o due** (um arquivo, o dia do prazo). Não início, não intervalo. Recorrente: só o `until` se existir e for futuro — não cada ocorrência da cadência.
+
 `constraints.md`: prosa; **script não lê**.
 
 Conflito schedule vs YAML da task → **vale a task**.
@@ -423,8 +425,9 @@ A implementação grava isto (pode ser o corpo de `AGENTS.md`), apontando para `
 - Editar phase/task existente: conversa → acordo → aí muda.
 - Independent: ele dá o simple goal; montar a task; respeitar restrições se houver.
 - Sem prazo: perguntar **no fim**, depois de escrito.
-- Só data final: perguntar **início** (obrigatório) → datar e preencher `schedule/`, lendo `constraints.md` e o que já cai em cada dia.
-- Só data início: perguntar final; se não der, **sugerir** e agendar.
+- Unique com due: YAML + `schedule/` **só no due** (se `due > hoje`). Não perguntar início.
+- Só data início: perguntar o due; se não der, **sugerir** e agendar no due.
+- Recorrente no schedule: só `until` futuro, não cada ocorrência.
 - How vago → `user/research/`, não task.
 - Não declarar condition verdadeira.
 - Task inútil: ele diz + motivo → `notes.md` + `obsolete/` + links.

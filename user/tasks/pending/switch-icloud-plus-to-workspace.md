@@ -31,7 +31,7 @@ Isto é o plano que o usuário trouxe. Não misturar com as tasks de 19/09 (Tail
 
 ## When
 
-Início 2026-09-20 (depois do sábado das outras tasks). Due 2026-09-26.
+Due 2026-09-26.
 
 ## Where
 

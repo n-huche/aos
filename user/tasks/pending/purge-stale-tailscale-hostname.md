@@ -34,7 +34,7 @@ A auth key (`TS_AUTHKEY`) pode ainda não existir no código; esta task assume q
 
 ## When
 
-Início 2026-09-18. Due 2026-09-19.
+Due 2026-09-19.
 
 ## Where
 
