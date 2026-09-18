@@ -604,13 +604,14 @@ h
                 proc.kill()
                 proc.communicate(timeout=3)
 
-    def test_render_crontab_babysits_and_reboot(self) -> None:
+    def test_render_crontab_is_calendar_only(self) -> None:
         from aos_lib.up import render_crontab
 
         text = render_crontab(self.root)
-        self.assertIn("up --quiet", text)
         self.assertIn("daily-close", text)
-        self.assertIn("@reboot", text)
+        self.assertNotIn("up --quiet", text)
+        self.assertNotIn("@reboot", text)
+        self.assertNotIn("* * * * *", text)
         self.assertIn(f"AOS_ROOT={self.root.resolve()}", text)
         self.assertIn(str(self.root.resolve() / "scripts" / "aos"), text)
 

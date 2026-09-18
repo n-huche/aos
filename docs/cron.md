@@ -1,8 +1,10 @@
-# Cron e watch
+# Cron and watch
 
-Fuso: `America/Sao_Paulo`.
+Timezone: `America/Sao_Paulo`.
 
-Não há systemd nesta box. O crontab **vive no repo** (`docs/crontab`); `aos up` instala no usuário `box` e sobe o watch se estiver morto.
+AOS does not babysit the host. It exposes commands; the machine (or a supervisor such as `box-keep`) starts them and keeps the `cron` daemon alive.
+
+The calendar crontab **lives in this repo** (`docs/crontab`). `aos up` installs it for the current user with a real `AOS_ROOT`.
 
 ```cron
 CRON_TZ=America/Sao_Paulo
@@ -10,29 +12,27 @@ MAILTO=""
 PATH=/usr/bin:/bin
 AOS_ROOT=/workspace/aos
 
-* * * * * /workspace/aos/scripts/aos up --quiet >> /workspace/aos/logs/up.log 2>&1
 0 0 * * * /workspace/aos/scripts/aos daily-close >> /workspace/aos/logs/daily-close.log 2>&1
-@reboot /workspace/aos/scripts/aos up --quiet >> /workspace/aos/logs/up.log 2>&1
 ```
 
-- A cada minuto: `aos up` (crontab idempotente + catch-up de dias não fechados + watch se o pid morreu).
-- À meia-noite local: `aos daily-close`.
-- `@reboot`: best-effort. Nesta box costuma não disparar; se disparar, é o mesmo `aos up`.
-- Watch em `--loop` (reinicia se o inotify cair).
+- Midnight local: `aos daily-close`.
+- No minute job. No `@reboot`. Those were host persistence.
 
-`aos up` no retorno (minuto, `@reboot` ou na mão):
+`aos up` (on return from downtime, or by hand):
 
-1. Fotografa os `[x]` ainda no `tasks.md`.
-2. Fecha cada dia sem daily, até ontem (sem daily nenhum: só ontem). Schedule ≤ D some. Esses dias não recebem crédito dos `[x]`.
-3. Aplica os `[x]` fotografados como **hoje** (`completed_on` / `done_on` = o dia da volta).
-4. Reindexa hoje e sobe o watch.
+1. Installs the calendar crontab.
+2. Snapshots leftover `[x]` in `tasks.md`.
+3. Closes each day without a daily, up to yesterday (no daily at all: yesterday only). Those days do not get credit for the `[x]`.
+4. Applies leftover `[x]` as **today**.
+5. Reindexes today and starts `watch` if it is dead.
 
-Sem daily nenhum no vault: fecha só ontem, não a história inteira.
+No daily in the vault: close yesterday only, not the whole history.
 
-Comando:
+Commands:
 
 ```text
 /workspace/aos/scripts/aos up
+/workspace/aos/scripts/aos up --watch-only
 ```
 
-Cold start da box: `/home/box/start.sh` vem do repo [n-huche/box-infra](https://github.com/n-huche/box-infra) (Tailscale + sshd). Sobe os watchdogs em `/home/box/infra/` e chama `aos up` quando reboot ou Update não reiniciaram os processos. Depois de Update: o disco `/workspace/aos` tende a ficar; `cron` e o spool podem sumir. O `aos up` do `start.sh` (ou o minuto do cron, se o daemon voltar) reconstrói crontab, fecha dias perdidos e sobe o watch.
+`--watch-only` is for a host supervisor that already ran catch-up and only needs the watch process alive.
