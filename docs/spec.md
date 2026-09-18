@@ -1,9 +1,9 @@
 # Agency Operating System (AOS)
 
-**O que é este arquivo:** lei completa. Uma sessão IDE implementa o AOS **só a partir daqui**, criando `/workspace/aos` do zero. Sem migrar outro vault, repo ou rascunho.
+**O que é este arquivo:** lei completa. Uma sessão IDE implementa o AOS **só a partir daqui**, criando o repo do zero. Sem migrar outro vault, repo ou rascunho.
 
 **Nome:** Agency Operating System · **sigla:** AOS  
-**Path a criar:** `/workspace/aos`  
+**Raiz:** qualquer diretório; `aos` descobre pela variável `AOS_ROOT` ou pela pasta que contém `scripts/`.  
 **Fuso:** `America/Sao_Paulo` (Rio de Janeiro)  
 **Idioma:** textos do usuário em português; pastas, arquivos, chaves de frontmatter e títulos de seção (`##`) em inglês, kebab-case, ASCII.
 
@@ -117,7 +117,7 @@ Order: Object → Question → Options → Decision → Implications.
 ## 3. Tree
 
 ```text
-/workspace/aos/
+aos/                        # raiz do repo (onde estiver)
   AGENTS.md
   docs/
     spec.md                 # esta lei, copiada para dentro do repo
