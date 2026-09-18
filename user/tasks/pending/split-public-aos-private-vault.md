@@ -35,7 +35,7 @@ Não: submodule no público apontando pro privado (clone do AOS 404). Não: vaul
 
 ## When
 
-Início 2026-09-18. Due 2026-09-19.
+Due 2026-09-19.
 
 ## Where
 

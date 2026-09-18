@@ -22,8 +22,9 @@ Markdown is the source of truth. After creating or editing tasks/projects, run `
 ## Dates
 
 - Sem prazo: perguntar no fim, depois de escrito.
-- Só data final: perguntar início (obrigatório) → datar e preencher `user/schedule/YYYY/MM/DD.md`, lendo `constraints.md` e o que já cai em cada dia.
-- Só data início: perguntar final; se não der, sugerir e agendar.
+- Unique com due: YAML `due` + **um** dia em `user/schedule/YYYY/MM/DD.md` (o due, se `due > hoje`). Não perguntar início. Não espalhar a task noutros dias.
+- Só data início: perguntar o due; se não der, sugerir e agendar no due.
+- Recorrente: o schedule lista o `until` se houver e for futuro — não cada ocorrência.
 - Conflito schedule vs YAML da task → vale a task.
 - Planejar no dia que ele quiser. Domingo sem task só se ele pedir (constraints).
 
