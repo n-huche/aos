@@ -94,7 +94,7 @@ If Tests exist, the user declares the Tests; otherwise the Goal. **Only the user
 
 ### 2.5 Plan
 
-`## Plan` always on the hub and on the phase. Prose of the descent at that level: the hub Plan names the phases; the phase Plan names the tasks. It does not give the method. Procedure stays in the task `## How`. Identity stays in `## Phases` / `## Tasks` (links).
+`## Plan` always on the hub and on the phase. Numbered list (`1.` `2.` `3.` …) of the descent at that level, in graph order (`depends_on`), not calendar time. One item per cut; not always three. Hub: the phases. Phase: the next drop (usually the tasks). Name states, not methods, not “this host”. Procedure stays in the task `## How`. Identity stays in `## Phases` / `## Tasks` (links).
 
 ### 2.6 Task: class vs folder
 
@@ -236,7 +236,7 @@ H1 = `{PREFIX}-{nn} {Name}` with `prefix` as written in YAML. Example: `# F-01 B
 
 Slug = filename stem. Same stem in `depends_on`, task `phase:`, and links. One identity.
 
-Body: `## Goal` · `## Tests` (only if Goal is not observable) · `## Plan` · `## Phases` (links).
+Body: `## Goal` · `## Tests` (only if Goal is not observable) · `## Plan` (numbered list) · `## Phases` (links).
 
 ### 4.4 Phase
 
@@ -249,7 +249,7 @@ depends_on: [mp-01-other-phase]
 ---
 ```
 
-Body: `## Goal` · `## Tests` (only if Goal is not observable) · `## Plan` · `## Tasks`. How is the task's field. Deps are YAML only.
+Body: `## Goal` · `## Tests` (only if Goal is not observable) · `## Plan` (numbered list) · `## Tasks`. How is the task's field. Deps are YAML only.
 
 In `## Tasks`, link by **slug** relative to `user/tasks/` **without** assuming a forever folder: when the script moves the task, it **rewrites** those links (`pending/x.md` → `completed/x.md` or `obsolete/x.md`).
 

@@ -518,7 +518,7 @@ g
 
 ## Plan
 
-p
+1. p
 
 ## Phases
 
@@ -542,7 +542,7 @@ c
 
 ## Plan
 
-p
+1. p
 
 ## Tasks
 
