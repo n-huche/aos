@@ -337,7 +337,7 @@ Relative to `user/tasks/`. Unique: 1 line. Recurring: up to 2, both `- [ ]`.
 
 `user/schedule/YYYY/MM/DD.md` only if `DD > today`. Body = links. Cron deletes dates ≤ the day it closed.
 
-Unique: **the due only** (one file, the deadline day). Not a start date, not a range. Recurring: only `until` if it exists and is in the future — not every cadence occurrence.
+Unique: **the due only** (one file, the deadline day). Not a start date, not a range. When the unique completes, scripts **drop it from `schedule/`** (the line). If that day has no links left, delete the file. Recurring: only `until` if it exists and is in the future — not every cadence occurrence.
 
 `user/preferences.md`: prose; **scripts do not read it**.
 
@@ -374,12 +374,13 @@ Early check is OK; **do not** change `due`.
 
 1. `status: completed`, `completed_on: <today>`
 2. Move `pending/` → `completed/`
-3. Rewrite links § 6.4
-4. Reindex, commit, push if origin
+3. Drop the unique from `schedule/` (§ 5.5)
+4. Rewrite links § 6.4
+5. Reindex, commit, push if origin
 
 ### 6.4 Rewrite links
 
-Search the `user/` tree for strings `pending/{slug}.md`, `recurring/{slug}.md`, etc., and point them at the new folder. Includes the phase `## Tasks` and future `schedule/` files.
+Search the `user/` tree for strings `pending/{slug}.md`, `recurring/{slug}.md`, etc., and point them at the new folder. Includes the phase `## Tasks`. Not `schedule/`: that is dropped on unique complete (§ 6.3), not rewritten.
 
 ---
 
@@ -455,7 +456,7 @@ The implementation writes this (it may be the body of `AGENTS.md`), pointing at 
 - Independent: they give the simple goal; build the task; honor `user/preferences.md` if present.
 - Talk and write `user/` prose in the language `user/preferences.md` sets. If it does not set one, use the language of the current conversation.
 - No due: ask **at the end**, after writing.
-- Unique with due: YAML + `schedule/` **only on the due** (if `due > today`). Do not ask for a start date.
+- Unique with due: YAML + `schedule/` **only on the due** (if `due > today`). Do not ask for a start date. Complete → scripts drop it from `schedule/`.
 - Start date only: ask for the due; if they will not give one, **suggest** and schedule on the due.
 - Recurring on the schedule: only a future `until`, not every occurrence.
 - Several concrete forms, or a vague how → `user/research/`, not a task.

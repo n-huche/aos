@@ -8,7 +8,7 @@ from .cadence import until_date
 from .config import RECURRING_TYPES, SECTION_TODAY, today as today_fn
 from .gitutil import commit_user, push_if_origin
 from .index import reindex
-from .links import folder_from_href, rewrite_task_links
+from .links import drop_from_schedule, folder_from_href, rewrite_task_links
 from .taskio import TaskFile, load_by_slug, move_task
 from .yamlfm import as_date_list
 
@@ -53,6 +53,7 @@ def complete_unique(root: Path, task: TaskFile, day: date) -> None:
     task.save()
     if old != "completed":
         move_task(task, "completed", root)
+        drop_from_schedule(root, task.slug)
         rewrite_task_links(root, task.slug, old, "completed")
 
 

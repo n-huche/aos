@@ -25,7 +25,7 @@ Markdown is the source of truth. After creating or editing tasks/projects, run `
 ## Dates
 
 - No due: ask at the end, after writing.
-- Unique with due: YAML `due` + **one** day in `user/schedule/YYYY/MM/DD.md` (the due, if `due > today`). Do not ask for a start date. Do not spread the task across other days.
+- Unique with due: YAML `due` + **one** day in `user/schedule/YYYY/MM/DD.md` (the due, if `due > today`). Do not ask for a start date. Do not spread the task across other days. Complete → scripts drop it from `schedule/`.
 - Start date only: ask for the due; if they will not give one, suggest and schedule on the due.
 - Recurring: the schedule lists `until` if it exists and is in the future — not every occurrence.
 - Schedule vs task YAML conflict → the task wins.

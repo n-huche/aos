@@ -559,6 +559,37 @@ c
         self.assertIn("tasks/completed/send.md", phase)
         self.assertNotIn("tasks/pending/send.md", phase)
 
+    def test_unique_complete_drops_schedule(self) -> None:
+        write_unique(self.root, "send", "Send", "2026-09-16")
+        write_unique(self.root, "keep", "Keep", "2026-09-20")
+        sched = self.root / "user/schedule/2026/09"
+        sched.mkdir(parents=True, exist_ok=True)
+        (sched / "16.md").write_text(
+            """# 2026-09-16
+
+- [Send](../../../tasks/pending/send.md)
+- [Keep](../../../tasks/pending/keep.md)
+""",
+            encoding="utf-8",
+        )
+        (sched / "20.md").write_text(
+            """# 2026-09-20
+
+- [Send](../../../tasks/pending/send.md)
+""",
+            encoding="utf-8",
+        )
+        self.aos("reindex")
+        path = self.root / "user/tasks/tasks.md"
+        path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
+        self.aos("sync")
+        day16 = (sched / "16.md").read_text(encoding="utf-8")
+        self.assertNotIn("send.md", day16)
+        self.assertIn("keep.md", day16)
+        self.assertFalse((sched / "20.md").is_file())
+        phase_ok = self.root / "user/tasks/completed/send.md"
+        self.assertTrue(phase_ok.is_file())
+
     def test_watch_syncs_unique_checkbox(self) -> None:
         write_unique(self.root, "seen", "Seen", "2026-09-16")
         self.aos("reindex")
