@@ -9,6 +9,4 @@ depends_on: [mp-01-other-phase]
 
 ## Condition
 
-## Deliverable
-
 ## Tasks

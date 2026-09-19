@@ -540,10 +540,6 @@ depends_on: []
 
 c
 
-## Deliverable
-
-e
-
 ## Tasks
 
 - [Send](../../../../tasks/pending/send.md)

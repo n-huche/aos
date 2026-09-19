@@ -18,9 +18,12 @@ Actions are centralized in **tasks**, whose intent is to reach or preserve a **d
 - **Goal:** reach a new state.
 - **Maintenance:** preserve a state already reached.
 
-Goals are **simple** (one task, or the same one repeated until the goal) or **complex** (they become a **project**).
+A goal is an abstraction. Far from what can be executed, the path to reality is not obvious. AOS **lowers** that abstraction until something concrete can run.
 
-Most of the decision happens **before** execution. In execution the task is mechanical: `what` / `how` / `when`; `where` / `with who` if they apply. **How** is the most critical field.
+- **Simple:** already close to concrete. No intermediate split. One task, or the same one repeated until the goal.
+- **Complex:** composed of lower abstractions. Those become **phases** (a **project**). No nesting: if a phase is still too abstract, the pieces are also phases, and the higher phase `depends_on` them.
+
+A **task** is not a smaller phase. Decomposition stops there: one concrete form is chosen. The same abstraction often admits several concretions; **research** picks which is adequate. Then execution is mechanical: `what` / `how` / `when`; `where` / `with who` if they apply. **How** is the most critical field.
 
 Status and evidence reflect **reality**, not volume of work. Task complete ≠ positive outcome. Phase complete = **condition** true, not a 100% checklist.
 
@@ -33,11 +36,11 @@ Status and evidence reflect **reality**, not volume of work. Task complete ≠ p
 ## 2. Model
 
 ```text
-GOAL        state to reach
-  → PROJECT complex goal
-    → PHASE intermediate state with value of its own
-      → CONDITION how I know the state is true
-        ↑ TASKS mechanical means
+GOAL        abstraction to make real
+  → PROJECT when it must split
+    → PHASE lower abstraction (flat; depends_on)
+      → CONDITION how I know it is real
+        ↑ TASKS chosen concrete form
           → reality / evidence / review
 ```
 
@@ -68,7 +71,7 @@ Project `due`: a date or `null`. No `projects.md`. Who changes project status is
 
 ### 2.3 Phase
 
-A state with value of its own, not a bucket. Heuristic: if you removed the phase, would that state still be worth having?
+A lower abstraction that is still a state, not a bucket. Heuristic: if you removed the phase, would that state still be worth having? After a split, keep the higher phase only if its condition is not merely the AND of `depends_on`. If it is only that AND, it is a ghost level: delete it; the hub goal aggregates.
 
 Complete ⇔ condition true, **even with pending tasks**. Leftover: the user names the task + a reason → the AI appends to `{project}/notes.md` and moves the file to `user/tasks/obsolete/`.
 
@@ -76,9 +79,9 @@ Tasks done + condition false ⇒ the phase is **not** complete.
 
 Status: `pending` · `ongoing` · `completed` · `obsolete`.
 
-Deps = a graph in frontmatter `depends_on` (slugs). No body section. Parallel if there is no edge. The phase path only changes if the project folder changes.
+Deps = a graph in frontmatter `depends_on` (slugs). No body section. Further descent = new phases on the same graph; the still-abstract phase depends on them. Parallel if there is no edge. The phase path only changes if the project folder changes.
 
-No `## How` on the phase. How lives on the task. Strategy without a task yet → `user/research/`.
+No `## How` and no `## Deliverable` on the phase. Concretion is the task. Several possible forms → `user/research/`.
 
 ### 2.4 Condition
 
@@ -106,7 +109,7 @@ Task slugs are **global**.
 
 ### 2.6 Research
 
-Not a task. `user/research/{slug}.md`. On demand or during planning. Open = empty `## Decision`.
+Not a task. `user/research/{slug}.md`. The same abstraction often admits several concrete forms; research chooses which is adequate — including a still-vague how. On demand or during planning. Open = empty `## Decision`.
 
 Order: Object → Question → Options → Decision → Implications.
 
@@ -237,7 +240,7 @@ depends_on: [mp-01-other-phase]
 ---
 ```
 
-Body: `## Condition` · `## Deliverable` · `## Tasks`. How is the task's field, not the phase's. Deps are YAML only.
+Body: `## Condition` · `## Tasks`. How is the task's field. Deps are YAML only. No Deliverable.
 
 In `## Tasks`, link by **slug** relative to `user/tasks/` **without** assuming a forever folder: when the script moves the task, it **rewrites** those links (`pending/x.md` → `completed/x.md` or `obsolete/x.md`).
 
@@ -446,7 +449,7 @@ The implementation writes this (it may be the body of `AGENTS.md`), pointing at 
 - Unique with due: YAML + `schedule/` **only on the due** (if `due > today`). Do not ask for a start date.
 - Start date only: ask for the due; if they will not give one, **suggest** and schedule on the due.
 - Recurring on the schedule: only a future `until`, not every occurrence.
-- Vague how → `user/research/`, not a task.
+- Several concrete forms, or a vague how → `user/research/`, not a task.
 - Do not declare a condition true.
 - Useless task: they say so + a reason → `notes.md` + `obsolete/` + links.
 - Until event / end maintenance / cancel: only on command. Cancel project = move `projects/{status}/{slug}/` → `projects/canceled/{slug}/`.

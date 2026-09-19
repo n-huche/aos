@@ -32,7 +32,7 @@ Markdown is the source of truth. After creating or editing tasks/projects, run `
 
 ## How and research
 
-- Vague how → `user/research/{slug}.md`, not a task.
+- Several concrete forms of the same abstraction, or a vague how → `user/research/{slug}.md`, not a task.
 - Open research = empty `## Decision`. Order: Object → Question → Options → Decision → Implications.
 
 ## Close, cancel, obsolete
