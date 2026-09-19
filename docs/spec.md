@@ -230,9 +230,9 @@ prefix: MP
 
 `prefix` = short label for the project. It enters the phase filename and the phase H1.
 
-Phase filename = `{prefix}-{nn}-{name}.md`, all lowercase. `nn` is a two-digit id assigned at creation (next unused number in that project). It does not change if `## Phases` is reordered. Example: prefix `F`, name Agency system → `f-01-agency-system.md`.
+Phase filename = `{prefix}-{nn}-{name}.md`, all lowercase. `nn` is a two-digit id assigned at creation (next unused number in that project). It does not change if `## Phases` is reordered. Example: prefix `F`, name Box access → `f-01-box-access.md`.
 
-H1 = `{PREFIX}-{nn} {Name}` with `prefix` as written in YAML. Example: `# F-01 Agency system`.
+H1 = `{PREFIX}-{nn} {Name}` with `prefix` as written in YAML. Example: `# F-01 Box access`.
 
 Slug = filename stem. Same stem in `depends_on`, task `phase:`, and links. One identity.
 
