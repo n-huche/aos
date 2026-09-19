@@ -522,11 +522,11 @@ c
 
 ## Phases
 
-- [One](phases/one.md)
+- [One](phases/de-01-one.md)
 """,
             encoding="utf-8",
         )
-        (proj / "phases/one.md").write_text(
+        (proj / "phases/de-01-one.md").write_text(
             """---
 status: ongoing
 due: null
@@ -561,7 +561,7 @@ h
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
         self.aos("sync")
-        phase = (proj / "phases/one.md").read_text(encoding="utf-8")
+        phase = (proj / "phases/de-01-one.md").read_text(encoding="utf-8")
         self.assertIn("tasks/completed/send.md", phase)
         self.assertNotIn("tasks/pending/send.md", phase)
 

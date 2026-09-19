@@ -2,10 +2,10 @@
 status: pending
 due: null
 project: my-project
-depends_on: [other-phase]
+depends_on: [mp-01-other-phase]
 ---
 
-# Phase
+# MP-01 Phase
 
 ## Condition
 

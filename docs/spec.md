@@ -135,7 +135,7 @@ aos/                        # repo root (wherever it lives)
       ongoing/{slug}/...
       completed/{slug}/...
       canceled/{slug}/...
-        phases/{phase-slug}.md
+        phases/{prefix}-{nn}-{name}.md
         notes.md
     tasks/
       tasks.md
@@ -151,7 +151,7 @@ aos/                        # repo root (wherever it lives)
 ```
 
 Hub `user/projects/{status}/{slug}/{slug}.md`  
-Phase `.../phases/{phase-slug}.md`  
+Phase `.../phases/{prefix}-{nn}-{name}.md`  
 Unique `user/tasks/pending/{slug}.md`  
 Recurring `user/tasks/recurring/{slug}.md`
 
@@ -176,7 +176,7 @@ status: pending              # pending | completed | obsolete | canceled
 due: 2026-09-18              # YYYY-MM-DD or null
 completed_on: null           # filled on check; YYYY-MM-DD
 project: my-project          # unique-project only
-phase: my-phase              # unique-project only
+phase: mp-01-my-phase        # unique-project only; filename stem
 ---
 ```
 
@@ -191,7 +191,7 @@ status: recurring
 until: 2026-12-01            # XOR until_event; omit on maintenance
 until_event: null
 project: my-project          # if recurring-project
-phase: my-phase
+phase: mp-01-my-phase        # filename stem
 done_on: []                  # completed occurrences, YYYY-MM-DD
 cadence:
   kind: daily                # daily | weekdays | interval
@@ -214,7 +214,13 @@ prefix: MP
 ---
 ```
 
-`prefix` = short label for human phase headings; it does not enter the filename. Phase filename = kebab of the name.
+`prefix` = short label for the project. It enters the phase filename and the phase H1.
+
+Phase filename = `{prefix}-{nn}-{name}.md`, all lowercase. `nn` is a two-digit id assigned at creation (next unused number in that project). It does not change if `## Phases` is reordered. Example: prefix `F`, name Agency system → `f-01-agency-system.md`.
+
+H1 = `{PREFIX}-{nn} {Name}` with `prefix` as written in YAML. Example: `# F-01 Agency system`.
+
+Slug = filename stem. Same stem in `depends_on`, task `phase:`, and links. One identity.
 
 Body: `## Goal` · `## Condition` · `## Phases` (links).
 
@@ -225,7 +231,7 @@ Body: `## Goal` · `## Condition` · `## Phases` (links).
 status: pending
 due: null
 project: my-project
-depends_on: [other-phase]
+depends_on: [mp-01-other-phase]
 ---
 ```
 

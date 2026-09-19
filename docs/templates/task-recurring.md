@@ -4,7 +4,7 @@ status: recurring
 until: 2026-12-01            # XOR until_event; omit on maintenance
 until_event: null
 project: my-project          # if recurring-project
-phase: my-phase
+phase: mp-01-my-phase        # filename stem
 done_on: []                  # completed occurrences, YYYY-MM-DD
 cadence:
   kind: daily                # daily | weekdays | interval
