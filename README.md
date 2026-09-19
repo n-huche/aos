@@ -1,6 +1,6 @@
 # Agency Operating System (AOS)
 
-Markdown operating system for an agency: tasks, projects, a derived index, daily close, and a watcher on checkboxes. The law is [`docs/spec.md`](docs/spec.md). The AI contract is [`AGENTS.md`](AGENTS.md).
+Markdown operating system. Decision first; execution is mechanical. Tasks, projects, a derived index, daily close, and a watcher on checkboxes. The law is [`docs/spec.md`](docs/spec.md). The AI contract is [`AGENTS.md`](AGENTS.md).
 
 This repository is the public law and the scripts. It does not ship real life.
 
