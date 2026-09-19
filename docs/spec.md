@@ -94,7 +94,7 @@ If Tests exist, the user declares the Tests; otherwise the Goal. **Only the user
 
 ### 2.5 Plan
 
-`## Plan` always on the hub and on the phase. Numbered list (`1.` `2.` `3.` …) of the descent at that level, in graph order (`depends_on`), not calendar time. One item per cut; not always three. Hub: the phases. Phase: the next drop (usually the tasks). Name states, not methods, not “this host”. Procedure stays in the task `## How`. Identity stays in `## Phases` / `## Tasks` (links).
+`## Plan` always on the hub and on the phase. Numbered list (`1.` `2.` `3.` …) of **what to do** at that abstraction level, in graph order (`depends_on`), not calendar time. One item per cut; not always three. Hub: the phases. Phase: the next drop (usually the tasks). Same altitude as this file's Goal — not the mechanical `## How` of a task. Identity stays in `## Phases` / `## Tasks` (links).
 
 ### 2.6 Task: class vs folder
 
