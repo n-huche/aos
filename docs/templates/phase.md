@@ -11,8 +11,4 @@ depends_on: [mp-01-other-phase]
 
 ## Deliverable
 
-## How
-
-## Depends on
-
 ## Tasks

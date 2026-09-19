@@ -76,7 +76,9 @@ Tasks done + condition false ⇒ the phase is **not** complete.
 
 Status: `pending` · `ongoing` · `completed` · `obsolete`.
 
-Deps = a graph: frontmatter `depends_on` **and** `## Depends on` with links. Parallel if there is no edge. The phase path only changes if the project folder changes.
+Deps = a graph in frontmatter `depends_on` (slugs). No body section. Parallel if there is no edge. The phase path only changes if the project folder changes.
+
+No `## How` on the phase. How lives on the task. Strategy without a task yet → `user/research/`.
 
 ### 2.4 Condition
 
@@ -235,7 +237,7 @@ depends_on: [mp-01-other-phase]
 ---
 ```
 
-Body: `## Condition` · `## Deliverable` · `## How` · `## Depends on` · `## Tasks`.
+Body: `## Condition` · `## Deliverable` · `## Tasks`. How is the task's field, not the phase's. Deps are YAML only.
 
 In `## Tasks`, link by **slug** relative to `user/tasks/` **without** assuming a forever folder: when the script moves the task, it **rewrites** those links (`pending/x.md` → `completed/x.md` or `obsolete/x.md`).
 

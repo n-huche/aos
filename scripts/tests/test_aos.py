@@ -544,12 +544,6 @@ c
 
 e
 
-## How
-
-h
-
-## Depends on
-
 ## Tasks
 
 - [Send](../../../../tasks/pending/send.md)
