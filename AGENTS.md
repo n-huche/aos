@@ -11,7 +11,8 @@ Markdown is the source of truth. After creating or editing tasks/projects, run `
 ## Goal
 
 - Only the user creates and changes the goal.
-- Do not declare a condition true.
+- Do not declare a Goal or Tests true.
+- Hub/phase Goal must be observable, or the file has `## Tests`.
 
 ## When to write
 

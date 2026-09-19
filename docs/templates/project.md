@@ -8,6 +8,6 @@ prefix: MP                  # short label; enters phase filename and H1
 
 ## Goal
 
-## Condition
+## Plan
 
 ## Phases

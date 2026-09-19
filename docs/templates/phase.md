@@ -7,6 +7,8 @@ depends_on: [mp-01-other-phase]
 
 # MP-01 Phase
 
-## Condition
+## Goal
+
+## Plan
 
 ## Tasks

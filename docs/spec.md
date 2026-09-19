@@ -25,7 +25,7 @@ A goal is an abstraction. Far from what can be executed, the path to reality is 
 
 A **task** is not a smaller phase. Decomposition stops there: one concrete form is chosen. The same abstraction often admits several concretions; **research** picks which is adequate. Then execution is mechanical: `what` / `how` / `when`; `where` / `with who` if they apply. **How** is the most critical field.
 
-Status and evidence reflect **reality**, not volume of work. Task complete ≠ positive outcome. Phase complete = **condition** true, not a 100% checklist.
+Status and evidence reflect **reality**, not volume of work. Task complete ≠ positive outcome. Phase or project complete = **Goal** true (or **Tests**, if present), not a 100% checklist.
 
 **Stack:** Markdown = source of truth · deterministic scripts · AI for planning · any editor as UI. The system **does not know Obsidian**. No required plugin.
 
@@ -36,10 +36,10 @@ Status and evidence reflect **reality**, not volume of work. Task complete ≠ p
 ## 2. Model
 
 ```text
-GOAL        abstraction to make real
+GOAL        abstraction to make real (Tests if not observable)
   → PROJECT when it must split
     → PHASE lower abstraction (flat; depends_on)
-      → CONDITION how I know it is real
+      → PLAN  the descent at that level
         ↑ TASKS chosen concrete form
           → reality / evidence / review
 ```
@@ -52,12 +52,15 @@ A reached goal **does not** become maintenance by itself. If the user asks, a **
 
 ### 2.1 Goal
 
-No folder.
+No folder. The statement of the abstraction at that level: a **state** to make real.
 
-- Complex: **Goal** + **Condition** on the project hub. Only the user defines it and only the user changes it.
+- Complex (project hub): global at that abstraction. Only the user defines it and only the user changes it.
+- Phase: local at that abstraction.
 - Simple: on the independent task itself (`## Goal`).
 
-A project-task does not repeat the why beyond `project:` / `phase:`.
+A project-task does not repeat the why beyond `project:` / `phase:` — no `## Goal` on it.
+
+The Goal must be observable, or the file has `## Tests`. Both vague is illegal.
 
 ### 2.2 Project
 
@@ -65,29 +68,35 @@ Folder 1:1 with status: `pending` · `ongoing` · `completed` · `canceled`.
 
 There is no `paused`. Pause = `due: null` on the hub. The folder stays `pending` or `ongoing`.
 
-**Completed** = the user declares the **goal** condition true. Completed phases are operational, not authority.
+**Completed** = the user declares the hub Goal true (or its Tests, if present). Completed phases are operational, not authority.
 
 Project `due`: a date or `null`. No `projects.md`. Who changes project status is the user/AI, **never** cron. Move the whole `{slug}/` folder (hub, `phases/`, `notes.md`). Links *inside* the project do not change. Links *from outside* (`tasks.md` does not point at projects; a phase points at tasks — see § 6.3).
 
 ### 2.3 Phase
 
-A lower abstraction that is still a state, not a bucket. Heuristic: if you removed the phase, would that state still be worth having? After a split, keep the higher phase only if its condition is not merely the AND of `depends_on`. If it is only that AND, it is a ghost level: delete it; the hub goal aggregates.
+A lower abstraction that is still a state, not a bucket. Heuristic: if you removed the phase, would that state still be worth having? After a split, keep the higher phase only if its Goal is not merely the AND of `depends_on`. If it is only that AND, it is a ghost level: delete it; the hub Goal aggregates.
 
-Complete ⇔ condition true, **even with pending tasks**. Leftover: the user names the task + a reason → the AI appends to `{project}/notes.md` and moves the file to `user/tasks/obsolete/`.
+Complete ⇔ the phase Goal is true (Tests if present), **even with pending tasks**. Leftover: the user names the task + a reason → the AI appends to `{project}/notes.md` and moves the file to `user/tasks/obsolete/`.
 
-Tasks done + condition false ⇒ the phase is **not** complete.
+Tasks done + Goal false ⇒ the phase is **not** complete. Plan done ≠ complete.
 
 Status: `pending` · `ongoing` · `completed` · `obsolete`.
 
 Deps = a graph in frontmatter `depends_on` (slugs). No body section. Further descent = new phases on the same graph; the still-abstract phase depends on them. Parallel if there is no edge. The phase path only changes if the project folder changes.
 
-No `## How` and no `## Deliverable` on the phase. Concretion is the task. Several possible forms → `user/research/`.
+No `## How`, no `## Deliverable`, no `## Condition` on the phase. Concretion is the task. Several possible forms → `user/research/`.
 
-### 2.4 Condition
+### 2.4 Tests
 
-A `## Condition` block on the phase and on the hub. No mandatory metrics in v1. **Only the user** declares it true.
+`## Tests` on the hub or phase **only** when that level's Goal is not itself observable. Omit when the Goal is the test.
 
-### 2.5 Task: class vs folder
+If Tests exist, the user declares the Tests; otherwise the Goal. **Only the user** declares it true. Not metrics: observable proxies (pass Y, create Z). No mandatory numbers in v1.
+
+### 2.5 Plan
+
+`## Plan` always on the hub and on the phase. Prose of the descent at that level: the hub Plan names the phases; the phase Plan names the tasks. It does not give the method. Procedure stays in the task `## How`. Identity stays in `## Phases` / `## Tasks` (links).
+
+### 2.6 Task: class vs folder
 
 `type`: `unique-independent` · `unique-project` · `recurring-independent` · `recurring-project` · `maintenance`
 
@@ -107,13 +116,13 @@ No `ongoing` for uniques. No `maintenance/` subfolder and no due-date buckets on
 
 Task slugs are **global**.
 
-### 2.6 Research
+### 2.7 Research
 
 Not a task. `user/research/{slug}.md`. The same abstraction often admits several concrete forms; research chooses which is adequate — including a still-vague how. On demand or during planning. Open = empty `## Decision`.
 
 Order: Object → Question → Options → Decision → Implications.
 
-### 2.7 Notes
+### 2.8 Notes
 
 `{project}/notes.md` — one file, created when there is something to record (outcome, obsolete task, observation). No `evidence/` folder.
 
@@ -227,7 +236,7 @@ H1 = `{PREFIX}-{nn} {Name}` with `prefix` as written in YAML. Example: `# F-01 A
 
 Slug = filename stem. Same stem in `depends_on`, task `phase:`, and links. One identity.
 
-Body: `## Goal` · `## Condition` · `## Phases` (links).
+Body: `## Goal` · `## Tests` (only if Goal is not observable) · `## Plan` · `## Phases` (links).
 
 ### 4.4 Phase
 
@@ -240,13 +249,13 @@ depends_on: [mp-01-other-phase]
 ---
 ```
 
-Body: `## Condition` · `## Tasks`. How is the task's field. Deps are YAML only. No Deliverable.
+Body: `## Goal` · `## Tests` (only if Goal is not observable) · `## Plan` · `## Tasks`. How is the task's field. Deps are YAML only.
 
 In `## Tasks`, link by **slug** relative to `user/tasks/` **without** assuming a forever folder: when the script moves the task, it **rewrites** those links (`pending/x.md` → `completed/x.md` or `obsolete/x.md`).
 
 ### 4.5 Research
 
-No status in YAML. Headings in the order of § 2.6. Optional frontmatter:
+No status in YAML. Headings in the order of § 2.7. Optional frontmatter:
 
 ```yaml
 ---
@@ -450,7 +459,7 @@ The implementation writes this (it may be the body of `AGENTS.md`), pointing at 
 - Start date only: ask for the due; if they will not give one, **suggest** and schedule on the due.
 - Recurring on the schedule: only a future `until`, not every occurrence.
 - Several concrete forms, or a vague how → `user/research/`, not a task.
-- Do not declare a condition true.
+- Do not declare a Goal or Tests true.
 - Useless task: they say so + a reason → `notes.md` + `obsolete/` + links.
 - Until event / end maintenance / cancel: only on command. Cancel project = move `projects/{status}/{slug}/` → `projects/canceled/{slug}/`.
 - Do not invent people, addresses, personal dates, habits.
@@ -502,7 +511,7 @@ Files in `docs/templates/`. Body matches sections 4.x + the listed headings. No 
 ## 13. Do not yield
 
 - Reality > checklist.
-- Phase = state + condition.
+- Phase = state + Goal (Tests if the Goal is not observable).
 - A deadline is a calculation, not a folder.
 - Unique: `x` moves the file. Recurring: `x` (Today only) records an occurrence.
 - Cron: index + daily + past schedule; completes recurring only on a date `until`.

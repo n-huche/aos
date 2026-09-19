@@ -516,9 +516,9 @@ prefix: DE
 
 g
 
-## Condition
+## Plan
 
-c
+p
 
 ## Phases
 
@@ -536,9 +536,13 @@ depends_on: []
 
 # One
 
-## Condition
+## Goal
 
 c
+
+## Plan
+
+p
 
 ## Tasks
 
