@@ -2,7 +2,7 @@
 
 AI contract for the Agency Operating System (AOS). The full law is [docs/spec.md](docs/spec.md).
 
-This repository is English. Folder names, file names, and frontmatter keys: English, kebab-case, ASCII. Timezone: `America/Sao_Paulo`. Section headings (`##`) in notes: English.
+This repository is English. Folder names, file names, and frontmatter keys: English, kebab-case, ASCII. Timezone: `America/Sao_Paulo`. Section headings (`##`) in `{project}/notes.md`: English. That file is atemporal (spec § 2.8).
 
 Prose inside `user/` follows `user/preferences.md`. If that file does not set a language, use the language of the current conversation.
 
@@ -39,6 +39,7 @@ Markdown is the source of truth. After creating or editing tasks/projects, run `
 ## Close, cancel, obsolete
 
 - Useless task: they say so + a reason → `{project}/notes.md` + move to `user/tasks/obsolete/` + rewrite links.
+- `{project}/notes.md` is atemporal. Rewrite so current truth stands alone. Do not append a dated log.
 - Until event / end of maintenance / cancel: only on command.
 - Cancel project = move `user/projects/{status}/{slug}/` → `user/projects/canceled/{slug}/`.
 - A reached goal does not become maintenance by itself. If they ask, a new maintenance is created.
