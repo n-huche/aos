@@ -126,6 +126,15 @@ Order: Object → Question → Options → Decision → Implications.
 
 `{project}/notes.md` — one file, created when there is something to record (outcome, obsolete task, observation). No `evidence/` folder.
 
+**Atemporal.** The file states what remains true of the project. It is not a log and not a snapshot of status.
+
+- Headings (`##`) are English. No dates in headings.
+- Status, dues, and diary words (`already` / `pending` / `ongoing` as a journal of when something was true) live in YAML, `daily/`, and git — not here.
+- A sentence that needs its writing date to stay true does not belong.
+- When a fact dies: rewrite or delete. Do not append a later correction.
+
+Daily `## Notes, optional` are of that day. They are not this file.
+
 ---
 
 ## 3. Tree
@@ -462,6 +471,7 @@ The implementation writes this (it may be the body of `AGENTS.md`), pointing at 
 - Several concrete forms, or a vague how → `user/research/`, not a task.
 - Do not declare a Goal or Tests true.
 - Useless task: they say so + a reason → `notes.md` + `obsolete/` + links.
+- `{project}/notes.md` is atemporal (§ 2.8). Rewrite so current truth stands alone. Do not append a dated log.
 - Until event / end maintenance / cancel: only on command. Cancel project = move `projects/{status}/{slug}/` → `projects/canceled/{slug}/`.
 - Do not invent people, addresses, personal dates, habits.
 - Do not check `x` in the user's place.
