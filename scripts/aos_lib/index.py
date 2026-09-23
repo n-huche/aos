@@ -4,7 +4,7 @@ from collections import defaultdict
 from datetime import date
 from pathlib import Path
 
-from .cadence import index_dates, start_date
+from .cadence import done_count, index_dates, start_date, times_of
 from .config import (
     BUCKET_ORDER,
     RECURRING_TYPES,
@@ -55,7 +55,7 @@ def recurring_bucket(when: date, today: date) -> str:
     return bucket_for((when - today).days, overdue=False, undefined=False)
 
 
-def render_index(items_by_bucket: dict[str, list[tuple[str, str]]]) -> str:
+def render_index(items_by_bucket: dict[str, list[tuple[str, str, str | None]]]) -> str:
     lines = ["# Tasks"]
     any_items = False
     for heading in BUCKET_ORDER:
@@ -66,8 +66,11 @@ def render_index(items_by_bucket: dict[str, list[tuple[str, str]]]) -> str:
         lines.append("")
         lines.append(f"## {heading}")
         lines.append("")
-        for title, href in items:
-            lines.append(f"- [ ] [{title}]({href})")
+        for title, href, suffix in items:
+            line = f"- [ ] [{title}]({href})"
+            if suffix:
+                line += f" {suffix}"
+            lines.append(line)
     if not any_items:
         lines.append("")
         return "\n".join(lines).rstrip() + "\n"
@@ -97,8 +100,17 @@ def activate_started_recurring(root: Path, today: date) -> list[str]:
     return moved
 
 
-def collect_index(root: Path, today: date) -> dict[str, list[tuple[str, str]]]:
-    buckets: dict[str, list[tuple[str, str, str]]] = defaultdict(list)
+def _today_suffix(data: dict, heading: str, today: date) -> str | None:
+    if heading != SECTION_TODAY:
+        return None
+    n_times = times_of(data)
+    if n_times < 2:
+        return None
+    return f"({done_count(data, today)}/{n_times})"
+
+
+def collect_index(root: Path, today: date) -> dict[str, list[tuple[str, str, str | None]]]:
+    buckets: dict[str, list[tuple[str, str, str, str | None]]] = defaultdict(list)
     for task in iter_task_files(root):
         t = task.type
         if t in UNIQUE_TYPES:
@@ -108,14 +120,18 @@ def collect_index(root: Path, today: date) -> dict[str, list[tuple[str, str]]]:
             heading = unique_bucket(due, today)
             href = f"pending/{task.slug}.md"
             sort_key = due.isoformat() if due else "9999-99-99"
-            buckets[heading].append((sort_key + task.title.lower(), task.title, href))
+            buckets[heading].append(
+                (sort_key + task.title.lower(), task.title, href, None)
+            )
             continue
         if t in RECURRING_TYPES and task.folder == "pending":
             start = start_date(task.data)
             heading = unique_bucket(start, today)
             href = f"pending/{task.slug}.md"
             sort_key = start.isoformat() if start else "9999-99-99"
-            buckets[heading].append((sort_key + task.title.lower(), task.title, href))
+            buckets[heading].append(
+                (sort_key + task.title.lower(), task.title, href, None)
+            )
             continue
         if t in RECURRING_TYPES:
             if task.folder != "recurring":
@@ -131,11 +147,12 @@ def collect_index(root: Path, today: date) -> dict[str, list[tuple[str, str]]]:
         for when in dates:
             heading = recurring_bucket(when, today)
             sort_key = when.isoformat() + task.title.lower()
-            buckets[heading].append((sort_key, task.title, href))
-    out: dict[str, list[tuple[str, str]]] = {}
+            suffix = _today_suffix(task.data, heading, today)
+            buckets[heading].append((sort_key, task.title, href, suffix))
+    out: dict[str, list[tuple[str, str, str | None]]] = {}
     for heading, rows in buckets.items():
         rows.sort()
-        out[heading] = [(title, href) for _k, title, href in rows]
+        out[heading] = [(title, href, suffix) for _k, title, href, suffix in rows]
     return out
 
 

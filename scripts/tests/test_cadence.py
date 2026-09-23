@@ -8,7 +8,15 @@ from pathlib import Path
 SCRIPTS = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS))
 
-from aos_lib.cadence import add_interval, add_months, index_dates, occurs_on
+from aos_lib.cadence import (
+    add_interval,
+    add_months,
+    day_complete,
+    done_count,
+    index_dates,
+    occurs_on,
+    times_of,
+)
 from aos_lib.yamlfm import dump_yaml, join_frontmatter, parse_yaml, split_frontmatter
 
 
@@ -74,6 +82,44 @@ class CadenceTest(unittest.TestCase):
         self.assertEqual(again["status"], "recurring")
         self.assertEqual(again["done_on"], [date(2026, 9, 16)])
         self.assertIn("# Title", body)
+
+    def test_times_quota_keeps_today_until_complete(self) -> None:
+        today = date(2026, 9, 16)
+        partial = parse_yaml(
+            "times: 3\n"
+            "done_on: [2026-09-16, 2026-09-16]\n"
+            "cadence:\n  kind: daily\n"
+        )
+        self.assertEqual(times_of(partial), 3)
+        self.assertEqual(done_count(partial, today), 2)
+        self.assertFalse(day_complete(partial, today))
+        self.assertEqual(
+            index_dates(partial, today),
+            [date(2026, 9, 16), date(2026, 9, 17)],
+        )
+        full = parse_yaml(
+            "times: 3\n"
+            "done_on: [2026-09-16, 2026-09-16, 2026-09-16]\n"
+            "cadence:\n  kind: daily\n"
+        )
+        self.assertTrue(day_complete(full, today))
+        self.assertEqual(index_dates(full, today), [date(2026, 9, 17)])
+
+    def test_done_on_duplicates_roundtrip(self) -> None:
+        data = {
+            "type": "recurring-independent",
+            "status": "recurring",
+            "times": 3,
+            "done_on": [date(2026, 9, 16), date(2026, 9, 16)],
+            "cadence": {"kind": "daily"},
+        }
+        dumped = dump_yaml(data)
+        parsed = parse_yaml(dumped)
+        self.assertEqual(parsed["times"], 3)
+        self.assertEqual(
+            parsed["done_on"],
+            [date(2026, 9, 16), date(2026, 9, 16)],
+        )
 
 
 if __name__ == "__main__":

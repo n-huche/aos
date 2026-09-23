@@ -124,6 +124,7 @@ def write_recurring(
     project: str | None = None,
     phase: str | None = None,
     start: str | None = "2026-09-01",
+    times: int | None = None,
 ) -> Path:
     lines = [
         "---",
@@ -142,6 +143,8 @@ def write_recurring(
         lines.append(f"project: {project}")
     if phase is not None:
         lines.append(f"phase: {phase}")
+    if times is not None:
+        lines.append(f"times: {times}")
     if done_on:
         lines.append("done_on:")
         for d in done_on:
@@ -445,6 +448,199 @@ do
         self.aos("reindex")
         text = self.tasks_md()
         self.assertIn("maintenance/box.md", section_items(text, "Today")[0])
+        self.aos("validate")
+
+    def test_times_today_suffix_next_has_none(self) -> None:
+        write_recurring(
+            self.root,
+            "water",
+            "Drink water",
+            kind="daily",
+            until="2026-12-01",
+            times=3,
+        )
+        self.aos("reindex")
+        text = self.tasks_md()
+        self.assertEqual(
+            section_items(text, "Today"),
+            ["- [ ] [Drink water](recurring/water.md) (0/3)"],
+        )
+        nxt = section_items(text, "1 day")
+        self.assertEqual(nxt, ["- [ ] [Drink water](recurring/water.md)"])
+        self.assertNotIn("(", nxt[0].rsplit(")", 1)[-1])
+
+    def test_times_each_x_appends_and_unchecks_until_quota(self) -> None:
+        write_recurring(
+            self.root,
+            "water",
+            "Drink water",
+            kind="daily",
+            until="2026-12-01",
+            times=3,
+        )
+        self.aos("reindex")
+        path = self.root / "user/tasks/tasks.md"
+        rec = self.root / "user/tasks/recurring/water.md"
+        for n in (1, 2):
+            path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
+            self.aos("sync")
+            data, _body = split_frontmatter(rec.read_text(encoding="utf-8"))
+            self.assertEqual(
+                [d.isoformat() for d in (data.get("done_on") or [])],
+                [TODAY] * n,
+            )
+            today_line = section_items(self.tasks_md(), "Today")[0]
+            self.assertTrue(today_line.startswith("- [ ]"))
+            self.assertEqual(
+                today_line,
+                f"- [ ] [Drink water](recurring/water.md) ({n}/3)",
+            )
+            self.assertTrue(rec.is_file())
+        path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
+        self.aos("sync")
+        data, _body = split_frontmatter(rec.read_text(encoding="utf-8"))
+        self.assertEqual(
+            [d.isoformat() for d in (data.get("done_on") or [])],
+            [TODAY, TODAY, TODAY],
+        )
+        text = self.tasks_md()
+        self.assertNotIn("## Today", text)
+        self.assertEqual(headings(text), ["1 day"])
+        log = _git(self.root, "log", "-1", "--pretty=%s")
+        self.assertEqual(log.stdout.strip(), "aos: sync tasks")
+
+    def test_times_partial_fails_daily(self) -> None:
+        write_recurring(
+            self.root,
+            "water",
+            "Drink water",
+            kind="daily",
+            until="2026-12-01",
+            times=3,
+            done_on=["2026-09-16", "2026-09-16"],
+        )
+        self.aos("daily-close", "2026-09-16", today="2026-09-17")
+        daily = (self.root / "user/daily/2026-09-16.md").read_text(encoding="utf-8")
+        self.assertIn("**Result:** failure", daily)
+        self.assertIn("## Failed tasks", daily)
+        self.assertIn("recurring/water.md", daily)
+        self.assertNotIn("## Completed tasks\n\n- [", daily)
+        self.assertTrue((self.root / "user/tasks/recurring/water.md").is_file())
+
+    def test_times_quota_met_daily_done(self) -> None:
+        write_recurring(
+            self.root,
+            "water",
+            "Drink water",
+            kind="daily",
+            until="2026-12-01",
+            times=3,
+            done_on=["2026-09-16", "2026-09-16", "2026-09-16"],
+        )
+        self.aos("daily-close", "2026-09-16", today="2026-09-17")
+        daily = (self.root / "user/daily/2026-09-16.md").read_text(encoding="utf-8")
+        self.assertIn("**Result:** satisfactory", daily)
+        self.assertNotIn("## Failed tasks", daily)
+        self.assertIn("recurring/water.md", daily)
+
+    def test_times_until_today_incomplete_stays_live(self) -> None:
+        write_recurring(
+            self.root,
+            "cycle",
+            "Short cycle",
+            kind="daily",
+            until="2026-09-16",
+            times=3,
+        )
+        self.aos("reindex")
+        path = self.root / "user/tasks/tasks.md"
+        path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
+        self.aos("sync")
+        rec = self.root / "user/tasks/recurring/cycle.md"
+        self.assertTrue(rec.is_file())
+        self.assertFalse((self.root / "user/tasks/completed/cycle.md").exists())
+        data, _body = split_frontmatter(rec.read_text(encoding="utf-8"))
+        self.assertEqual(str(data.get("status")), "recurring")
+        self.assertEqual(
+            [d.isoformat() for d in (data.get("done_on") or [])],
+            [TODAY],
+        )
+        self.assertIn("(1/3)", section_items(self.tasks_md(), "Today")[0])
+
+    def test_times_validate_rejects_one_and_unique(self) -> None:
+        write_recurring(
+            self.root,
+            "water",
+            "Drink water",
+            kind="daily",
+            until="2026-12-01",
+            times=1,
+        )
+        proc = subprocess.run(
+            [sys.executable, str(BIN), "validate"],
+            env=self.env(),
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("times must be an integer", proc.stderr)
+        rec = self.root / "user/tasks/recurring/water.md"
+        rec.unlink()
+        write_unique(self.root, "one", "One unique", "2026-09-16")
+        u = self.root / "user/tasks/pending/one.md"
+        text = u.read_text(encoding="utf-8")
+        u.write_text(text.replace("due: 2026-09-16\n", "due: 2026-09-16\ntimes: 3\n"))
+        proc = subprocess.run(
+            [sys.executable, str(BIN), "validate"],
+            env=self.env(),
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("unique has no times", proc.stderr)
+
+    def test_maintenance_times_same_as_recurring(self) -> None:
+        path = self.root / "user/tasks/maintenance/box.md"
+        path.write_text(
+            """---
+type: maintenance
+status: maintenance
+times: 2
+done_on: []
+cadence:
+  kind: daily
+---
+
+# Box upkeep
+
+## What
+
+keep
+
+## How
+
+do
+""",
+            encoding="utf-8",
+        )
+        self.aos("reindex")
+        self.assertEqual(
+            section_items(self.tasks_md(), "Today"),
+            ["- [ ] [Box upkeep](maintenance/box.md) (0/2)"],
+        )
+        (self.root / "user/tasks/tasks.md").write_text(
+            mark_section(self.tasks_md(), "Today"), encoding="utf-8"
+        )
+        self.aos("sync")
+        data, _body = split_frontmatter(path.read_text(encoding="utf-8"))
+        self.assertEqual(
+            [d.isoformat() for d in (data.get("done_on") or [])],
+            [TODAY],
+        )
+        self.assertEqual(
+            section_items(self.tasks_md(), "Today"),
+            ["- [ ] [Box upkeep](maintenance/box.md) (1/2)"],
+        )
         self.aos("validate")
 
     def test_interval(self) -> None:

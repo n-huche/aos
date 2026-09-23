@@ -4,7 +4,7 @@ import re
 from datetime import date, timedelta
 from pathlib import Path
 
-from .cadence import done_on_set, occurs_on, start_date, until_date
+from .cadence import day_complete, occurs_on, start_date, until_date
 from .config import (
     RECURRING_TYPES,
     SERIES_TYPES,
@@ -132,7 +132,7 @@ def collect_daily(root: Path, d: date) -> tuple[list[tuple[str, str]], list[tupl
         if t in RECURRING_TYPES and (start is None or start > d):
             continue
         until = until_date(task.data)
-        done = d in done_on_set(task.data)
+        done = day_complete(task.data, d)
         if until == d:
             if task.folder == "recurring":
                 finish_recurring_until(root, task)

@@ -1,6 +1,7 @@
 ---
 type: maintenance
 status: maintenance          # maintenance | completed | obsolete | canceled
+# times: 3                   # omit unless the same action repeats >1 per cadence day
 done_on: []
 cadence:
   kind: daily                # daily | weekdays | interval

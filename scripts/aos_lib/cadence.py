@@ -35,8 +35,20 @@ def start_date(data: dict[str, Any]) -> date | None:
     return as_date(data.get("start"))
 
 
-def done_on_set(data: dict[str, Any]) -> set[date]:
-    return set(as_date_list(data.get("done_on") or []))
+def times_of(data: dict[str, Any]) -> int:
+    """Quota per cadence day. Omitted / invalid → 1."""
+    raw = data.get("times")
+    if isinstance(raw, bool) or not isinstance(raw, int) or raw < 2:
+        return 1
+    return raw
+
+
+def done_count(data: dict[str, Any], d: date) -> int:
+    return sum(1 for x in as_date_list(data.get("done_on") or []) if x == d)
+
+
+def day_complete(data: dict[str, Any], d: date) -> bool:
+    return done_count(data, d) >= times_of(data)
 
 
 def cadence_of(data: dict[str, Any]) -> dict[str, Any]:
@@ -134,14 +146,13 @@ def _interval_from(cad: dict[str, Any], start: date) -> Iterator[date]:
 
 
 def next_occurrence(data: dict[str, Any], start: date) -> date | None:
-    """First occurrence on or after start not in done_on, within until."""
+    """First occurrence on or after start whose quota is not met, within until."""
     series = start_date(data)
     if series is not None and start < series:
         start = series
     t = str(data.get("type") or "").strip()
     if t in RECURRING_TYPES and series is None:
         return None
-    done = done_on_set(data)
     cad = cadence_of(data)
     kind = str(cad.get("kind") or "").strip().lower()
     if kind == "daily":
@@ -149,7 +160,7 @@ def next_occurrence(data: dict[str, Any], start: date) -> date | None:
         for _ in range(40000):
             if not within_until(d, data):
                 return None
-            if d not in done:
+            if not day_complete(data, d):
                 return d
             d += timedelta(days=1)
         return None
@@ -162,7 +173,7 @@ def next_occurrence(data: dict[str, Any], start: date) -> date | None:
         for _ in range(40000):
             if not within_until(d, data):
                 return None
-            if d.weekday() in wanted and d not in done:
+            if d.weekday() in wanted and not day_complete(data, d):
                 return d
             d += timedelta(days=1)
         return None
@@ -170,7 +181,7 @@ def next_occurrence(data: dict[str, Any], start: date) -> date | None:
         for cur in _interval_from(cad, start):
             if not within_until(cur, data):
                 return None
-            if cur not in done:
+            if not day_complete(data, cur):
                 return cur
         return None
     return None
@@ -179,7 +190,7 @@ def next_occurrence(data: dict[str, Any], start: date) -> date | None:
 def index_dates(data: dict[str, Any], today: date) -> list[date]:
     """At most two dates: today (if due now) and the next date > today."""
     out: list[date] = []
-    if occurs_on(data, today) and today not in done_on_set(data):
+    if occurs_on(data, today) and not day_complete(data, today):
         out.append(today)
     nxt = next_occurrence(data, today + timedelta(days=1))
     if nxt is not None:
