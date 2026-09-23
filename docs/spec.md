@@ -113,6 +113,7 @@ No `ongoing` for uniques. No `maintenance/` subfolder and no due-date buckets on
 - Unique: `due` a date or `null`.
 - `recurring-independent` / `recurring-project`: `until` **XOR** `until_event` required.
 - `maintenance`: no end until the user says so.
+- `recurring-project` is **inert** while the hub folder is not `ongoing` (not started = `pending`; also `completed` / `canceled`): not in the index, not a daily occurrence. It starts when the hub moves to `ongoing/`. `recurring-independent` and `maintenance` are unaffected.
 
 Task slugs are **global**.
 
@@ -295,6 +296,8 @@ Recurring: at most two lines:
 1. **Today** if the cadence falls today and today ∉ `done_on`
 2. one bucket for the **next date > today** (a single window)
 
+`recurring-project`: those lines only while the hub is `ongoing`.
+
 No Maintenance / Recurring sections. Overdue = **uniques only**.
 
 ### 5.2 Cadence
@@ -398,7 +401,7 @@ Search the `user/` tree for strings `pending/{slug}.md`, `recurring/{slug}.md`, 
 Timezone `America/Sao_Paulo`. D = the day that **ended**. The next reindex clock = D+1.
 
 1. Unique still in `pending/` with `due==D` or `due<D` → failure on daily D.
-2. Recurring whose cadence includes D, D ∉ `done_on`, `until != D` → failure; **not** Overdue; the series continues.
+2. Recurring whose cadence includes D, D ∉ `done_on`, `until != D` → failure; **not** Overdue; the series continues. `recurring-project` while the hub is not `ongoing`: **no** occurrence, **no** failure.
 3. Recurring `until == D`:
    - D ∈ `done_on`: if still in `recurring/`, move to `completed/` (same as § 6.2.2). Daily: done.
    - D ∉ `done_on`: move to `completed/` anyway. Daily: **not done**.
@@ -514,7 +517,7 @@ Files in `docs/templates/`. Body matches sections 4.x + the listed headings. No 
 1. Tree § 3; `user/` without real life; `preferences.md` empty/minimal is OK.
 2. `docs/spec.md` = this law; `AGENTS.md`; templates; `docs/cron.md`; `README.md`.
 3. The commands work (`reindex`, `watch`, `sync`, `daily-close`, `validate`, `up`).
-4. Tests in `scripts/tests/` (not in `user/`): unique, daily, weekdays, interval, until date — empty sections omitted; Overdue uniques only; `x` on a recurring 1 day line reverted; `x` unique moves + `completed_on` + commit; `x` recurring Today fills `done_on`; `daily-close` until without x → completed + daily failure; past schedule gone; catch-up closes missed days with no credit and applies `[x]` on the return day; with `user/.git`, daily-close commits in the nested user git and the parent stays clean.
+4. Tests in `scripts/tests/` (not in `user/`): unique, daily, weekdays, interval, until date — empty sections omitted; Overdue uniques only; `x` on a recurring 1 day line reverted; `x` unique moves + `completed_on` + commit; `x` recurring Today fills `done_on`; `daily-close` until without x → completed + daily failure; past schedule gone; catch-up closes missed days with no credit and applies `[x]` on the return day; with `user/.git`, daily-close commits in the nested user git and the parent stays clean; `recurring-project` inert while the hub is `pending`, live when `ongoing`.
 5. `origin` on GitHub; public tree without real-life projects/tasks (`/user/` in gitignore).
 
 ---

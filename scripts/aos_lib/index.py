@@ -16,6 +16,7 @@ from .config import (
     SECTION_TODAY,
     SECTION_UNDEFINED,
     UNIQUE_TYPES,
+    recurring_project_live,
     tasks_dir,
 )
 from .taskio import atomic_write, iter_task_files
@@ -88,6 +89,8 @@ def collect_index(root: Path, today: date) -> dict[str, list[tuple[str, str]]]:
             buckets[heading].append((sort_key + task.title.lower(), task.title, href))
         else:
             if task.folder != "recurring":
+                continue
+            if not recurring_project_live(root, task.data):
                 continue
             dates = index_dates(task.data, today)
             href = f"recurring/{task.slug}.md"

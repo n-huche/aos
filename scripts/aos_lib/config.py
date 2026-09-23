@@ -82,6 +82,29 @@ def projects_dir(root: Path) -> Path:
     return root / "user" / "projects"
 
 
+def project_status(root: Path, slug: str) -> str | None:
+    """Hub folder name (`pending` / `ongoing` / …), or None if missing."""
+    name = (slug or "").strip()
+    if not name:
+        return None
+    base = projects_dir(root)
+    for st in PROJECT_STATUSES:
+        if (base / st / name).is_dir():
+            return st
+    return None
+
+
+def recurring_project_live(root: Path, data: dict) -> bool:
+    """recurring-project runs only while the hub is ongoing.
+
+    Independent recurrences and maintenance are always live.
+    """
+    t = str(data.get("type") or "").strip()
+    if t != "recurring-project":
+        return True
+    return project_status(root, str(data.get("project") or "")) == "ongoing"
+
+
 def daily_dir(root: Path) -> Path:
     return root / "user" / "daily"
 
