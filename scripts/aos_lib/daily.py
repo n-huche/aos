@@ -5,7 +5,13 @@ from datetime import date, timedelta
 from pathlib import Path
 
 from .cadence import done_on_set, occurs_on, until_date
-from .config import RECURRING_TYPES, UNIQUE_TYPES, daily_dir, schedule_dir
+from .config import (
+    RECURRING_TYPES,
+    UNIQUE_TYPES,
+    daily_dir,
+    recurring_project_live,
+    schedule_dir,
+)
 from .gitutil import commit_user, push_if_origin
 from .index import reindex
 from .sync import finish_recurring_until
@@ -121,6 +127,8 @@ def collect_daily(root: Path, d: date) -> tuple[list[tuple[str, str]], list[tupl
         if t not in RECURRING_TYPES:
             continue
         if task.folder in {"canceled", "obsolete"}:
+            continue
+        if not recurring_project_live(root, task.data):
             continue
         until = until_date(task.data)
         done = d in done_on_set(task.data)

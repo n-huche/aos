@@ -120,6 +120,8 @@ def write_recurring(
     type_: str = "recurring-independent",
     folder: str = "recurring",
     status: str = "recurring",
+    project: str | None = None,
+    phase: str | None = None,
 ) -> Path:
     lines = [
         "---",
@@ -130,6 +132,10 @@ def write_recurring(
         lines.append(f"until: {until}")
     if until_event is not None:
         lines.append(f"until_event: {until_event}")
+    if project is not None:
+        lines.append(f"project: {project}")
+    if phase is not None:
+        lines.append(f"phase: {phase}")
     if done_on:
         lines.append("done_on:")
         for d in done_on:
@@ -162,6 +168,38 @@ def write_recurring(
     path = root / "user" / "tasks" / folder / f"{slug}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text("\n".join(lines), encoding="utf-8")
+    return path
+
+
+def write_project(
+    root: Path,
+    slug: str,
+    *,
+    status: str = "ongoing",
+    prefix: str = "D",
+) -> Path:
+    hub_dir = root / "user" / "projects" / status / slug
+    hub_dir.mkdir(parents=True, exist_ok=True)
+    path = hub_dir / f"{slug}.md"
+    path.write_text(
+        f"""---
+status: {status}
+due: null
+prefix: {prefix}
+---
+
+# {slug}
+
+## Goal
+
+the goal
+
+## Plan
+
+1. do
+""",
+        encoding="utf-8",
+    )
     return path
 
 
@@ -292,6 +330,35 @@ class AOSTest(unittest.TestCase):
         text = self.tasks_md()
         self.assertEqual(headings(text), ["Today", "4-7 days"])
         self.assertIn("recurring/training.md", section_items(text, "4-7 days")[0])
+
+    def test_recurring_project_inert_while_hub_pending(self) -> None:
+        write_project(self.root, "demo", status="pending")
+        write_recurring(
+            self.root,
+            "habit",
+            "Habit",
+            kind="daily",
+            until="2026-12-01",
+            type_="recurring-project",
+            project="demo",
+            phase="d-01-x",
+        )
+        self.aos("reindex")
+        text = self.tasks_md()
+        self.assertNotIn("habit.md", text)
+        self.assertNotIn("## Today", text)
+        self.aos("daily-close", "2026-09-16", today="2026-09-17")
+        daily = (self.root / "user/daily/2026-09-16.md").read_text(encoding="utf-8")
+        self.assertIn("**Result:** satisfactory", daily)
+        self.assertNotIn("## Failed tasks", daily)
+
+        pending = self.root / "user/projects/pending/demo"
+        ongoing = self.root / "user/projects/ongoing/demo"
+        ongoing.parent.mkdir(parents=True, exist_ok=True)
+        pending.rename(ongoing)
+        self.aos("reindex")
+        text = self.tasks_md()
+        self.assertIn("recurring/habit.md", section_items(text, "Today")[0])
 
     def test_interval(self) -> None:
         write_recurring(
