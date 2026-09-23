@@ -4,9 +4,10 @@ from collections import defaultdict
 from datetime import date
 from pathlib import Path
 
-from .cadence import index_dates
+from .cadence import index_dates, start_date
 from .config import (
     BUCKET_ORDER,
+    RECURRING_TYPES,
     SECTION_1_DAY,
     SECTION_2_3_DAYS,
     SECTION_4_7_DAYS,
@@ -16,10 +17,9 @@ from .config import (
     SECTION_TODAY,
     SECTION_UNDEFINED,
     UNIQUE_TYPES,
-    recurring_project_live,
     tasks_dir,
 )
-from .taskio import atomic_write, iter_task_files
+from .taskio import atomic_write, iter_task_files, move_task
 from .yamlfm import as_date
 
 
@@ -75,6 +75,28 @@ def render_index(items_by_bucket: dict[str, list[tuple[str, str]]]) -> str:
     return "\n".join(lines)
 
 
+def activate_started_recurring(root: Path, today: date) -> list[str]:
+    """Move recurring-* from pending/ to recurring/ when start <= today."""
+    from .links import rewrite_task_links
+
+    moved: list[str] = []
+    for task in list(iter_task_files(root)):
+        if task.type not in RECURRING_TYPES:
+            continue
+        if task.folder != "pending":
+            continue
+        start = start_date(task.data)
+        if start is None or start > today:
+            continue
+        task.data["status"] = "recurring"
+        task.save()
+        old = task.folder
+        move_task(task, "recurring", root)
+        rewrite_task_links(root, task.slug, old, "recurring")
+        moved.append(task.slug)
+    return moved
+
+
 def collect_index(root: Path, today: date) -> dict[str, list[tuple[str, str]]]:
     buckets: dict[str, list[tuple[str, str, str]]] = defaultdict(list)
     for task in iter_task_files(root):
@@ -87,17 +109,29 @@ def collect_index(root: Path, today: date) -> dict[str, list[tuple[str, str]]]:
             href = f"pending/{task.slug}.md"
             sort_key = due.isoformat() if due else "9999-99-99"
             buckets[heading].append((sort_key + task.title.lower(), task.title, href))
-        else:
+            continue
+        if t in RECURRING_TYPES and task.folder == "pending":
+            start = start_date(task.data)
+            heading = unique_bucket(start, today)
+            href = f"pending/{task.slug}.md"
+            sort_key = start.isoformat() if start else "9999-99-99"
+            buckets[heading].append((sort_key + task.title.lower(), task.title, href))
+            continue
+        if t in RECURRING_TYPES:
             if task.folder != "recurring":
                 continue
-            if not recurring_project_live(root, task.data):
-                continue
-            dates = index_dates(task.data, today)
             href = f"recurring/{task.slug}.md"
-            for when in dates:
-                heading = recurring_bucket(when, today)
-                sort_key = when.isoformat() + task.title.lower()
-                buckets[heading].append((sort_key, task.title, href))
+        elif t == "maintenance":
+            if task.folder != "maintenance":
+                continue
+            href = f"maintenance/{task.slug}.md"
+        else:
+            continue
+        dates = index_dates(task.data, today)
+        for when in dates:
+            heading = recurring_bucket(when, today)
+            sort_key = when.isoformat() + task.title.lower()
+            buckets[heading].append((sort_key, task.title, href))
     out: dict[str, list[tuple[str, str]]] = {}
     for heading, rows in buckets.items():
         rows.sort()
@@ -110,6 +144,7 @@ def reindex(root: Path, today: date | None = None) -> Path:
 
     if today is None:
         today = today_fn(root)
+    activate_started_recurring(root, today)
     items = collect_index(root, today)
     text = render_index(items)
     path = tasks_dir(root) / "tasks.md"

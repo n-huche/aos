@@ -3,14 +3,18 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .cadence import cadence_of, weekday_names
+from .cadence import cadence_of, start_date, until_date, weekday_names
 from .config import (
     ALL_TYPES,
     CADENCE_KINDS,
     INTERVAL_UNITS,
+    MAINTENANCE_STATUSES,
     PHASE_STATUSES,
     PROJECT_STATUSES,
+    RECURRING_STATUSES,
+    RECURRING_TYPES,
     STATUS_FOLDER,
+    UNIQUE_STATUSES,
     UNIQUE_TYPES,
     WEEKDAYS,
     projects_dir,
@@ -52,18 +56,41 @@ def _validate_tasks(root: Path) -> list[str]:
                 f"{task.path}: status {st!r} does not match folder {task.folder!r}"
             )
         if t in UNIQUE_TYPES:
-            if st not in {"pending", "completed", "obsolete", "canceled"}:
+            if st not in UNIQUE_STATUSES:
                 errors.append(f"{task.path}: invalid unique status {st!r}")
-            if task.folder == "recurring":
-                errors.append(f"{task.path}: unique type in recurring/")
+            if task.folder in {"recurring", "maintenance"}:
+                errors.append(f"{task.path}: unique type in {task.folder}/")
             if t == "unique-project":
                 if not task.data.get("project") or not task.data.get("phase"):
                     errors.append(f"{task.path}: unique-project needs project and phase")
-        else:
-            if st not in {"recurring", "completed", "obsolete", "canceled"}:
+            continue
+        if t in RECURRING_TYPES:
+            if st not in RECURRING_STATUSES:
                 errors.append(f"{task.path}: invalid recurring status {st!r}")
+            start = start_date(task.data)
             if task.folder == "pending":
-                errors.append(f"{task.path}: recurring type in pending/")
+                if st != "pending":
+                    errors.append(f"{task.path}: unstarted recurring needs status pending")
+            elif task.folder == "recurring":
+                if start is None:
+                    errors.append(f"{task.path}: live recurring needs start")
+            elif task.folder == "maintenance":
+                errors.append(f"{task.path}: recurring type in maintenance/")
+            errors.extend(_validate_recurrence(task.path, task.data, t))
+            continue
+        if t == "maintenance":
+            if st not in MAINTENANCE_STATUSES:
+                errors.append(f"{task.path}: invalid maintenance status {st!r}")
+            if task.folder == "pending":
+                errors.append(f"{task.path}: maintenance type in pending/")
+            if task.folder == "recurring":
+                errors.append(f"{task.path}: maintenance type in recurring/")
+            if start_date(task.data) is not None:
+                errors.append(f"{task.path}: maintenance has no start")
+            if until_date(task.data) is not None or (
+                task.data.get("until_event") not in (None, "", False)
+            ):
+                errors.append(f"{task.path}: maintenance has no until")
             errors.extend(_validate_recurrence(task.path, task.data, t))
     return errors
 
@@ -78,6 +105,9 @@ def _validate_recurrence(path: Path, data: dict, t: str) -> list[str]:
             errors.append(
                 f"{path}: recurring needs until XOR until_event"
             )
+        start = start_date(data)
+        if start is not None and until is not None and start > until:
+            errors.append(f"{path}: start after until")
     if t == "recurring-project":
         if not data.get("project") or not data.get("phase"):
             errors.append(f"{path}: recurring-project needs project and phase")

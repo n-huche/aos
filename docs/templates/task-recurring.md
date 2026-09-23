@@ -1,17 +1,18 @@
 ---
-type: maintenance            # or recurring-independent | recurring-project
-status: recurring
-until: 2026-12-01            # XOR until_event; omit on maintenance
+type: recurring-independent  # or recurring-project
+status: pending              # pending | recurring | completed | obsolete | canceled
+start: 2026-10-01            # YYYY-MM-DD or null
+until: 2026-12-01            # XOR until_event
 until_event: null
-project: my-project          # if recurring-project
+project: my-project          # recurring-project only
 phase: mp-01-my-phase        # filename stem
-done_on: []                  # completed occurrences, YYYY-MM-DD
+done_on: []
 cadence:
   kind: daily                # daily | weekdays | interval
-  days: [wed, thu]           # weekdays only; mon tue wed thu fri sat sun
-  every: 2                   # interval only
-  unit: months               # days | weeks | months
-  anchor: 2026-09-16         # interval only
+  days: [wed, thu]
+  every: 2
+  unit: months
+  anchor: 2026-09-16
 ---
 
 # Title
