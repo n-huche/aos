@@ -4,7 +4,7 @@ import re
 from datetime import date
 from pathlib import Path
 
-from .cadence import until_date
+from .cadence import day_complete, until_date
 from .config import RECURRING_TYPES, SECTION_TODAY, SERIES_TYPES, UNIQUE_TYPES, today as today_fn
 from .gitutil import commit_user, push_if_origin
 from .index import reindex
@@ -14,7 +14,7 @@ from .yamlfm import as_date_list
 
 HEADING_RE = re.compile(r"^##\s+(.+?)\s*$")
 ITEM_RE = re.compile(
-    r"^(\s*-\s*\[)([xX ])(\]\s+\[[^\]]*\]\s*\()([^\)]+)(\)\s*)$"
+    r"^(\s*-\s*\[)([xX ])(\]\s+\[[^\]]*\]\s*\()([^\)]+)(\).*$)"
 )
 
 
@@ -40,9 +40,8 @@ def parse_checked(text: str) -> list[tuple[str, str, str]]:
 
 def _append_done_on(task: TaskFile, day: date) -> None:
     existing = as_date_list(task.data.get("done_on") or [])
-    if day not in existing:
-        existing.append(day)
-        existing.sort()
+    existing.append(day)
+    existing.sort()
     task.data["done_on"] = existing
 
 
@@ -60,7 +59,7 @@ def complete_unique(root: Path, task: TaskFile, day: date) -> None:
 def mark_recurring_today(root: Path, task: TaskFile, day: date) -> None:
     _append_done_on(task, day)
     until = until_date(task.data)
-    if until == day:
+    if until == day and day_complete(task.data, day):
         task.data["status"] = "completed"
         task.save()
         old = task.folder

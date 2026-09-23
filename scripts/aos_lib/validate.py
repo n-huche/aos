@@ -63,6 +63,8 @@ def _validate_tasks(root: Path) -> list[str]:
             if t == "unique-project":
                 if not task.data.get("project") or not task.data.get("phase"):
                     errors.append(f"{task.path}: unique-project needs project and phase")
+            if task.data.get("times") is not None:
+                errors.append(f"{task.path}: unique has no times")
             continue
         if t in RECURRING_TYPES:
             if st not in RECURRING_STATUSES:
@@ -111,6 +113,10 @@ def _validate_recurrence(path: Path, data: dict, t: str) -> list[str]:
     if t == "recurring-project":
         if not data.get("project") or not data.get("phase"):
             errors.append(f"{path}: recurring-project needs project and phase")
+    times = data.get("times")
+    if times is not None:
+        if isinstance(times, bool) or not isinstance(times, int) or times < 2:
+            errors.append(f"{path}: times must be an integer ≥ 2 (omit if 1)")
     cad = cadence_of(data)
     kind = str(cad.get("kind") or "").strip().lower()
     if kind not in CADENCE_KINDS:

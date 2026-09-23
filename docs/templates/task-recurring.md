@@ -6,6 +6,7 @@ until: 2026-12-01            # XOR until_event
 until_event: null
 project: my-project          # recurring-project only
 phase: mp-01-my-phase        # filename stem
+# times: 3                   # omit unless the same action repeats >1 per cadence day
 done_on: []
 cadence:
   kind: daily                # daily | weekdays | interval
