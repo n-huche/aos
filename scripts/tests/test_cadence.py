@@ -29,6 +29,22 @@ class CadenceTest(unittest.TestCase):
         self.assertTrue(occurs_on(data, date(2026, 9, 17)))
         self.assertFalse(occurs_on(data, date(2026, 9, 18)))
 
+    def test_recurring_start_gates_occurrences(self) -> None:
+        data = parse_yaml(
+            "type: recurring-independent\n"
+            "start: 2026-09-16\n"
+            "cadence:\n  kind: weekdays\n  days: [tue, fri]\n"
+        )
+        self.assertFalse(occurs_on(data, date(2026, 9, 15)))
+        self.assertFalse(occurs_on(data, date(2026, 9, 16)))
+        self.assertTrue(occurs_on(data, date(2026, 9, 18)))
+        none = parse_yaml(
+            "type: recurring-independent\n"
+            "start: null\n"
+            "cadence:\n  kind: daily\n"
+        )
+        self.assertFalse(occurs_on(none, date(2026, 9, 16)))
+
     def test_interval_index_anchor_today_and_yesterday(self) -> None:
         today = date(2026, 9, 16)
         data_today = parse_yaml(

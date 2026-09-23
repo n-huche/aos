@@ -5,7 +5,7 @@ from datetime import date
 from pathlib import Path
 
 from .cadence import until_date
-from .config import RECURRING_TYPES, SECTION_TODAY, today as today_fn
+from .config import RECURRING_TYPES, SECTION_TODAY, SERIES_TYPES, UNIQUE_TYPES, today as today_fn
 from .gitutil import commit_user, push_if_origin
 from .index import reindex
 from .links import drop_from_schedule, folder_from_href, rewrite_task_links
@@ -98,19 +98,23 @@ def collect_checked(root: Path) -> dict[str, list[str]]:
         folder, slug = folder_from_href(href)
         if not folder or not slug:
             continue
-        if folder == "recurring" and section != SECTION_TODAY:
+        if folder in {"recurring", "maintenance"} and section != SECTION_TODAY:
             report["reverted"].append(slug)
             continue
         task = load_by_slug(root, slug)
         if task is None:
             continue
-        if folder == "recurring" and section == SECTION_TODAY:
-            if task.type not in RECURRING_TYPES and task.folder != "recurring":
+        if folder in {"recurring", "maintenance"} and section == SECTION_TODAY:
+            if task.type not in SERIES_TYPES:
                 continue
             report["recurring"].append(slug)
             continue
         if folder == "pending":
-            report["unique"].append(slug)
+            if task.type in RECURRING_TYPES:
+                report["reverted"].append(slug)
+                continue
+            if task.type in UNIQUE_TYPES:
+                report["unique"].append(slug)
     return report
 
 

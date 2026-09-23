@@ -4,7 +4,7 @@ import calendar
 from datetime import date, timedelta
 from typing import Any, Iterator
 
-from .config import INTERVAL_UNITS, WEEKDAY_INDEX
+from .config import INTERVAL_UNITS, RECURRING_TYPES, WEEKDAY_INDEX
 from .yamlfm import as_date, as_date_list
 
 
@@ -31,6 +31,10 @@ def until_date(data: dict[str, Any]) -> date | None:
     return as_date(data.get("until"))
 
 
+def start_date(data: dict[str, Any]) -> date | None:
+    return as_date(data.get("start"))
+
+
 def done_on_set(data: dict[str, Any]) -> set[date]:
     return set(as_date_list(data.get("done_on") or []))
 
@@ -40,6 +44,16 @@ def cadence_of(data: dict[str, Any]) -> dict[str, Any]:
     if not isinstance(cad, dict):
         return {}
     return cad
+
+
+def within_start(d: date, data: dict[str, Any]) -> bool:
+    t = str(data.get("type") or "").strip()
+    if t not in RECURRING_TYPES:
+        return True
+    s = start_date(data)
+    if s is None:
+        return False
+    return d >= s
 
 
 def within_until(d: date, data: dict[str, Any]) -> bool:
@@ -62,6 +76,8 @@ def weekday_names(cad: dict[str, Any]) -> set[str]:
 
 
 def occurs_on(data: dict[str, Any], d: date) -> bool:
+    if not within_start(d, data):
+        return False
     if not within_until(d, data):
         return False
     cad = cadence_of(data)
@@ -119,6 +135,12 @@ def _interval_from(cad: dict[str, Any], start: date) -> Iterator[date]:
 
 def next_occurrence(data: dict[str, Any], start: date) -> date | None:
     """First occurrence on or after start not in done_on, within until."""
+    series = start_date(data)
+    if series is not None and start < series:
+        start = series
+    t = str(data.get("type") or "").strip()
+    if t in RECURRING_TYPES and series is None:
+        return None
     done = done_on_set(data)
     cad = cadence_of(data)
     kind = str(cad.get("kind") or "").strip().lower()

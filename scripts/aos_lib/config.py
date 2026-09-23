@@ -8,17 +8,28 @@ from zoneinfo import ZoneInfo
 TZ = ZoneInfo("America/Sao_Paulo")
 TZ_NAME = "America/Sao_Paulo"
 
-TASK_FOLDERS = ("pending", "recurring", "completed", "obsolete", "canceled")
+TASK_FOLDERS = (
+    "pending",
+    "recurring",
+    "maintenance",
+    "completed",
+    "obsolete",
+    "canceled",
+)
 PROJECT_STATUSES = ("pending", "ongoing", "completed", "canceled")
 
 UNIQUE_TYPES = frozenset({"unique-independent", "unique-project"})
-RECURRING_TYPES = frozenset(
-    {"recurring-independent", "recurring-project", "maintenance"}
-)
-ALL_TYPES = UNIQUE_TYPES | RECURRING_TYPES
+RECURRING_TYPES = frozenset({"recurring-independent", "recurring-project"})
+SERIES_TYPES = RECURRING_TYPES | frozenset({"maintenance"})
+ALL_TYPES = UNIQUE_TYPES | SERIES_TYPES
 
 UNIQUE_STATUSES = frozenset({"pending", "completed", "obsolete", "canceled"})
-RECURRING_STATUSES = frozenset({"recurring", "completed", "obsolete", "canceled"})
+RECURRING_STATUSES = frozenset(
+    {"pending", "recurring", "completed", "obsolete", "canceled"}
+)
+MAINTENANCE_STATUSES = frozenset(
+    {"maintenance", "completed", "obsolete", "canceled"}
+)
 PHASE_STATUSES = frozenset({"pending", "ongoing", "completed", "obsolete"})
 
 WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
@@ -50,6 +61,7 @@ BUCKET_ORDER = (
 STATUS_FOLDER = {
     "pending": "pending",
     "recurring": "recurring",
+    "maintenance": "maintenance",
     "completed": "completed",
     "obsolete": "obsolete",
     "canceled": "canceled",
@@ -80,29 +92,6 @@ def tasks_dir(root: Path) -> Path:
 
 def projects_dir(root: Path) -> Path:
     return root / "user" / "projects"
-
-
-def project_status(root: Path, slug: str) -> str | None:
-    """Hub folder name (`pending` / `ongoing` / …), or None if missing."""
-    name = (slug or "").strip()
-    if not name:
-        return None
-    base = projects_dir(root)
-    for st in PROJECT_STATUSES:
-        if (base / st / name).is_dir():
-            return st
-    return None
-
-
-def recurring_project_live(root: Path, data: dict) -> bool:
-    """recurring-project runs only while the hub is ongoing.
-
-    Independent recurrences and maintenance are always live.
-    """
-    t = str(data.get("type") or "").strip()
-    if t != "recurring-project":
-        return True
-    return project_status(root, str(data.get("project") or "")) == "ongoing"
 
 
 def daily_dir(root: Path) -> Path:

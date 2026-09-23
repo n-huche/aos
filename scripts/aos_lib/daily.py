@@ -4,12 +4,12 @@ import re
 from datetime import date, timedelta
 from pathlib import Path
 
-from .cadence import done_on_set, occurs_on, until_date
+from .cadence import done_on_set, occurs_on, start_date, until_date
 from .config import (
     RECURRING_TYPES,
+    SERIES_TYPES,
     UNIQUE_TYPES,
     daily_dir,
-    recurring_project_live,
     schedule_dir,
 )
 from .gitutil import commit_user, push_if_origin
@@ -124,11 +124,12 @@ def collect_daily(root: Path, d: date) -> tuple[list[tuple[str, str]], list[tupl
             elif task.folder == "pending" and due is not None and due <= d:
                 failed.append((task.title, _href_for("pending", task.slug)))
             continue
-        if t not in RECURRING_TYPES:
+        if t not in SERIES_TYPES:
             continue
         if task.folder in {"canceled", "obsolete"}:
             continue
-        if not recurring_project_live(root, task.data):
+        start = start_date(task.data)
+        if t in RECURRING_TYPES and (start is None or start > d):
             continue
         until = until_date(task.data)
         done = d in done_on_set(task.data)
