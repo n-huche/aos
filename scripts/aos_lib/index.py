@@ -213,6 +213,15 @@ def _separate(lines: list[str]) -> None:
         lines.append("")
 
 
+def _append_tasks(lines: list[str], rows: list[str]) -> None:
+    """Task lines stay one list. A blank line is only for a heading block."""
+    if lines and lines[-1].startswith("- [ ]"):
+        lines.extend(rows)
+        return
+    _separate(lines)
+    lines.extend(rows)
+
+
 def _check_cycles(nodes: dict[str, _Node]) -> None:
     color: dict[str, int] = {}
 
@@ -383,15 +392,13 @@ def _merge_section(chunks: list[list[str]]) -> list[str]:
     lines: list[str] = []
     for kind, payload in blocks:
         if kind == "fence":
-            _separate(lines)
-            lines.append(str(payload))
+            _append_tasks(lines, [str(payload)])
             continue
         if kind == "loose":
             rows = payload if isinstance(payload, list) else []
             if not rows:
                 continue
-            _separate(lines)
-            lines.extend(rows)
+            _append_tasks(lines, rows)
             continue
         heading, rows = payload  # type: ignore[misc]
         if not isinstance(rows, list) or not rows:

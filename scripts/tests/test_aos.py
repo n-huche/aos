@@ -14,6 +14,7 @@ BIN = Path(__file__).resolve().parent.parent / "aos"
 SCRIPTS = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS))
 
+from aos_lib.index import _merge_section  # noqa: E402
 from aos_lib.yamlfm import split_frontmatter  # noqa: E402
 
 
@@ -1299,10 +1300,51 @@ z
         text = self.tasks_md()
         section = text.split("## 8-30 days", 1)[1].split("\n## ", 1)[0]
         self.assertEqual(section.count("### Depois de Tomar café da manhã"), 1)
+        self.assertNotIn(")\n\n- [ ]", section)
         self.assertIn(
             "### Depois de Tomar café da manhã\n\n"
             "- [ ] [Fazer trabalhos da faculdade](ongoing/college.md)\n"
             "- [ ] [Terminar com a namorada](pending/end-relationship.md)\n",
+            text,
+        )
+
+    def test_merge_keeps_task_lines_together(self) -> None:
+        merged = _merge_section(
+            [
+                [
+                    "- [ ] [Acordar](ongoing/wake.md)",
+                    "",
+                    "### Depois de Acordar",
+                    "",
+                    "- [ ] [Caminhar](ongoing/walk.md)",
+                    "- [ ] [Tomar café da manhã](ongoing/breakfast.md)",
+                    "- [ ] [Almoçar](ongoing/lunch.md)",
+                    "",
+                    "### Depois de Almoçar",
+                    "",
+                    "- [ ] [Jantar](ongoing/dinner.md)",
+                ],
+                [
+                    "### Depois de Tomar café da manhã",
+                    "",
+                    "- [ ] [Estudar equals](pending/equals.md)",
+                    "- [ ] [Estudar Stream](pending/stream.md)",
+                    "",
+                    "### Depois de Almoçar",
+                    "",
+                    "- [ ] [Postar vídeo](ongoing/video.md)",
+                ],
+            ]
+        )
+        text = "\n".join(merged)
+        self.assertNotIn(")\n\n- [ ]", text)
+        self.assertIn("### Depois de Acordar\n\n- [ ] [Caminhar]", text)
+        self.assertIn(
+            "- [ ] [Tomar café da manhã](ongoing/breakfast.md)\n- [ ] [Almoçar](ongoing/lunch.md)",
+            text,
+        )
+        self.assertIn(
+            "- [ ] [Estudar equals](pending/equals.md)\n- [ ] [Estudar Stream](pending/stream.md)",
             text,
         )
 
