@@ -1,12 +1,14 @@
 ---
 type: recurring-independent  # or recurring-project
-status: pending              # pending | recurring | completed | obsolete | canceled
-start: 2026-10-01            # YYYY-MM-DD or null
+status: pending              # pending | ongoing | completed | obsolete | canceled
+due: 2026-10-01              # deadline to start; YYYY-MM-DD or null
 until: 2026-12-01            # XOR until_event
 until_event: null
+infinitive: Do the thing
+# do_in: "09:00"             # XOR do_after; omit when due is null
+# do_after: other-task
 project: my-project          # recurring-project only
 phase: mp-01-my-phase        # filename stem
-# times: 3                   # omit unless the same action repeats >1 per cadence day
 done_on: []
 cadence:
   kind: daily                # daily | weekdays | interval
@@ -16,7 +18,7 @@ cadence:
   anchor: 2026-09-16
 ---
 
-# Title
+# The thing
 
 ## What
 

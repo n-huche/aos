@@ -4,7 +4,7 @@ import re
 from datetime import date, timedelta
 from pathlib import Path
 
-from .cadence import day_complete, occurs_on, start_date, until_date
+from .cadence import day_complete, due_date, occurs_on, until_date
 from .config import (
     RECURRING_TYPES,
     SERIES_TYPES,
@@ -128,13 +128,15 @@ def collect_daily(root: Path, d: date) -> tuple[list[tuple[str, str]], list[tupl
             continue
         if task.folder in {"canceled", "obsolete"}:
             continue
-        start = start_date(task.data)
-        if t in RECURRING_TYPES and (start is None or start > d):
+        if t in RECURRING_TYPES and task.status == "pending":
+            due = due_date(task.data)
+            if task.folder == "pending" and due is not None and due <= d:
+                failed.append((task.title, _href_for("pending", task.slug)))
             continue
         until = until_date(task.data)
         done = day_complete(task.data, d)
-        if until == d:
-            if task.folder == "recurring":
+        if t in RECURRING_TYPES and until == d:
+            if task.folder == "ongoing":
                 finish_recurring_until(root, task)
                 folder = "completed"
             else:
@@ -239,12 +241,28 @@ def daily_close(
         d = today - timedelta(days=1)
     completed, failed, early = collect_daily(root, d)
     path = write_daily(root, d, completed, failed, early)
+    _clear_done_on(root, d)
     delete_past_schedule(root, d)
     reindex(root, d + timedelta(days=1))
     if commit:
         if commit_user(root, f"aos: daily-close {d.isoformat()}"):
             push_if_origin(root)
     return path
+
+
+def _clear_done_on(root: Path, d: date) -> None:
+    """Drop D from done_on. A later date stays (the return-day check)."""
+    from .yamlfm import as_date_list
+
+    for task in list(iter_task_files(root)):
+        if task.type not in SERIES_TYPES:
+            continue
+        dates = as_date_list(task.data.get("done_on") or [])
+        kept = [item for item in dates if item != d]
+        if kept == dates:
+            continue
+        task.data["done_on"] = kept
+        task.save()
 
 
 def list_daily_dates(root: Path) -> list[date]:
@@ -305,7 +323,11 @@ def catch_up(
     for d in missed:
         daily_close(root, d, today=today, commit=commit)
         actions.append(f"catch-up-close:{d.isoformat()}")
-    applied = len(leftover["unique"]) + len(leftover["recurring"])
+    applied = (
+        len(leftover["unique"])
+        + len(leftover["recurring"])
+        + len(leftover.get("start") or [])
+    )
     if applied:
         apply_collected(root, leftover, today, commit=commit)
         actions.append(f"catch-up-sync:{today.isoformat()}:{applied}")

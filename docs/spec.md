@@ -102,22 +102,21 @@ If Tests exist, the user declares the Tests; otherwise the Goal. **Only the user
 
 | Folder | Who |
 |---|---|
-| `pending/` | unfinished uniques; **unstarted** recurring-* (`start` null or `start > today`) |
-| `recurring/` | live recurring-* (`start <= today`) |
-| `maintenance/` | maintenance (cadence, no `start`, no `due`, no `until`) |
-| `completed/` | finished uniques; recurring whose cycle **ended**; ended maintenance |
-| `obsolete/` | was not needed |
-| `canceled/` | aborted by the user |
+| `pending/` | unfinished uniques; recurring-* that has not started |
+| `ongoing/` | live recurring-* and live maintenance |
+| `completed/` | finished uniques; recurring whose cycle **ended** |
+| `obsolete/` | unique or recurring that was not needed |
+| `canceled/` | aborted by the user, including a maintenance the user stopped |
 
-No `ongoing` for uniques. No due-date buckets on disk.
+No `ongoing` status for uniques. No `completed` or `obsolete` for maintenance. No due-date buckets on disk. There is no `times` field.
 
-- Unique: `due` a date or `null`.
-- `recurring-independent` / `recurring-project`: `start` a date or `null`; `until` **XOR** `until_event` required. **No `due`.**
-- `start` null → the series has not begun: file stays in `pending/`, `status: pending`, Undefined, **no** daily occurrence. Same as a unique without a due.
-- On the calendar day `start` (beginning of that day): `status: recurring`, move `pending/` → `recurring/`. `aos reindex` applies `start`; so does `daily-close` via the reindex at D+1. Cron **may** move this. It still does not complete uniques or move projects.
-- First occurrence = the first cadence day **≥ `start`**. If `start` is not a cadence weekday, skip to the next one (Wednesday `start` + `tue, fri` → Friday).
-- `maintenance`: cadence; no `start`, no `due`, no `until`. Ends only when the user says so. Same index buckets as a live series.
-- Recurring and maintenance may set `times:` an integer **≥ 2** when the **same action** must run more than once on a cadence day. **Omit** when the quota is 1 (the default). Unique has no `times`. Cadence still picks the days; `times` is only the intra-day quota.
+- Unique: `due` a date or `null`. Status: `pending` · `completed` · `obsolete` · `canceled`.
+- Recurring: `due` is the deadline to **start**, or `null`. `until` **XOR** `until_event`. Status: `pending` · `ongoing` · `completed` · `obsolete` · `canceled`.
+- `due` null → the series has not begun: file stays in `pending/`, `status: pending`, Undefined, **no** daily occurrence. The user may start whenever they want. Cron does **not** move the file on `due`.
+- The first `[x]` starts the series, in any section: `status: ongoing`, move `pending/` → `ongoing/`, and that day is `done_on`. Later `[x]` count only in **Today**.
+- After it is `ongoing`, `due` is only a record. Occurrences follow the cadence. The first check counts even off a cadence day. The next ones follow the cadence. `cadence.anchor` is not rewritten.
+- Passed `due` still `pending`: **Overdue**. The daily fails each day until the first check.
+- `maintenance`: cadence; no `due`, no `until`. Status: `ongoing` · `canceled` only. Folder `ongoing/` while live. It does not complete and does not become obsolete.
 
 Task slugs are **global**.
 
@@ -170,23 +169,21 @@ aos/                        # repo root (wherever it lives)
     tasks/
       tasks.md
       pending/
-      recurring/
-      maintenance/
+      ongoing/
       completed/
       obsolete/
       canceled/
     daily/
     research/
     schedule/
-      YYYY/MM/DD.md         # unique: the due; recurring: start and/or until; only if > today
+      YYYY/MM/DD.md         # unique: the due; pending recurring: the due; recurring: until; only if > today
 ```
 
 Hub `user/projects/{status}/{slug}/{slug}.md`  
 Phase `.../phases/{prefix}-{nn}-{name}.md`  
 Unique `user/tasks/pending/{slug}.md`  
 Unstarted recurring `user/tasks/pending/{slug}.md`  
-Live recurring `user/tasks/recurring/{slug}.md`  
-Maintenance `user/tasks/maintenance/{slug}.md`
+Live recurring and live maintenance `user/tasks/ongoing/{slug}.md`
 
 A folder may exist with only a note. Links `[text](relative)` — never wiki links.
 
@@ -208,25 +205,27 @@ type: unique-independent     # or unique-project
 status: pending              # pending | completed | obsolete | canceled
 due: 2026-09-18              # YYYY-MM-DD or null
 completed_on: null           # filled on check; YYYY-MM-DD
+infinitive: Do the thing     # index label; required
 project: my-project          # unique-project only
 phase: mp-01-my-phase        # unique-project only; filename stem
 ---
 ```
 
-Body: H1 = title (the label in the index). `## What` · `## How` · `## When` if due · `## Where` / `## With who` if they apply · independent: `## Goal`.
+Body: H1 is the thing, not the act (`# Café da manhã`). The slug is that title in English (`morning-breakfast`). `infinitive` is the index phrase (`Tomar café da manhã`). `## What` · `## How` · `## When` if due · `## Where` / `## With who` if they apply · independent: `## Goal`.
 
 ### 4.2 Recurring
 
 ```yaml
 ---
 type: recurring-independent  # or recurring-project
-status: pending              # pending | recurring | completed | obsolete | canceled
-start: 2026-10-01            # YYYY-MM-DD or null; first day the series may run
+status: pending              # pending | ongoing | completed | obsolete | canceled
+due: 2026-10-01              # deadline to start; YYYY-MM-DD or null
 until: 2026-12-01            # XOR until_event
 until_event: null
+infinitive: Do the thing
 project: my-project          # recurring-project only
 phase: mp-01-my-phase        # filename stem
-done_on: []                  # one YYYY-MM-DD per mark; the same date may repeat
+done_on: []                  # at most the open day; a later date may remain across catch-up
 cadence:
   kind: daily                # daily | weekdays | interval
   days: [wed, thu]           # weekdays only; mon tue wed thu fri sat sun
@@ -236,16 +235,17 @@ cadence:
 ---
 ```
 
-`status: pending` while unstarted (folder `pending/`). `status: recurring` while live (folder `recurring/`).
+`status: pending` while unstarted (folder `pending/`). `status: ongoing` while live (folder `ongoing/`).
 
-`times`: integer ≥ 2; **omit** when the quota is 1. Recurring and maintenance only. Each `[x]` on **Today** appends today to `done_on` (duplicates allowed). The day is complete when `count(today) >= times` (default 1). Until then, sync unchecks the line and it stays Today.
+One `[x]` on a live series in **Today** records that day in `done_on` and the line leaves Today. There is no intra-day quota. `done_on` holds at most that open day. On daily-close of D, D is removed. A later date stays. The history of the day lives in `daily/`.
 
 ### 4.2.1 Maintenance
 
 ```yaml
 ---
 type: maintenance
-status: maintenance
+status: ongoing              # ongoing | canceled
+infinitive: Do the thing
 done_on: []
 cadence:
   kind: daily                # daily | weekdays | interval
@@ -256,7 +256,7 @@ cadence:
 ---
 ```
 
-No `start`, no `due`, no `until`. Folder `maintenance/`. Same `times` rule as recurring.
+No `due`, no `until`. Folder `ongoing/` while live, `canceled/` when the user stops it. Same `done_on` rule as recurring.
 
 `interval` + `months`: add calendar months; if the day does not exist in the target month, use the **last day** of that month (31 Jan + 1 month → 28/29 Feb).
 
@@ -317,28 +317,26 @@ Suggested headings: `## Language` · `## Restrictions`. The user may add more.
 
 100% derived. Clock `America/Sao_Paulo`.
 
-The title of each line = H1 of the task file.
+The label of each line is `infinitive`, never the H1. A missing `infinitive` is an index error.
 
 ### 5.1 Placement
 
 Unique: `due` null → Undefined. `due < today` → Overdue. Else bucket of `delta = due - today`.
 
-Unstarted recurring (`pending/`, `start` null) → Undefined. Unstarted with a future `start` → bucket of `delta = start - today` (not Overdue). Href `pending/{slug}.md`. `[x]` is forbidden (§ 6.1).
+Unstarted recurring (`pending/`, `due` null) → Undefined. Unstarted with a future `due` → bucket of `delta = due - today`. Unstarted with `due < today` → Overdue. Href `pending/{slug}.md`. The first `[x]` starts the series (§ 6.1).
 
-Live recurring and maintenance: at most two lines:
+Live recurring and maintenance (`ongoing/`): at most two lines:
 
-1. **Today** if the cadence falls today, today ≥ `start` (recurring only), and `count(today) < times` (default 1)
-2. one bucket for the **next date > today** (a single window)
+1. **Today** if the cadence falls today and today is not in `done_on`
+2. one bucket for the **next cadence date > today**
 
-Href `recurring/` or `maintenance/`. No Maintenance / Recurring sections. Overdue = **uniques only**.
-
-Today line of a series with `times`: suffix ` (n/N)` after the href (`n` = count of today in `done_on`, `N` = `times`), including `(0/N)` at the start of the day. The suffix leaves with the line when the quota is met. The next-occurrence line has no suffix.
+No Maintenance / Recurring sections. Overdue holds uniques past due and recurring still `pending` past due.
 
 ### 5.2 Cadence
 
-- `daily`: today if quota not met; next = tomorrow.
-- `weekdays`: next calendar dates whose weekday ∈ `days`, skipping dates whose quota is met.
-- `interval`: from `anchor`, step `every`/`unit` until dates ≥ today whose quota is not met.
+- `daily`: today if not done; next = tomorrow.
+- `weekdays`: next calendar dates whose weekday ∈ `days`, skipping a date already in `done_on`.
+- `interval`: from `anchor`, step `every`/`unit` until dates ≥ today not in `done_on`. The first check does not change `anchor`.
 
 ### 5.3 Buckets
 
@@ -351,7 +349,7 @@ Today line of a series with `times`: suffix ` (n/N)` after the href (`n` = count
 | delta ∈ {4, 5, 6, 7} | `## 4-7 days` |
 | delta ∈ [8, 30] | `## 8-30 days` |
 | delta ≥ 31 | `## +30 days` |
-| unique `due` null | `## Undefined` |
+| unique or unstarted recurring `due` null | `## Undefined` |
 
 Rolling windows. No ISO week / civil month as a bucket.
 
@@ -366,11 +364,44 @@ Heading **only if** ≥1 item. Empty file allowed:
 Item:
 
 ```markdown
-- [ ] [Title](pending/slug.md)
-- [ ] [Title](recurring/slug.md) (1/3)
+- [ ] [Tomar café da manhã](ongoing/morning-breakfast.md)
+
+### Depois de tomar café da manhã
+
+- [ ] [Postar vídeo para namorada](ongoing/post-video-for-girlfriend.md)
 ```
 
-Relative to `user/tasks/`. Unique: 1 line. Recurring (live or unstarted) and maintenance: up to 2 live lines, or 1 unstarted line; all `- [ ]`. The `(n/N)` suffix is **Today only**, and only when `times` is set.
+Relative to `user/tasks/`. Unique: 1 line. Recurring (live or unstarted) and maintenance: up to 2 live lines, or 1 unstarted line; all `- [ ]`.
+
+### 5.3.1 Order inside a bucket
+
+The order is a suggestion. The checkbox does not depend on position.
+
+In a bucket that spans more than one day, the occurrence day comes first.
+
+`do_in` is `HH:MM` (24h, `America/Sao_Paulo`). `do_after` is a task slug. A task has one of them, or neither. Both is an error. A cycle, or a slug that does not exist, is an index error.
+
+A `do_in` task is a fence. Tasks with `do_after` pointing at it sit after it and before the next later `do_in` that day. The block stays together: the task, its children, and their children. Two tasks with the same `do_in` are two fences, ordered by the five bands below. Each has its own heading if it has children. Those children come before the next later time.
+
+Inside one parent, the bands are:
+
+1. maintenance
+2. recurring independent
+3. unique independent
+4. recurring project
+5. unique project
+
+Inside a band, sort by `infinitive`. Tasks of the same project on the same day stay together, in `## Phases` order and then `## Tasks` order. Between projects, sort by the project H1.
+
+A `do_in` line stays `- [ ]`. If that section has a child, the next heading is `### Depois de {infinitive}`. A child that itself has children uses `####`. Deeper than that stays a list under the nearest `do_in`, with no further heading. The clock is not written in the heading. The heading is omitted when no child remains in the section. If the parent is already absent from the section, the heading still shows while a child remains.
+
+`###` does not change the bucket. Sync reads only a line that starts with `## `.
+
+Tasks with neither key go at the end of the section, under `### Sem posição`, in the five bands. Undefined has no `###` headings: only the five bands, and the same project grouping.
+
+`due` null (unique, or recurring still `pending`) forbids `do_in` and `do_after`. The agent asks for one of them only when a `due` is set. Maintenance has no `due`; the agent asks at creation. If the user still does not choose, the task is unplaced.
+
+The phrases `Depois de` and `Sem posição` are fixed. Scripts do not read `preferences.md`.
 
 ### 5.4 Examples
 
@@ -378,13 +409,13 @@ Relative to `user/tasks/`. Unique: 1 line. Recurring (live or unstarted) and mai
 
 2-month interval, anchor today → Today + +30 days. Anchor yesterday → only +30 days.
 
-`daily` → Today + 1 day if today's quota is not met.
+`daily` → Today + 1 day if today is not in `done_on`.
 
 ### 5.5 Schedule
 
 `user/schedule/YYYY/MM/DD.md` only if `DD > today`. Body = links. Cron deletes dates ≤ the day it closed.
 
-Unique: **the due only** (one file, the deadline day). Not a start date, not a range. When the unique completes, scripts **drop it from `schedule/`** (the line). If that day has no links left, delete the file. Recurring: a future `start` if it exists, and a future `until` if it exists — not every cadence occurrence. Maintenance: not on the schedule.
+Unique: **the due only** (one file, the deadline day). When the unique completes, scripts **drop it from `schedule/`** (the line). If that day has no links left, delete the file. Pending recurring: a future `due` if it exists, and a future `until` if it exists — not every cadence occurrence. Maintenance: not on the schedule.
 
 `user/preferences.md`: prose; **scripts do not read it**.
 
@@ -398,25 +429,31 @@ Watch: inotify or poll ≤2 s on `user/tasks/tasks.md`.
 
 ### 6.1 How to read the section
 
-Walk the file top to bottom. `## …` sets the current section. Each `- [x]` or `- [X]` inherits that section.
+Walk the file top to bottom. A line `## …` sets the current section. `###` does not. Each `- [x]` or `- [X]` inherits that section.
 
 One pass, rules in this order:
 
-1. An `[x]` line whose href is in `recurring/` or `maintenance/` **and** section **≠** `Today` → treat as **forbidden**: the line goes back to `[ ]`. Do not touch `done_on`.
-2. An `[x]` `recurring/` or `maintenance/` line in section **Today** → § 6.2.
-3. An `[x]` `pending/` line whose task `type` is recurring-* → **forbidden**: back to `[ ]`. Do not start the series, do not touch `done_on`.
+1. An `[x]` line whose href is in `ongoing/` **and** section **≠** `Today` → **forbidden**: the line goes back to `[ ]`. Do not touch `done_on`.
+2. An `[x]` `ongoing/` line in section **Today** → § 6.2.
+3. An `[x]` `pending/` line whose task `type` is recurring-* → start the series (§ 6.2), in any section including Overdue and Undefined.
 4. An `[x]` `pending/` unique (any section) → § 6.3.
 
 Then `reindex` (rebuilds the MD). If the only action was reverting rule 1, still write `tasks.md` unchecked.
 
-### 6.2 Recurring on Today
+### 6.2 Series check
 
-1. Append today to `done_on` (**duplicates allowed**; one append per `[x]`).
-2. Quota = `times` if present, else 1.
-3. If `count(today) < quota`: reindex leaves the line in **Today**, unchecked. Suffix `(n/N)` if `times` is set.
-4. If `count(today) ≥ quota` and `until == today`: `status: completed`, move `recurring/` → `completed/`, rewrite links in phases (§ 6.4).
-5. If `count(today) ≥ quota` and `until != today`: the file stays in `recurring/` (or `maintenance/`); the line leaves Today.
-6. Commit `aos: sync tasks`. Push if `origin` exists.
+Live series (recurring or maintenance) in **Today**:
+
+1. Record today in `done_on` (drop earlier dates; keep a later date).
+2. Recurring with `until == today`: `status: completed`, move `ongoing/` → `completed/`, rewrite links (§ 6.4).
+3. Otherwise the file stays in `ongoing/`. Reindex drops the Today line.
+4. Commit `aos: sync tasks`. Push if `origin` exists.
+
+First `[x]` on a `pending` recurring, any section:
+
+1. `status: ongoing`, move `pending/` → `ongoing/`, record today in `done_on`.
+2. If `until == today`, complete it as above.
+3. Reindex. That day counts even when it is not a cadence day.
 
 ### 6.3 Unique (any section)
 
@@ -430,7 +467,7 @@ Early check is OK; **do not** change `due`.
 
 ### 6.4 Rewrite links
 
-Search the `user/` tree for strings `pending/{slug}.md`, `recurring/{slug}.md`, `maintenance/{slug}.md`, etc., and point them at the new folder. Includes the phase `## Tasks`. Not `schedule/`: that is dropped on unique complete (§ 6.3), not rewritten.
+Search the `user/` tree for strings `pending/{slug}.md`, `ongoing/{slug}.md`, etc., and point them at the new folder. Includes the phase `## Tasks`. Not `schedule/`: that is dropped on unique complete (§ 6.3), not rewritten.
 
 ---
 
@@ -439,16 +476,18 @@ Search the `user/` tree for strings `pending/{slug}.md`, `recurring/{slug}.md`, 
 Timezone `America/Sao_Paulo`. D = the day that **ended**. The next reindex clock = D+1.
 
 1. Unique still in `pending/` with `due==D` or `due<D` → failure on daily D.
-2. Recurring whose cadence includes D, D ≥ `start`, `count(D) < times` (default 1), `until != D` → failure; **not** Overdue; the series continues. Recurring with `start` null or `start > D`: **no** occurrence, **no** failure.
-3. Recurring `until == D` (and the series had started):
-   - quota met: if still in `recurring/`, move to `completed/` (same as § 6.2.4). Daily: done.
-   - quota not met: move to `completed/` anyway. Daily: **not done**.
-4. Write `user/daily/D.md` (idempotent if the set is the same).
-5. Delete `schedule` dates ≤ D. Non-date markdown under `schedule/` is left alone.
-6. Reindex with today = D+1 (applies `start <= D+1`: pending → recurring).
-7. Commit `aos: daily-close D`. Push if origin.
+2. Recurring still `pending` with `due==D` or `due<D` → failure. It stays `pending`. No cadence occurrence until the first check.
+3. Live recurring whose cadence includes D and D is not in `done_on`, `until != D` → failure; the series continues. The same for maintenance.
+4. Recurring `until == D` (the series is `ongoing`):
+   - D in `done_on`: move `ongoing/` → `completed/`. Daily: done.
+   - D not in `done_on`: move to `completed/` anyway. Daily: **not done**.
+5. Write `user/daily/D.md` (idempotent if the set is the same).
+6. Remove D from `done_on`. A later date stays.
+7. Delete `schedule` dates ≤ D. Non-date markdown under `schedule/` is left alone.
+8. Reindex with today = D+1.
+9. Commit `aos: daily-close D`. Push if origin.
 
-Cron **does not** complete uniques. **Does not** move projects. It **does** move recurring pending → recurring on `start`. Until **event** and ending maintenance: AI command only.
+Cron **does not** complete uniques. **Does not** move projects. **Does not** start a recurring series. Until **event** and canceling maintenance: AI command only.
 
 `daily-close` can also be run by hand. Document the crontab in `docs/cron.md`. Watch is a separate process: `aos up` starts it if it is dead; keeping it alive after that is the host, not AOS.
 
@@ -456,7 +495,7 @@ If the process was dead while the calendar moved, `aos up` does **catch-up** bef
 
 1. Snapshot leftover `[x]` in `tasks.md` (close rewrites the index).
 2. `daily-close` each day without a daily after the last one, through yesterday (no daily at all: yesterday only). Those days get no credit for the `[x]`. Schedule ≤ last D goes away.
-3. Apply the snapshotted `[x]` with date = **today** (the day of return): unique `completed_on`, recurring `done_on` only if it was in Today (one increment, not the rest of the quota).
+3. Apply the snapshotted `[x]` with date = **today** (the day of return): unique `completed_on`; a live series `done_on` only if it was in Today; a pending recurring starts.
 4. Reindex = today. The clock that counts is the AOS that is up.
 
 
@@ -482,11 +521,11 @@ If the process was dead while the calendar moved, `aos up` does **catch-up** bef
 ## Notes, optional
 ```
 
-Omit failed if empty. Recurring completed that day (still in `recurring/`): link `../tasks/recurring/slug.md`. Recurring closed on `until`: `completed/`. Maintenance: `../tasks/maintenance/slug.md`.
+Omit failed if empty. Live series: link `../tasks/ongoing/slug.md`. Recurring closed on `until`: `completed/`.
 
-**Done on D:** unique with `completed_on == D`; recurring/maintenance with `count(D) ≥ times` (default 1).
+**Done on D:** unique with `completed_on == D`; live recurring/maintenance with D in `done_on`.
 
-**Failure on D:** unique `due==D` or `due<D` still pending; live recurring/maintenance with an occurrence on D and `count(D) < times` (including `until==D` without a full quota). Unstarted recurring does not fail.
+**Failure on D:** unique `due==D` or `due<D` still pending; recurring still `pending` with `due<=D`; live recurring/maintenance with an occurrence on D and D not in `done_on` (including `until==D` without the day). Unstarted recurring with `due` null does not fail.
 
 - `failure` if ≥1 failure
 - `satisfactory` if zero failures
@@ -505,11 +544,11 @@ The implementation writes this (it may be the body of `AGENTS.md`), pointing at 
 - Edit an existing phase/task: conversation → agreement → then change.
 - Independent: they give the simple goal; build the task; honor `user/preferences.md` if present.
 - Talk and write `user/` prose in the language `user/preferences.md` sets. If it does not set one, use the language of the current conversation.
-- No due: ask **at the end**, after writing. Recurring `start`: same — ask at the end; if they will not give one, leave `start: null` (pending / Undefined).
+- No due: ask **at the end**, after writing. Recurring `due`: same — ask at the end; if they will not give one, leave `due: null` (pending / Undefined, no `do_in` / `do_after`). When `due` is set, ask `do_in` or `do_after`.
 - Unique with due: YAML + `schedule/` **only on the due** (if `due > today`). Do not ask for a start date. Complete → scripts drop it from `schedule/`.
 - Start date only: ask for the due; if they will not give one, **suggest** and schedule on the due.
-- Recurring on the schedule: a future `start` and/or a future `until`, not every occurrence.
-- Recurring/maintenance `times:` only if they ask for the same action more than once on a cadence day (integer ≥ 2). Omit otherwise.
+- Recurring on the schedule: a future `due` and/or a future `until`, not every occurrence.
+- The same action twice in one day is two files. There is no `times`.
 - Several concrete forms, or a vague how → `user/research/`, not a task.
 - Do not declare a Goal or Tests true.
 - Useless task: they say so + a reason → `notes.md` + `obsolete/` + links.
@@ -539,7 +578,7 @@ aos up --quiet           # no stdout on success
 aos up --watch-only      # watch only; no crontab or catch-up
 ```
 
-`reindex` applies `start` (pending → recurring when `start <= today`). It does not apply `until` (only `daily-close` and the last day's `x`).
+`reindex` does not start a recurring series. It does not apply `until` (only `daily-close` and the last day's `x`).
 
 ---
 
@@ -556,7 +595,7 @@ Files in `docs/templates/`. Body matches sections 4.x + the listed headings. No 
 1. Tree § 3; `user/` without real life; `preferences.md` empty/minimal is OK.
 2. `docs/spec.md` = this law; `AGENTS.md`; templates; `docs/cron.md`; `README.md`.
 3. The commands work (`reindex`, `watch`, `sync`, `daily-close`, `validate`, `up`).
-4. Tests in `scripts/tests/` (not in `user/`): unique, daily, weekdays, interval, until date — empty sections omitted; Overdue uniques only; `x` on a recurring 1 day line reverted; `x` unique moves + `completed_on` + commit; `x` recurring Today fills `done_on`; `x` on unstarted recurring in `pending/` reverted; `daily-close` until without x → completed + daily failure; past schedule gone; catch-up closes missed days with no credit and applies `[x]` on the return day; with `user/.git`, daily-close commits in the nested user git and the parent stays clean; recurring `start` null stays pending; `start` today moves to `recurring/`; first cadence day ≥ `start`; maintenance in `maintenance/` on the same index; `times` Today suffix `(n/N)`; each Today `x` appends one date and unchecks until the quota; partial quota fails the daily.
+4. Tests in `scripts/tests/` (not in `user/`): unique, daily, weekdays, interval, until date — empty sections omitted; Overdue includes a pending recurring past due; `x` on an ongoing line outside Today reverted; `x` unique moves + `completed_on` + commit; `x` ongoing Today fills `done_on` and leaves Today; first `x` on pending recurring starts it; `daily-close` until without x → completed + daily failure; past schedule gone; catch-up closes missed days with no credit and applies `[x]` on the return day; with `user/.git`, daily-close commits in the nested user git and the parent stays clean; recurring `due` null stays pending; maintenance lives in `ongoing/`; `done_on` drops the closed day; `times` is rejected.
 5. `origin` on GitHub; public tree without real-life projects/tasks (`/user/` in gitignore).
 
 ---
@@ -566,7 +605,7 @@ Files in `docs/templates/`. Body matches sections 4.x + the listed headings. No 
 - Reality > checklist.
 - Phase = state + Goal (Tests if the Goal is not observable).
 - A deadline is a calculation, not a folder.
-- Unique: `x` moves the file. Recurring: `x` (Today only, live series) records **one** occurrence. If `times` and the day's count is still short, the line is unchecked and stays Today. Unstarted recurring: `x` is reverted.
-- Cron: index + daily + past schedule; completes recurring only on a date `until`; moves recurring pending → recurring on `start`.
+- Unique: `x` moves the file. Live series: `x` in Today records the day. Pending recurring: `x` in any section starts the series.
+- Cron: index + daily + past schedule; completes recurring only on a date `until`. It does not start a series.
 - `aos up` installs the calendar crontab (`daily-close`), catch-up of missed days, and starts watch if it is dead. It does not start the `cron` daemon and does not reinstall every minute. Process persistence is the host.
 - The AI does not replace the goal or the `x`.

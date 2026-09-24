@@ -10,8 +10,7 @@ TZ_NAME = "America/Sao_Paulo"
 
 TASK_FOLDERS = (
     "pending",
-    "recurring",
-    "maintenance",
+    "ongoing",
     "completed",
     "obsolete",
     "canceled",
@@ -25,11 +24,9 @@ ALL_TYPES = UNIQUE_TYPES | SERIES_TYPES
 
 UNIQUE_STATUSES = frozenset({"pending", "completed", "obsolete", "canceled"})
 RECURRING_STATUSES = frozenset(
-    {"pending", "recurring", "completed", "obsolete", "canceled"}
+    {"pending", "ongoing", "completed", "obsolete", "canceled"}
 )
-MAINTENANCE_STATUSES = frozenset(
-    {"maintenance", "completed", "obsolete", "canceled"}
-)
+MAINTENANCE_STATUSES = frozenset({"ongoing", "canceled"})
 PHASE_STATUSES = frozenset({"pending", "ongoing", "completed", "obsolete"})
 
 WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
@@ -60,12 +57,22 @@ BUCKET_ORDER = (
 
 STATUS_FOLDER = {
     "pending": "pending",
-    "recurring": "recurring",
-    "maintenance": "maintenance",
+    "ongoing": "ongoing",
     "completed": "completed",
     "obsolete": "obsolete",
     "canceled": "canceled",
 }
+
+CLASS_RANK = {
+    "maintenance": 0,
+    "recurring-independent": 1,
+    "unique-independent": 2,
+    "recurring-project": 3,
+    "unique-project": 4,
+}
+
+HEADING_AFTER = "Depois de"
+HEADING_UNPLACED = "Sem posição"
 
 
 def get_root() -> Path:

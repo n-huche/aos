@@ -3,7 +3,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .cadence import cadence_of, start_date, until_date, weekday_names
+from .cadence import cadence_of, due_date, until_date, weekday_names
+from .index import after_slug, clock_of
 from .config import (
     ALL_TYPES,
     CADENCE_KINDS,
@@ -34,9 +35,66 @@ def validate(root: Path) -> list[str]:
     return errors
 
 
+def _validate_common(task) -> list[str]:
+    errors: list[str] = []
+    inf = task.data.get("infinitive")
+    if not isinstance(inf, str) or not inf.strip():
+        errors.append(f"{task.path}: missing infinitive")
+    if task.data.get("times") is not None:
+        errors.append(f"{task.path}: times is not a field")
+    has_in = task.data.get("do_in") not in (None, "", False)
+    has_after = task.data.get("do_after") not in (None, "", False)
+    if has_in and has_after:
+        errors.append(f"{task.path}: do_in and do_after are exclusive")
+    if has_in:
+        try:
+            clock_of(task.data)
+        except ValueError:
+            errors.append(f"{task.path}: invalid do_in")
+    return errors
+
+
+def _forbid_placement(task) -> list[str]:
+    if task.data.get("do_in") not in (None, "", False) or task.data.get("do_after") not in (
+        None,
+        "",
+        False,
+    ):
+        return [f"{task.path}: undefined due has no do_in or do_after"]
+    return []
+
+
+def _validate_after_graph(tasks) -> list[str]:
+    errors: list[str] = []
+    by_slug = {task.slug: task for task in tasks}
+    color: dict[str, int] = {}
+
+    def walk(slug: str) -> None:
+        state = color.get(slug, 0)
+        if state == 1:
+            errors.append(f"do_after cycle at {slug}")
+            return
+        if state == 2:
+            return
+        color[slug] = 1
+        task = by_slug.get(slug)
+        parent = after_slug(task.data) if task else None
+        if parent:
+            if parent not in by_slug:
+                errors.append(f"{task.path}: do_after missing slug {parent!r}")
+            else:
+                walk(parent)
+        color[slug] = 2
+
+    for slug in by_slug:
+        walk(slug)
+    return errors
+
+
 def _validate_tasks(root: Path) -> list[str]:
     errors: list[str] = []
     seen: dict[str, Path] = {}
+    tasks = []
     for task in iter_task_files(root):
         slug = task.slug
         if slug in seen:
@@ -45,6 +103,7 @@ def _validate_tasks(root: Path) -> list[str]:
             )
         else:
             seen[slug] = task.path
+        tasks.append(task)
         t = task.type
         if t not in ALL_TYPES:
             errors.append(f"{task.path}: invalid type {t!r}")
@@ -55,45 +114,44 @@ def _validate_tasks(root: Path) -> list[str]:
             errors.append(
                 f"{task.path}: status {st!r} does not match folder {task.folder!r}"
             )
+        errors.extend(_validate_common(task))
         if t in UNIQUE_TYPES:
             if st not in UNIQUE_STATUSES:
                 errors.append(f"{task.path}: invalid unique status {st!r}")
-            if task.folder in {"recurring", "maintenance"}:
-                errors.append(f"{task.path}: unique type in {task.folder}/")
+            if task.folder == "ongoing":
+                errors.append(f"{task.path}: unique type in ongoing/")
             if t == "unique-project":
                 if not task.data.get("project") or not task.data.get("phase"):
                     errors.append(f"{task.path}: unique-project needs project and phase")
-            if task.data.get("times") is not None:
-                errors.append(f"{task.path}: unique has no times")
+            if due_date(task.data) is None:
+                errors.extend(_forbid_placement(task))
             continue
         if t in RECURRING_TYPES:
             if st not in RECURRING_STATUSES:
                 errors.append(f"{task.path}: invalid recurring status {st!r}")
-            start = start_date(task.data)
-            if task.folder == "pending":
-                if st != "pending":
-                    errors.append(f"{task.path}: unstarted recurring needs status pending")
-            elif task.folder == "recurring":
-                if start is None:
-                    errors.append(f"{task.path}: live recurring needs start")
-            elif task.folder == "maintenance":
-                errors.append(f"{task.path}: recurring type in maintenance/")
+            if task.folder == "pending" and st != "pending":
+                errors.append(f"{task.path}: unstarted recurring needs status pending")
+            if task.folder == "ongoing" and st != "ongoing":
+                errors.append(f"{task.path}: live recurring needs status ongoing")
+            if task.data.get("start") is not None:
+                errors.append(f"{task.path}: recurring has no start")
+            if st == "pending" and due_date(task.data) is None:
+                errors.extend(_forbid_placement(task))
             errors.extend(_validate_recurrence(task.path, task.data, t))
             continue
         if t == "maintenance":
             if st not in MAINTENANCE_STATUSES:
                 errors.append(f"{task.path}: invalid maintenance status {st!r}")
-            if task.folder == "pending":
-                errors.append(f"{task.path}: maintenance type in pending/")
-            if task.folder == "recurring":
-                errors.append(f"{task.path}: maintenance type in recurring/")
-            if start_date(task.data) is not None:
-                errors.append(f"{task.path}: maintenance has no start")
+            if task.folder not in {"ongoing", "canceled"}:
+                errors.append(f"{task.path}: maintenance lives in ongoing/ or canceled/")
+            if task.data.get("start") is not None or task.data.get("due") is not None:
+                errors.append(f"{task.path}: maintenance has no start or due")
             if until_date(task.data) is not None or (
                 task.data.get("until_event") not in (None, "", False)
             ):
                 errors.append(f"{task.path}: maintenance has no until")
             errors.extend(_validate_recurrence(task.path, task.data, t))
+    errors.extend(_validate_after_graph(tasks))
     return errors
 
 
@@ -107,16 +165,11 @@ def _validate_recurrence(path: Path, data: dict, t: str) -> list[str]:
             errors.append(
                 f"{path}: recurring needs until XOR until_event"
             )
-        start = start_date(data)
-        if start is not None and until is not None and start > until:
-            errors.append(f"{path}: start after until")
     if t == "recurring-project":
         if not data.get("project") or not data.get("phase"):
             errors.append(f"{path}: recurring-project needs project and phase")
-    times = data.get("times")
-    if times is not None:
-        if isinstance(times, bool) or not isinstance(times, int) or times < 2:
-            errors.append(f"{path}: times must be an integer ≥ 2 (omit if 1)")
+    if data.get("times") is not None:
+        errors.append(f"{path}: times is not a field")
     cad = cadence_of(data)
     kind = str(cad.get("kind") or "").strip().lower()
     if kind not in CADENCE_KINDS:

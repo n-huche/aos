@@ -31,16 +31,8 @@ def until_date(data: dict[str, Any]) -> date | None:
     return as_date(data.get("until"))
 
 
-def start_date(data: dict[str, Any]) -> date | None:
-    return as_date(data.get("start"))
-
-
-def times_of(data: dict[str, Any]) -> int:
-    """Quota per cadence day. Omitted / invalid → 1."""
-    raw = data.get("times")
-    if isinstance(raw, bool) or not isinstance(raw, int) or raw < 2:
-        return 1
-    return raw
+def due_date(data: dict[str, Any]) -> date | None:
+    return as_date(data.get("due"))
 
 
 def done_count(data: dict[str, Any], d: date) -> int:
@@ -48,7 +40,7 @@ def done_count(data: dict[str, Any], d: date) -> int:
 
 
 def day_complete(data: dict[str, Any], d: date) -> bool:
-    return done_count(data, d) >= times_of(data)
+    return done_count(data, d) >= 1
 
 
 def cadence_of(data: dict[str, Any]) -> dict[str, Any]:
@@ -58,14 +50,12 @@ def cadence_of(data: dict[str, Any]) -> dict[str, Any]:
     return cad
 
 
-def within_start(d: date, data: dict[str, Any]) -> bool:
+def series_live(data: dict[str, Any]) -> bool:
+    """Maintenance always. Recurring only after the first check (status ongoing)."""
     t = str(data.get("type") or "").strip()
     if t not in RECURRING_TYPES:
         return True
-    s = start_date(data)
-    if s is None:
-        return False
-    return d >= s
+    return str(data.get("status") or "").strip() == "ongoing"
 
 
 def within_until(d: date, data: dict[str, Any]) -> bool:
@@ -88,7 +78,7 @@ def weekday_names(cad: dict[str, Any]) -> set[str]:
 
 
 def occurs_on(data: dict[str, Any], d: date) -> bool:
-    if not within_start(d, data):
+    if not series_live(data):
         return False
     if not within_until(d, data):
         return False
@@ -146,12 +136,8 @@ def _interval_from(cad: dict[str, Any], start: date) -> Iterator[date]:
 
 
 def next_occurrence(data: dict[str, Any], start: date) -> date | None:
-    """First occurrence on or after start whose quota is not met, within until."""
-    series = start_date(data)
-    if series is not None and start < series:
-        start = series
-    t = str(data.get("type") or "").strip()
-    if t in RECURRING_TYPES and series is None:
+    """First cadence day on or after start that is not already done, within until."""
+    if not series_live(data):
         return None
     cad = cadence_of(data)
     kind = str(cad.get("kind") or "").strip().lower()

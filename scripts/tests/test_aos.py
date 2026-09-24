@@ -32,8 +32,7 @@ def init_aos(root: Path) -> None:
         "user/projects/completed",
         "user/projects/canceled",
         "user/tasks/pending",
-        "user/tasks/recurring",
-        "user/tasks/maintenance",
+        "user/tasks/ongoing",
         "user/tasks/completed",
         "user/tasks/obsolete",
         "user/tasks/canceled",
@@ -84,6 +83,7 @@ type: unique-independent
 status: {status}
 due: {due_s}
 completed_on: {completed_s}
+infinitive: {title}
 ---
 
 # {title}
@@ -119,22 +119,23 @@ def write_recurring(
     anchor: str | None = None,
     done_on: list[str] | None = None,
     type_: str = "recurring-independent",
-    folder: str = "recurring",
-    status: str = "recurring",
+    folder: str = "ongoing",
+    status: str = "ongoing",
     project: str | None = None,
     phase: str | None = None,
-    start: str | None = "2026-09-01",
+    due: str | None = None,
     times: int | None = None,
 ) -> Path:
     lines = [
         "---",
         f"type: {type_}",
         f"status: {status}",
+        f"infinitive: {title}",
     ]
-    if start is None:
-        lines.append("start: null")
+    if due is None:
+        lines.append("due: null")
     else:
-        lines.append(f"start: {start}")
+        lines.append(f"due: {due}")
     if until is not None:
         lines.append(f"until: {until}")
     if until_event is not None:
@@ -319,8 +320,8 @@ class AOSTest(unittest.TestCase):
         self.assertEqual(headings(text), ["Today", "1 day"])
         self.assertEqual(len(section_items(text, "Today")), 1)
         self.assertEqual(len(section_items(text, "1 day")), 1)
-        self.assertIn("recurring/water.md", section_items(text, "Today")[0])
-        self.assertIn("recurring/water.md", section_items(text, "1 day")[0])
+        self.assertIn("ongoing/water.md", section_items(text, "Today")[0])
+        self.assertIn("ongoing/water.md", section_items(text, "1 day")[0])
         self.assertNotIn("## Overdue", text)
 
     def test_weekdays_wed_and_thu(self) -> None:
@@ -338,9 +339,9 @@ class AOSTest(unittest.TestCase):
         self.aos("reindex", today="2026-09-17")
         text = self.tasks_md()
         self.assertEqual(headings(text), ["Today", "4-7 days"])
-        self.assertIn("recurring/training.md", section_items(text, "4-7 days")[0])
+        self.assertIn("ongoing/training.md", section_items(text, "4-7 days")[0])
 
-    def test_recurring_start_null_stays_pending(self) -> None:
+    def test_recurring_due_null_stays_pending(self) -> None:
         write_recurring(
             self.root,
             "habit",
@@ -349,19 +350,19 @@ class AOSTest(unittest.TestCase):
             until="2026-12-01",
             folder="pending",
             status="pending",
-            start=None,
+            due=None,
         )
         self.aos("reindex")
         text = self.tasks_md()
         self.assertEqual(headings(text), ["Undefined"])
         self.assertIn("pending/habit.md", section_items(text, "Undefined")[0])
-        self.assertFalse((self.root / "user/tasks/recurring/habit.md").exists())
+        self.assertFalse((self.root / "user/tasks/ongoing/habit.md").exists())
         self.aos("daily-close", "2026-09-16", today="2026-09-17")
         daily = (self.root / "user/daily/2026-09-16.md").read_text(encoding="utf-8")
         self.assertIn("**Result:** satisfactory", daily)
         self.assertNotIn("## Failed tasks", daily)
 
-    def test_recurring_start_today_moves_to_recurring(self) -> None:
+    def test_first_check_starts_recurring(self) -> None:
         write_recurring(
             self.root,
             "habit",
@@ -370,18 +371,25 @@ class AOSTest(unittest.TestCase):
             until="2026-12-01",
             folder="pending",
             status="pending",
-            start="2026-09-16",
+            due="2026-09-16",
         )
         self.aos("reindex")
+        self.assertTrue((self.root / "user/tasks/pending/habit.md").is_file())
+        text = self.tasks_md()
+        self.assertIn("pending/habit.md", section_items(text, "Today")[0])
+        (self.root / "user/tasks/tasks.md").write_text(
+            mark_section(text, "Today"), encoding="utf-8"
+        )
+        self.aos("sync")
         self.assertFalse((self.root / "user/tasks/pending/habit.md").exists())
-        path = self.root / "user/tasks/recurring/habit.md"
+        path = self.root / "user/tasks/ongoing/habit.md"
         self.assertTrue(path.is_file())
         data, _body = split_frontmatter(path.read_text(encoding="utf-8"))
-        self.assertEqual(str(data.get("status")), "recurring")
-        text = self.tasks_md()
-        self.assertIn("recurring/habit.md", section_items(text, "Today")[0])
+        self.assertEqual(str(data.get("status")), "ongoing")
+        self.assertEqual([d.isoformat() for d in data.get("done_on") or []], [TODAY])
+        self.assertNotIn("## Today", self.tasks_md())
 
-    def test_recurring_start_skips_to_next_cadence_day(self) -> None:
+    def test_pending_due_is_not_the_cadence(self) -> None:
         write_recurring(
             self.root,
             "training",
@@ -391,14 +399,14 @@ class AOSTest(unittest.TestCase):
             until="2026-12-01",
             folder="pending",
             status="pending",
-            start="2026-09-16",
+            due="2026-09-16",
         )
         self.aos("reindex", today="2026-09-16")
         text = self.tasks_md()
-        self.assertNotIn("## Today", text)
-        self.assertIn("recurring/training.md", section_items(text, "2-3 days")[0])
+        self.assertIn("pending/training.md", section_items(text, "Today")[0])
+        self.assertNotIn("## 2-3 days", text)
 
-    def test_x_unstarted_recurring_reverted(self) -> None:
+    def test_x_unstarted_recurring_starts(self) -> None:
         write_recurring(
             self.root,
             "habit",
@@ -407,27 +415,27 @@ class AOSTest(unittest.TestCase):
             until="2026-12-01",
             folder="pending",
             status="pending",
-            start=None,
+            due=None,
         )
         write_unique(self.root, "one", "One unique", "2026-09-16")
         self.aos("reindex")
-        text = self.tasks_md()
-        text = mark_section(text, "Undefined")
+        text = mark_section(self.tasks_md(), "Undefined")
         (self.root / "user/tasks/tasks.md").write_text(text, encoding="utf-8")
         self.aos("sync")
-        self.assertTrue((self.root / "user/tasks/pending/habit.md").exists())
-        self.assertFalse((self.root / "user/tasks/completed/habit.md").exists())
-        data, _body = split_frontmatter(
-            (self.root / "user/tasks/pending/habit.md").read_text(encoding="utf-8")
-        )
-        self.assertEqual(data.get("done_on") or [], [])
+        self.assertFalse((self.root / "user/tasks/pending/habit.md").exists())
+        path = self.root / "user/tasks/ongoing/habit.md"
+        self.assertTrue(path.is_file())
+        data, _body = split_frontmatter(path.read_text(encoding="utf-8"))
+        self.assertEqual(str(data.get("status")), "ongoing")
+        self.assertEqual([d.isoformat() for d in data.get("done_on") or []], [TODAY])
 
     def test_maintenance_own_folder_same_index(self) -> None:
-        path = self.root / "user/tasks/maintenance/box.md"
+        path = self.root / "user/tasks/ongoing/box.md"
         path.write_text(
             """---
 type: maintenance
-status: maintenance
+status: ongoing
+infinitive: Box upkeep
 done_on: []
 cadence:
   kind: daily
@@ -447,127 +455,37 @@ do
         )
         self.aos("reindex")
         text = self.tasks_md()
-        self.assertIn("maintenance/box.md", section_items(text, "Today")[0])
+        self.assertIn("ongoing/box.md", section_items(text, "Today")[0])
         self.aos("validate")
 
-    def test_times_today_suffix_next_has_none(self) -> None:
+    def test_one_check_closes_the_day(self) -> None:
         write_recurring(
             self.root,
             "water",
             "Drink water",
             kind="daily",
             until="2026-12-01",
-            times=3,
         )
         self.aos("reindex")
         text = self.tasks_md()
         self.assertEqual(
             section_items(text, "Today"),
-            ["- [ ] [Drink water](recurring/water.md) (0/3)"],
+            ["- [ ] [Drink water](ongoing/water.md)"],
         )
-        nxt = section_items(text, "1 day")
-        self.assertEqual(nxt, ["- [ ] [Drink water](recurring/water.md)"])
-        self.assertNotIn("(", nxt[0].rsplit(")", 1)[-1])
-
-    def test_times_each_x_appends_and_unchecks_until_quota(self) -> None:
-        write_recurring(
-            self.root,
-            "water",
-            "Drink water",
-            kind="daily",
-            until="2026-12-01",
-            times=3,
-        )
-        self.aos("reindex")
-        path = self.root / "user/tasks/tasks.md"
-        rec = self.root / "user/tasks/recurring/water.md"
-        for n in (1, 2):
-            path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
-            self.aos("sync")
-            data, _body = split_frontmatter(rec.read_text(encoding="utf-8"))
-            self.assertEqual(
-                [d.isoformat() for d in (data.get("done_on") or [])],
-                [TODAY] * n,
-            )
-            today_line = section_items(self.tasks_md(), "Today")[0]
-            self.assertTrue(today_line.startswith("- [ ]"))
-            self.assertEqual(
-                today_line,
-                f"- [ ] [Drink water](recurring/water.md) ({n}/3)",
-            )
-            self.assertTrue(rec.is_file())
-        path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
-        self.aos("sync")
-        data, _body = split_frontmatter(rec.read_text(encoding="utf-8"))
         self.assertEqual(
-            [d.isoformat() for d in (data.get("done_on") or [])],
-            [TODAY, TODAY, TODAY],
+            section_items(text, "1 day"),
+            ["- [ ] [Drink water](ongoing/water.md)"],
         )
-        text = self.tasks_md()
-        self.assertNotIn("## Today", text)
-        self.assertEqual(headings(text), ["1 day"])
-        log = _git(self.root, "log", "-1", "--pretty=%s")
-        self.assertEqual(log.stdout.strip(), "aos: sync tasks")
-
-    def test_times_partial_fails_daily(self) -> None:
-        write_recurring(
-            self.root,
-            "water",
-            "Drink water",
-            kind="daily",
-            until="2026-12-01",
-            times=3,
-            done_on=["2026-09-16", "2026-09-16"],
-        )
-        self.aos("daily-close", "2026-09-16", today="2026-09-17")
-        daily = (self.root / "user/daily/2026-09-16.md").read_text(encoding="utf-8")
-        self.assertIn("**Result:** failure", daily)
-        self.assertIn("## Failed tasks", daily)
-        self.assertIn("recurring/water.md", daily)
-        self.assertNotIn("## Completed tasks\n\n- [", daily)
-        self.assertTrue((self.root / "user/tasks/recurring/water.md").is_file())
-
-    def test_times_quota_met_daily_done(self) -> None:
-        write_recurring(
-            self.root,
-            "water",
-            "Drink water",
-            kind="daily",
-            until="2026-12-01",
-            times=3,
-            done_on=["2026-09-16", "2026-09-16", "2026-09-16"],
-        )
-        self.aos("daily-close", "2026-09-16", today="2026-09-17")
-        daily = (self.root / "user/daily/2026-09-16.md").read_text(encoding="utf-8")
-        self.assertIn("**Result:** satisfactory", daily)
-        self.assertNotIn("## Failed tasks", daily)
-        self.assertIn("recurring/water.md", daily)
-
-    def test_times_until_today_incomplete_stays_live(self) -> None:
-        write_recurring(
-            self.root,
-            "cycle",
-            "Short cycle",
-            kind="daily",
-            until="2026-09-16",
-            times=3,
-        )
-        self.aos("reindex")
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
         self.aos("sync")
-        rec = self.root / "user/tasks/recurring/cycle.md"
-        self.assertTrue(rec.is_file())
-        self.assertFalse((self.root / "user/tasks/completed/cycle.md").exists())
+        rec = self.root / "user/tasks/ongoing/water.md"
         data, _body = split_frontmatter(rec.read_text(encoding="utf-8"))
-        self.assertEqual(str(data.get("status")), "recurring")
-        self.assertEqual(
-            [d.isoformat() for d in (data.get("done_on") or [])],
-            [TODAY],
-        )
-        self.assertIn("(1/3)", section_items(self.tasks_md(), "Today")[0])
+        self.assertEqual([d.isoformat() for d in data.get("done_on") or []], [TODAY])
+        self.assertNotIn("## Today", self.tasks_md())
+        self.assertEqual(headings(self.tasks_md()), ["1 day"])
 
-    def test_times_validate_rejects_one_and_unique(self) -> None:
+    def test_times_is_rejected(self) -> None:
         write_recurring(
             self.root,
             "water",
@@ -583,65 +501,25 @@ do
             text=True,
         )
         self.assertNotEqual(proc.returncode, 0)
-        self.assertIn("times must be an integer", proc.stderr)
-        rec = self.root / "user/tasks/recurring/water.md"
-        rec.unlink()
-        write_unique(self.root, "one", "One unique", "2026-09-16")
-        u = self.root / "user/tasks/pending/one.md"
-        text = u.read_text(encoding="utf-8")
-        u.write_text(text.replace("due: 2026-09-16\n", "due: 2026-09-16\ntimes: 3\n"))
-        proc = subprocess.run(
-            [sys.executable, str(BIN), "validate"],
-            env=self.env(),
-            capture_output=True,
-            text=True,
-        )
-        self.assertNotEqual(proc.returncode, 0)
-        self.assertIn("unique has no times", proc.stderr)
+        self.assertIn("times is not a field", proc.stderr)
 
-    def test_maintenance_times_same_as_recurring(self) -> None:
-        path = self.root / "user/tasks/maintenance/box.md"
-        path.write_text(
-            """---
-type: maintenance
-status: maintenance
-times: 2
-done_on: []
-cadence:
-  kind: daily
----
-
-# Box upkeep
-
-## What
-
-keep
-
-## How
-
-do
-""",
-            encoding="utf-8",
+    def test_done_on_cleared_at_close(self) -> None:
+        write_recurring(
+            self.root,
+            "water",
+            "Drink water",
+            kind="daily",
+            until="2026-12-01",
+            done_on=["2026-09-16"],
         )
-        self.aos("reindex")
-        self.assertEqual(
-            section_items(self.tasks_md(), "Today"),
-            ["- [ ] [Box upkeep](maintenance/box.md) (0/2)"],
+        self.aos("daily-close", "2026-09-16", today="2026-09-17")
+        daily = (self.root / "user/daily/2026-09-16.md").read_text(encoding="utf-8")
+        self.assertIn("**Result:** satisfactory", daily)
+        self.assertIn("ongoing/water.md", daily)
+        data, _body = split_frontmatter(
+            (self.root / "user/tasks/ongoing/water.md").read_text(encoding="utf-8")
         )
-        (self.root / "user/tasks/tasks.md").write_text(
-            mark_section(self.tasks_md(), "Today"), encoding="utf-8"
-        )
-        self.aos("sync")
-        data, _body = split_frontmatter(path.read_text(encoding="utf-8"))
-        self.assertEqual(
-            [d.isoformat() for d in (data.get("done_on") or [])],
-            [TODAY],
-        )
-        self.assertEqual(
-            section_items(self.tasks_md(), "Today"),
-            ["- [ ] [Box upkeep](maintenance/box.md) (1/2)"],
-        )
-        self.aos("validate")
+        self.assertEqual(data.get("done_on") or [], [])
 
     def test_interval(self) -> None:
         write_recurring(
@@ -666,11 +544,11 @@ do
         )
         self.aos("reindex")
         text = self.tasks_md()
-        self.assertIn("recurring/review-now.md", section_items(text, "Today")[0])
+        self.assertIn("ongoing/review-now.md", section_items(text, "Today")[0])
         later = section_items(text, "+30 days")
         hrefs = " ".join(later)
-        self.assertIn("recurring/review-now.md", hrefs)
-        self.assertIn("recurring/review-y.md", hrefs)
+        self.assertIn("ongoing/review-now.md", hrefs)
+        self.assertIn("ongoing/review-y.md", hrefs)
         self.assertNotIn("review-y", " ".join(section_items(text, "Today")))
 
     def test_until_date(self) -> None:
@@ -708,8 +586,8 @@ do
         overdue_items = section_items(text, "Overdue")
         self.assertEqual(len(overdue_items), 1)
         self.assertIn("pending/overdue.md", overdue_items[0])
-        self.assertNotIn("recurring/", " ".join(overdue_items))
-        self.assertIn("recurring/daily-habit.md", section_items(text, "Today")[0])
+        self.assertNotIn("ongoing/", " ".join(overdue_items))
+        self.assertIn("ongoing/daily-habit.md", section_items(text, "Today")[0])
 
     def test_x_recurring_not_today_reverted(self) -> None:
         write_recurring(
@@ -724,13 +602,13 @@ do
         path.write_text(mark_section(self.tasks_md(), "1 day"), encoding="utf-8")
         self.aos("sync")
         data, _body = split_frontmatter(
-            (self.root / "user/tasks/recurring/water.md").read_text(encoding="utf-8")
+            (self.root / "user/tasks/ongoing/water.md").read_text(encoding="utf-8")
         )
         self.assertEqual(data.get("done_on") or [], [])
-        self.assertTrue((self.root / "user/tasks/recurring/water.md").is_file())
+        self.assertTrue((self.root / "user/tasks/ongoing/water.md").is_file())
         text = self.tasks_md()
         self.assertTrue(all("- [ ]" in ln or not ln.startswith("- [") for ln in text.splitlines()))
-        self.assertIn("- [ ] [Drink water](recurring/water.md)", section_items(text, "1 day"))
+        self.assertIn("- [ ] [Drink water](ongoing/water.md)", section_items(text, "1 day"))
 
     def test_x_unique_moves_completed_on_commit(self) -> None:
         write_unique(self.root, "send-email", "Send email", "2026-09-18")
@@ -762,7 +640,7 @@ do
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
         self.aos("sync")
-        rec = self.root / "user/tasks/recurring/water.md"
+        rec = self.root / "user/tasks/ongoing/water.md"
         self.assertTrue(rec.is_file())
         data, _body = split_frontmatter(rec.read_text(encoding="utf-8"))
         done = data.get("done_on") or []
@@ -786,11 +664,11 @@ do
             "# 2026-09-15\n\n- [x] leftover\n", encoding="utf-8"
         )
         (self.root / "user/schedule/2026/09/16.md").write_text(
-            "# 2026-09-16\n\n- [Cycle](../../../tasks/recurring/cycle.md)\n",
+            "# 2026-09-16\n\n- [Cycle](../../../tasks/ongoing/cycle.md)\n",
             encoding="utf-8",
         )
         self.aos("daily-close", "2026-09-15")
-        self.assertFalse((self.root / "user/tasks/recurring/cycle.md").exists())
+        self.assertFalse((self.root / "user/tasks/ongoing/cycle.md").exists())
         completed = self.root / "user/tasks/completed/cycle.md"
         self.assertTrue(completed.is_file())
         data, _body = split_frontmatter(completed.read_text(encoding="utf-8"))
@@ -825,12 +703,14 @@ do
         self.aos("reindex")
         proc = self.aos("validate")
         self.assertEqual(proc.stdout.strip(), "ok")
-        bad = self.root / "user/tasks/recurring/bad.md"
+        bad = self.root / "user/tasks/ongoing/bad.md"
+        bad.parent.mkdir(parents=True, exist_ok=True)
         bad.write_text(
             """---
 type: recurring-independent
-status: recurring
-start: 2026-09-01
+status: ongoing
+infinitive: Bad
+due: null
 until: 2026-12-01
 until_event: some event
 done_on: []
@@ -1055,7 +935,7 @@ c
         self.assertTrue(done_u.is_file())
         data, _body = split_frontmatter(done_u.read_text(encoding="utf-8"))
         self.assertEqual(data.get("completed_on").isoformat(), "2026-09-16")
-        rec = self.root / "user/tasks/recurring/water.md"
+        rec = self.root / "user/tasks/ongoing/water.md"
         data_r, _body = split_frontmatter(rec.read_text(encoding="utf-8"))
         self.assertEqual(
             [d.isoformat() for d in (data_r.get("done_on") or [])],
@@ -1065,13 +945,13 @@ c
         self.assertIn("**Result:** failure", daily)
         self.assertIn("## Failed tasks", daily)
         self.assertIn("send-email.md", daily)
-        self.assertIn("recurring/water.md", daily)
+        self.assertIn("ongoing/water.md", daily)
         self.assertFalse((sched / "2026/09/15.md").exists())
         self.assertTrue((sched / "2026/09/16.md").exists())
         text = self.tasks_md()
         self.assertNotIn("send-email", text)
         self.assertNotIn("## Today", text)
-        self.assertIn("recurring/water.md", section_items(text, "1 day")[0])
+        self.assertIn("ongoing/water.md", section_items(text, "1 day")[0])
 
     def test_catch_up_today_unique_completes_on_recovery_day(self) -> None:
         from aos_lib.daily import catch_up

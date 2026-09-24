@@ -15,7 +15,6 @@ from aos_lib.cadence import (
     done_count,
     index_dates,
     occurs_on,
-    times_of,
 )
 from aos_lib.yamlfm import dump_yaml, join_frontmatter, parse_yaml, split_frontmatter
 
@@ -37,21 +36,20 @@ class CadenceTest(unittest.TestCase):
         self.assertTrue(occurs_on(data, date(2026, 9, 17)))
         self.assertFalse(occurs_on(data, date(2026, 9, 18)))
 
-    def test_recurring_start_gates_occurrences(self) -> None:
-        data = parse_yaml(
+    def test_pending_recurring_does_not_occur(self) -> None:
+        pending = parse_yaml(
             "type: recurring-independent\n"
-            "start: 2026-09-16\n"
-            "cadence:\n  kind: weekdays\n  days: [tue, fri]\n"
-        )
-        self.assertFalse(occurs_on(data, date(2026, 9, 15)))
-        self.assertFalse(occurs_on(data, date(2026, 9, 16)))
-        self.assertTrue(occurs_on(data, date(2026, 9, 18)))
-        none = parse_yaml(
-            "type: recurring-independent\n"
-            "start: null\n"
+            "status: pending\n"
             "cadence:\n  kind: daily\n"
         )
-        self.assertFalse(occurs_on(none, date(2026, 9, 16)))
+        self.assertFalse(occurs_on(pending, date(2026, 9, 16)))
+        live = parse_yaml(
+            "type: recurring-independent\n"
+            "status: ongoing\n"
+            "cadence:\n  kind: weekdays\n  days: [tue, fri]\n"
+        )
+        self.assertFalse(occurs_on(live, date(2026, 9, 16)))
+        self.assertTrue(occurs_on(live, date(2026, 9, 18)))
 
     def test_interval_index_anchor_today_and_yesterday(self) -> None:
         today = date(2026, 9, 16)
@@ -70,7 +68,7 @@ class CadenceTest(unittest.TestCase):
     def test_done_on_roundtrip(self) -> None:
         data = {
             "type": "recurring-independent",
-            "status": "recurring",
+            "status": "ongoing",
             "done_on": [date(2026, 9, 16)],
             "cadence": {"kind": "daily"},
         }
@@ -79,47 +77,20 @@ class CadenceTest(unittest.TestCase):
         self.assertEqual(parsed["done_on"], [date(2026, 9, 16)])
         text = join_frontmatter(data, "# Title\n")
         again, body = split_frontmatter(text)
-        self.assertEqual(again["status"], "recurring")
+        self.assertEqual(again["status"], "ongoing")
         self.assertEqual(again["done_on"], [date(2026, 9, 16)])
         self.assertIn("# Title", body)
 
-    def test_times_quota_keeps_today_until_complete(self) -> None:
+    def test_done_today_hides_today(self) -> None:
         today = date(2026, 9, 16)
-        partial = parse_yaml(
-            "times: 3\n"
-            "done_on: [2026-09-16, 2026-09-16]\n"
+        data = parse_yaml(
+            "status: ongoing\n"
+            "done_on: [2026-09-16]\n"
             "cadence:\n  kind: daily\n"
         )
-        self.assertEqual(times_of(partial), 3)
-        self.assertEqual(done_count(partial, today), 2)
-        self.assertFalse(day_complete(partial, today))
-        self.assertEqual(
-            index_dates(partial, today),
-            [date(2026, 9, 16), date(2026, 9, 17)],
-        )
-        full = parse_yaml(
-            "times: 3\n"
-            "done_on: [2026-09-16, 2026-09-16, 2026-09-16]\n"
-            "cadence:\n  kind: daily\n"
-        )
-        self.assertTrue(day_complete(full, today))
-        self.assertEqual(index_dates(full, today), [date(2026, 9, 17)])
-
-    def test_done_on_duplicates_roundtrip(self) -> None:
-        data = {
-            "type": "recurring-independent",
-            "status": "recurring",
-            "times": 3,
-            "done_on": [date(2026, 9, 16), date(2026, 9, 16)],
-            "cadence": {"kind": "daily"},
-        }
-        dumped = dump_yaml(data)
-        parsed = parse_yaml(dumped)
-        self.assertEqual(parsed["times"], 3)
-        self.assertEqual(
-            parsed["done_on"],
-            [date(2026, 9, 16), date(2026, 9, 16)],
-        )
+        self.assertEqual(done_count(data, today), 1)
+        self.assertTrue(day_complete(data, today))
+        self.assertEqual(index_dates(data, today), [date(2026, 9, 17)])
 
 
 if __name__ == "__main__":

@@ -24,12 +24,13 @@ Markdown is the source of truth. After creating or editing tasks/projects, run `
 
 ## Dates
 
-- No due: ask at the end, after writing. Recurring `start`: same.
-- Unique with due: YAML `due` + **one** day in `user/schedule/YYYY/MM/DD.md` (the due, if `due > today`). Do not ask for a start date. Do not spread the task across other days. Complete → scripts drop it from `schedule/`.
-- Start date only: ask for the due; if they will not give one, suggest and schedule on the due.
-- Recurring `start`: ask at the end; if they will not give one, `start: null` (file in `pending/`, Undefined). Schedule lists a future `start` and/or a future `until` — not every occurrence.
-- Recurring live: `pending/` → `recurring/` on the calendar day `start`. First occurrence = first cadence day ≥ `start`.
-- Recurring/maintenance `times:` only if they say the **same** action repeats more than once on a cadence day (integer ≥ 2). Omit otherwise. Do not use cadence for intra-day repeats.
+- No due: ask at the end, after writing. Recurring `due` (the deadline to start): same. `due` null gets no `do_in` and no `do_after`, and the agent does not ask for them.
+- When a `due` is set, ask `do_in` (`HH:MM`) or `do_after` (slug). If they still do not choose, omit both.
+- Maintenance has no `due`. Ask `do_in` or `do_after` when creating it. If they still do not choose, omit both.
+- Unique with due: YAML `due` + **one** day in `user/schedule/YYYY/MM/DD.md` (the due, if `due > today`). Do not spread the task across other days. Complete → scripts drop it from `schedule/`.
+- Recurring `due`: ask at the end; if they will not give one, `due: null` (file in `pending/`, Undefined). Schedule lists a future `due` and/or a future `until` — not every occurrence. The series starts when they check it the first time, not on the due date.
+- The same action twice in one day is two task files, each with its own `do_in` or `do_after`. There is no `times`.
+- H1 is the thing (`# Café da manhã`). Slug is that title in English. `infinitive` is the index phrase (`Tomar café da manhã`), required, no exceptions.
 - Schedule vs task YAML conflict → the task wins.
 - Plan on whichever day they want. No tasks on Sunday only if they ask (preferences).
 
@@ -45,6 +46,7 @@ Markdown is the source of truth. After creating or editing tasks/projects, run `
 - Until event / end of maintenance / cancel: only on command.
 - Cancel project = move `user/projects/{status}/{slug}/` → `user/projects/canceled/{slug}/`.
 - A reached goal does not become maintenance by itself. If they ask, a new maintenance is created.
+- Maintenance ends only by cancel. It does not complete and does not become obsolete.
 
 ## What the agent must not do
 

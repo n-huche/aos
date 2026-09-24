@@ -1,7 +1,9 @@
 ---
 type: maintenance
-status: maintenance          # maintenance | completed | obsolete | canceled
-# times: 3                   # omit unless the same action repeats >1 per cadence day
+status: ongoing              # ongoing | canceled
+infinitive: Do the thing
+# do_in: "06:00"             # XOR do_after
+# do_after: other-task
 done_on: []
 cadence:
   kind: daily                # daily | weekdays | interval
@@ -11,7 +13,7 @@ cadence:
   anchor: 2026-09-16
 ---
 
-# Title
+# The thing
 
 ## What
 
