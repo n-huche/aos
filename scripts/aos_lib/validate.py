@@ -195,6 +195,21 @@ def _validate_recurrence(path: Path, data: dict, t: str) -> list[str]:
             errors.append(f"{path}: invalid interval unit {unit!r}")
         if anchor is None:
             errors.append(f"{path}: interval needs anchor")
+    if kind == "month-weekday":
+        raw = cad.get("day")
+        name = "" if raw in (None, "", False) else str(raw).strip().lower()[:3]
+        n = cad.get("n")
+        if not name:
+            errors.append(f"{path}: month-weekday needs day")
+        elif name not in WEEKDAYS:
+            errors.append(f"{path}: invalid weekday {raw!r}")
+        values = [n] if isinstance(n, int) else n
+        if (
+            not isinstance(values, list)
+            or not values
+            or any(not isinstance(item, int) or not 1 <= item <= 5 for item in values)
+        ):
+            errors.append(f"{path}: month-weekday needs n from 1 to 5")
     return errors
 
 

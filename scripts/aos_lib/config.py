@@ -32,7 +32,7 @@ PHASE_STATUSES = frozenset({"pending", "ongoing", "completed", "obsolete"})
 WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 WEEKDAY_INDEX = {name: i for i, name in enumerate(WEEKDAYS)}
 
-CADENCE_KINDS = frozenset({"daily", "weekdays", "interval"})
+CADENCE_KINDS = frozenset({"daily", "weekdays", "interval", "month-weekday"})
 INTERVAL_UNITS = frozenset({"days", "weeks", "months"})
 
 SECTION_OVERDUE = "Overdue"

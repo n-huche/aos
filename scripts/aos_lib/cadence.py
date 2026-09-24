@@ -92,6 +92,8 @@ def occurs_on(data: dict[str, Any], d: date) -> bool:
         return d.weekday() in wanted
     if kind == "interval":
         return _interval_occurs(cad, d)
+    if kind == "month-weekday":
+        return _month_weekday_occurs(cad, d)
     return False
 
 
@@ -135,6 +137,73 @@ def _interval_from(cad: dict[str, Any], start: date) -> Iterator[date]:
             return
 
 
+def month_weekday_date(year: int, month: int, weekday: int, n: int) -> date | None:
+    """The n-th weekday in that month. weekday is Monday=0. None when it does not exist."""
+    if n < 1 or n > 5:
+        return None
+    first = date(year, month, 1)
+    delta = (weekday - first.weekday()) % 7
+    day_num = 1 + delta + (n - 1) * 7
+    if day_num > calendar.monthrange(year, month)[1]:
+        return None
+    return date(year, month, day_num)
+
+
+def _month_weekday_ns(raw: Any) -> list[int] | None:
+    values = [raw] if isinstance(raw, int) else raw
+    if not isinstance(values, list) or not values:
+        return None
+    out: list[int] = []
+    for item in values:
+        if not isinstance(item, int) or not 1 <= item <= 5 or item in out:
+            return None
+        out.append(item)
+    return out
+
+
+def _month_weekday_params(cad: dict[str, Any]) -> tuple[int, list[int]] | None:
+    raw = cad.get("day")
+    if raw in (None, "", False):
+        return None
+    name = str(raw).strip().lower()[:3]
+    ns = _month_weekday_ns(cad.get("n"))
+    if name not in WEEKDAY_INDEX or ns is None:
+        return None
+    return WEEKDAY_INDEX[name], ns
+
+
+def _month_weekday_occurs(cad: dict[str, Any], d: date) -> bool:
+    params = _month_weekday_params(cad)
+    if params is None:
+        return False
+    weekday, ns = params
+    return any(month_weekday_date(d.year, d.month, weekday, n) == d for n in ns)
+
+
+def _next_month_weekday(data: dict[str, Any], cad: dict[str, Any], start: date) -> date | None:
+    params = _month_weekday_params(cad)
+    if params is None:
+        return None
+    weekday, ns = params
+    year, month = start.year, start.month
+    for _ in range(12 * 80):
+        hits = [
+            hit
+            for n in ns
+            if (hit := month_weekday_date(year, month, weekday, n)) is not None and hit >= start
+        ]
+        for hit in sorted(hits):
+            if not within_until(hit, data):
+                return None
+            if not day_complete(data, hit):
+                return hit
+        month += 1
+        if month > 12:
+            month = 1
+            year += 1
+    return None
+
+
 def next_occurrence(data: dict[str, Any], start: date) -> date | None:
     """First cadence day on or after start that is not already done, within until."""
     if not series_live(data):
@@ -170,6 +239,8 @@ def next_occurrence(data: dict[str, Any], start: date) -> date | None:
             if not day_complete(data, cur):
                 return cur
         return None
+    if kind == "month-weekday":
+        return _next_month_weekday(data, cad, start)
     return None
 
 

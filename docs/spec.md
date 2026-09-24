@@ -227,11 +227,13 @@ project: my-project          # recurring-project only
 phase: mp-01-my-phase        # filename stem
 done_on: []                  # at most the open day; a later date may remain across catch-up
 cadence:
-  kind: daily                # daily | weekdays | interval
+  kind: daily                # daily | weekdays | interval | month-weekday
   days: [wed, thu]           # weekdays only; mon tue wed thu fri sat sun
   every: 2                   # interval only
   unit: months               # days | weeks | months
   anchor: 2026-09-16         # interval only
+  day: mon                   # month-weekday only
+  n: 1                       # month-weekday only; 1–5, or a list such as [1, 3]
 ---
 ```
 
@@ -248,11 +250,13 @@ status: ongoing              # ongoing | canceled
 infinitive: Do the thing
 done_on: []
 cadence:
-  kind: daily                # daily | weekdays | interval
+  kind: daily                # daily | weekdays | interval | month-weekday
   days: [wed, thu]
   every: 2
   unit: months
   anchor: 2026-09-16
+  day: mon                   # month-weekday only
+  n: 1                       # 1–5, or a list such as [1, 3]
 ---
 ```
 
@@ -337,6 +341,7 @@ No Maintenance / Recurring sections. Overdue holds uniques past due and recurrin
 - `daily`: today if not done; next = tomorrow.
 - `weekdays`: next calendar dates whose weekday ∈ `days`, skipping a date already in `done_on`.
 - `interval`: from `anchor`, step `every`/`unit` until dates ≥ today not in `done_on`. The first check does not change `anchor`.
+- `month-weekday`: the `n`th `day` of each month (`n` is 1–5 or a list of those, `day` is `mon`…`sun`). `n: 1` and `day: mon` is the first Monday. `n: [1, 3]` is the first and the third. A month that has no such day is skipped.
 
 ### 5.3 Buckets
 

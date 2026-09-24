@@ -92,6 +92,52 @@ class CadenceTest(unittest.TestCase):
         self.assertTrue(day_complete(data, today))
         self.assertEqual(index_dates(data, today), [date(2026, 9, 17)])
 
+    def test_first_monday_of_month(self) -> None:
+        data = parse_yaml(
+            "status: ongoing\n"
+            "done_on: []\n"
+            "cadence:\n  kind: month-weekday\n  day: mon\n  n: 1\n"
+        )
+        self.assertTrue(occurs_on(data, date(2026, 9, 7)))
+        self.assertFalse(occurs_on(data, date(2026, 9, 14)))
+        self.assertTrue(occurs_on(data, date(2026, 10, 5)))
+        self.assertEqual(
+            index_dates(data, date(2026, 9, 7)),
+            [date(2026, 9, 7), date(2026, 10, 5)],
+        )
+        self.assertEqual(index_dates(data, date(2026, 9, 24)), [date(2026, 10, 5)])
+        done = parse_yaml(
+            "status: ongoing\n"
+            "done_on: [2026-10-05]\n"
+            "cadence:\n  kind: month-weekday\n  day: mon\n  n: 1\n"
+        )
+        self.assertEqual(index_dates(done, date(2026, 9, 24)), [date(2026, 11, 2)])
+
+    def test_first_and_third_monday(self) -> None:
+        data = parse_yaml(
+            "status: ongoing\n"
+            "done_on: []\n"
+            "cadence:\n  kind: month-weekday\n  day: mon\n  n: [1, 3]\n"
+        )
+        self.assertTrue(occurs_on(data, date(2026, 10, 5)))
+        self.assertFalse(occurs_on(data, date(2026, 10, 12)))
+        self.assertTrue(occurs_on(data, date(2026, 10, 19)))
+        self.assertEqual(index_dates(data, date(2026, 9, 24)), [date(2026, 10, 5)])
+        self.assertEqual(
+            index_dates(data, date(2026, 10, 5)),
+            [date(2026, 10, 5), date(2026, 10, 19)],
+        )
+
+    def test_fifth_weekday_skips_a_short_month(self) -> None:
+        data = parse_yaml(
+            "status: ongoing\n"
+            "done_on: []\n"
+            "cadence:\n  kind: month-weekday\n  day: mon\n  n: 5\n"
+        )
+        self.assertFalse(occurs_on(data, date(2026, 9, 28)))
+        self.assertTrue(occurs_on(data, date(2026, 11, 30)))
+        self.assertEqual(index_dates(data, date(2026, 9, 1)), [date(2026, 11, 30)])
+
 
 if __name__ == "__main__":
     unittest.main()
