@@ -1064,6 +1064,87 @@ c
         self.assertEqual(_git(user, "status", "--porcelain").stdout.strip(), "")
         self.assertTrue((user / "daily/2026-09-15.md").is_file())
 
+    def test_same_project_ignores_type_order(self) -> None:
+        write_project(self.root, "job", status="pending", prefix="J")
+        hub = self.root / "user/projects/pending/job/job.md"
+        hub.write_text(
+            hub.read_text(encoding="utf-8") + "\n## Phases\n\n- [J-01](phases/j-01-learn.md)\n",
+            encoding="utf-8",
+        )
+        phase = self.root / "user/projects/pending/job/phases"
+        phase.mkdir()
+        (phase / "j-01-learn.md").write_text(
+            """---
+status: pending
+project: job
+---
+
+# J-01 Learn
+
+## Plan
+
+1. go
+
+## Tasks
+
+- [First](../../../tasks/pending/first.md)
+- [Habit](../../../tasks/pending/habit.md)
+""",
+            encoding="utf-8",
+        )
+        write_unique(self.root, "other", "Other thing", None)
+        write_recurring(
+            self.root,
+            "habit",
+            "Habit",
+            kind="daily",
+            until_event="done",
+            folder="pending",
+            status="pending",
+            due=None,
+            type_="recurring-project",
+            project="job",
+            phase="j-01-learn",
+        )
+        path = self.root / "user/tasks/pending/first.md"
+        path.write_text(
+            """---
+type: unique-project
+status: pending
+due: null
+completed_on: null
+infinitive: First step
+project: job
+phase: j-01-learn
+---
+
+# First
+
+## What
+
+a
+
+## How
+
+b
+
+## Goal
+
+c
+""",
+            encoding="utf-8",
+        )
+        self.aos("reindex")
+        items = section_items(self.tasks_md(), "Undefined")
+        self.assertEqual(
+            items,
+            [
+                "- [ ] [Other thing](pending/other.md)",
+                "- [ ] [First step](pending/first.md)",
+                "- [ ] [Habit](pending/habit.md)",
+            ],
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

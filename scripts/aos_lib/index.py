@@ -163,18 +163,44 @@ class _Node:
         self.rank = CLASS_RANK.get(task.type, 9)
 
 
-def _sort_key(node: _Node, order: dict[str, tuple[str, int, int]]) -> tuple:
+def _project_bands(
+    nodes: list[_Node], order: dict[str, tuple[str, int, int]]
+) -> dict[str, int]:
+    """One type-band per project, so the same project stays in presentation order."""
+    bands: dict[str, int] = {}
+    for node in nodes:
+        placed = order.get(node.slug)
+        if placed is None:
+            continue
+        title = placed[0]
+        bands[title] = min(node.rank, bands.get(title, node.rank))
+    return bands
+
+
+def _sort_key(
+    node: _Node,
+    order: dict[str, tuple[str, int, int]],
+    bands: dict[str, int],
+) -> tuple:
     placed = order.get(node.slug)
     if placed is None:
         return (node.rank, 0, node.infinitive.casefold(), 0, 0, "")
     title, phase_i, task_i = placed
-    return (node.rank, 1, title.casefold(), phase_i, task_i, node.infinitive.casefold())
+    return (
+        bands.get(title, node.rank),
+        1,
+        title.casefold(),
+        phase_i,
+        task_i,
+        node.infinitive.casefold(),
+    )
 
 
 def _sorted_nodes(
     nodes: list[_Node], order: dict[str, tuple[str, int, int]]
 ) -> list[_Node]:
-    return sorted(nodes, key=lambda n: _sort_key(n, order))
+    bands = _project_bands(nodes, order)
+    return sorted(nodes, key=lambda n: _sort_key(n, order, bands))
 
 
 def _line(node: _Node) -> str:
@@ -272,10 +298,13 @@ def render_placed(
             continue
         roots.append(parent)
 
-    def fence_key(node: _Node) -> tuple:
-        return ((node.clock or (99, 99)),) + _sort_key(node, order)
+    fence_nodes = [n for n in roots if n.clock is not None]
+    fence_bands = _project_bands(fence_nodes, order)
 
-    fences = sorted((n for n in roots if n.clock is not None), key=fence_key)
+    def fence_key(node: _Node) -> tuple:
+        return ((node.clock or (99, 99)),) + _sort_key(node, order, fence_bands)
+
+    fences = sorted(fence_nodes, key=fence_key)
     lines: list[str] = []
     for fence in fences:
         if fence.present:

@@ -391,7 +391,7 @@ Inside one parent, the bands are:
 4. recurring project
 5. unique project
 
-Inside a band, sort by `infinitive`. Tasks of the same project on the same day stay together, in `## Phases` order and then `## Tasks` order. Between projects, sort by the project H1.
+Tasks of the same project stay in `## Phases` order and then `## Tasks` order, across types. The five bands apply only between different projects, and between tasks that have no project. A project takes the band of its earliest type in that list. Inside a band, tasks without a project sort by `infinitive`. Between projects in the same band, sort by the project H1.
 
 A `do_in` line stays `- [ ]`. If that section has a child, the next heading is `### Depois de {infinitive}`. A child that itself has children uses `####`. Deeper than that stays a list under the nearest `do_in`, with no further heading. The clock is not written in the heading. The heading is omitted when no child remains in the section. If the parent is already absent from the section, the heading still shows while a child remains.
 
