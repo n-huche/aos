@@ -1145,6 +1145,73 @@ c
             ],
         )
 
+    def test_index_never_stacks_blank_lines(self) -> None:
+        def write(slug: str, title: str, *, extra: str, cadence: str, done: str) -> None:
+            path = self.root / "user/tasks/ongoing" / f"{slug}.md"
+            path.write_text(
+                f"""---
+type: maintenance
+infinitive: {title}
+status: ongoing
+{extra}
+done_on: [{done}]
+cadence:
+{cadence}
+---
+
+# {title}
+
+## What
+
+x
+
+## How
+
+y
+
+## When
+
+z
+
+## Where
+
+w
+""",
+                encoding="utf-8",
+            )
+
+        write("wake", "Acordar", extra='do_in: "06:00"', cadence="  kind: daily", done="2026-09-24")
+        write("walk", "Caminhar", extra="do_after: wake", cadence="  kind: daily", done="2026-09-24")
+        write(
+            "breakfast",
+            "Tomar café da manhã",
+            extra='do_in: "06:30"',
+            cadence="  kind: daily",
+            done="2026-09-24",
+        )
+        write(
+            "video",
+            "Postar vídeo",
+            extra="do_after: breakfast",
+            cadence="  kind: weekdays\n  days: [thu]",
+            done="2026-09-24",
+        )
+        write(
+            "lunch",
+            "Almoçar",
+            extra='do_in: "12:00"',
+            cadence="  kind: weekdays\n  days: [fri]",
+            done="",
+        )
+        self.aos("reindex", today="2026-09-24")
+        text = self.tasks_md()
+        self.assertNotIn("\n\n\n", text)
+        self.assertIn("## 4-7 days\n\n### Depois de Tomar café da manhã\n\n- [ ] [Postar vídeo]", text)
+        self.assertIn(
+            "- [ ] [Acordar](ongoing/wake.md)\n\n### Depois de Acordar\n\n- [ ] [Caminhar](ongoing/walk.md)\n",
+            text,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

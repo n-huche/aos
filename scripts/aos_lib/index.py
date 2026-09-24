@@ -207,6 +207,12 @@ def _line(node: _Node) -> str:
     return f"- [ ] [{node.infinitive}]({node.href})"
 
 
+def _separate(lines: list[str]) -> None:
+    """One blank line before the next block. Never two in a row, never a leading one."""
+    if lines and lines[-1] != "":
+        lines.append("")
+
+
 def _check_cycles(nodes: dict[str, _Node]) -> None:
     color: dict[str, int] = {}
 
@@ -241,7 +247,7 @@ def _render_children(
     if not visible:
         return
     if parent.clock is not None and depth == 0:
-        lines.append("")
+        _separate(lines)
         lines.append(f"### {HEADING_AFTER} {parent.infinitive}")
         lines.append("")
     for child in visible:
@@ -312,8 +318,7 @@ def render_placed(
     for shell in _sorted_nodes(shells, order):
         _render_children(shell, kids, order, depth=0, lines=lines)
     if loose:
-        if lines:
-            lines.append("")
+        _separate(lines)
         lines.append(f"### {HEADING_UNPLACED}")
         lines.append("")
         for node in _sorted_nodes(loose, order):
@@ -322,26 +327,43 @@ def render_placed(
     return lines
 
 
-def render_index(days_by_bucket: dict[str, list[tuple[date | None, list[str]]]]) -> str:
+def _extend(lines: list[str], chunk: list[str]) -> None:
+    body = list(chunk)
+    while body and body[0] == "":
+        body.pop(0)
+    while body and body[-1] == "":
+        body.pop()
+    if not body:
+        return
+    _separate(lines)
+    lines.extend(body)
+
+
+def assemble_index(chunks_by_heading: dict[str, list[list[str]]]) -> str:
     lines = ["# Tasks"]
     any_items = False
     for heading in BUCKET_ORDER:
-        chunks = days_by_bucket.get(heading) or []
-        if not chunks:
+        chunks = chunks_by_heading.get(heading) or []
+        if not any(any(line.strip() for line in chunk) for chunk in chunks):
             continue
         any_items = True
-        lines.append("")
+        _separate(lines)
         lines.append(f"## {heading}")
-        lines.append("")
-        for i, chunk in enumerate(chunks):
-            if i and chunk:
-                lines.append("")
-            lines.extend(chunk)
+        for chunk in chunks:
+            _extend(lines, chunk)
     if not any_items:
         lines.append("")
         return "\n".join(lines).rstrip() + "\n"
     lines.append("")
     return "\n".join(lines)
+
+
+def render_index(days_by_bucket: dict[str, list[tuple[date | None, list[str]]]]) -> str:
+    chunks_by_heading = {
+        heading: [list(chunk) for _day, chunk in pairs]
+        for heading, pairs in days_by_bucket.items()
+    }
+    return assemble_index(chunks_by_heading)
 
 
 def _href(folder: str, slug: str) -> str:
@@ -421,28 +443,7 @@ def reindex(root: Path, today: date | None = None) -> Path:
     if today is None:
         today = today_fn(root)
     items = collect_index(root, today)
-    lines = ["# Tasks"]
-    any_items = False
-    for heading in BUCKET_ORDER:
-        chunks = items.get(heading) or []
-        if not chunks:
-            continue
-        any_items = True
-        lines.append("")
-        lines.append(f"## {heading}")
-        lines.append("")
-        first = True
-        for chunk in chunks:
-            if not first:
-                lines.append("")
-            first = False
-            lines.extend(chunk)
-    if not any_items:
-        lines.append("")
-        text = "\n".join(lines).rstrip() + "\n"
-    else:
-        lines.append("")
-        text = "\n".join(lines)
+    text = assemble_index(items)
     path = tasks_dir(root) / "tasks.md"
     atomic_write(path, text)
     return path
