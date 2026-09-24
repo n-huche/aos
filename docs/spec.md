@@ -211,7 +211,7 @@ phase: mp-01-my-phase        # unique-project only; filename stem
 ---
 ```
 
-Body: H1 is the thing, not the act (`# Café da manhã`). The slug is that title in English (`morning-breakfast`). `infinitive` is the index phrase (`Tomar café da manhã`). `## What` · `## How` · `## When` if due · `## Where` / `## With who` if they apply · independent: `## Goal`.
+Body: H1 is the thing, not the act (`# Café da manhã`). The slug is that title in English (`breakfast`). `infinitive` is the index phrase (`Tomar café da manhã`). `## What` · `## How` · `## When` if due · `## Where` / `## With who` if they apply · independent: `## Goal`.
 
 ### 4.2 Recurring
 
@@ -364,11 +364,11 @@ Heading **only if** ≥1 item. Empty file allowed:
 Item:
 
 ```markdown
-- [ ] [Tomar café da manhã](ongoing/morning-breakfast.md)
+- [ ] [Tomar café da manhã](ongoing/breakfast.md)
 
 ### Depois de tomar café da manhã
 
-- [ ] [Postar vídeo para namorada](ongoing/post-video-for-girlfriend.md)
+- [ ] [Postar vídeo para namorada](ongoing/video-for-girlfriend.md)
 ```
 
 Relative to `user/tasks/`. Unique: 1 line. Recurring (live or unstarted) and maintenance: up to 2 live lines, or 1 unstarted line; all `- [ ]`.
