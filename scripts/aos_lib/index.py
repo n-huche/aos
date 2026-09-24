@@ -339,6 +339,70 @@ def _extend(lines: list[str], chunk: list[str]) -> None:
     lines.extend(body)
 
 
+def _merge_section(chunks: list[list[str]]) -> list[str]:
+    """One `###` heading per section. Later days append under the first use."""
+    groups: dict[str, list[str]] = {}
+    blocks: list[tuple[str, object]] = []
+
+    def flush_loose(loose: list[str]) -> None:
+        if loose:
+            blocks.append(("loose", list(loose)))
+            loose.clear()
+
+    for chunk in chunks:
+        loose: list[str] = []
+        current: list[str] | None = None
+        i = 0
+        body = [line for line in chunk if line != ""]
+        while i < len(body):
+            line = body[i]
+            nxt = body[i + 1] if i + 1 < len(body) else ""
+            if line.startswith("- [ ]") and nxt.startswith("### "):
+                flush_loose(loose)
+                current = None
+                blocks.append(("fence", line))
+                i += 1
+                continue
+            if line.startswith("### "):
+                flush_loose(loose)
+                bucket = groups.get(line)
+                if bucket is None:
+                    bucket = []
+                    groups[line] = bucket
+                    blocks.append(("group", (line, bucket)))
+                current = bucket
+                i += 1
+                continue
+            if current is None:
+                loose.append(line)
+            else:
+                current.append(line)
+            i += 1
+        flush_loose(loose)
+
+    lines: list[str] = []
+    for kind, payload in blocks:
+        if kind == "fence":
+            _separate(lines)
+            lines.append(str(payload))
+            continue
+        if kind == "loose":
+            rows = payload if isinstance(payload, list) else []
+            if not rows:
+                continue
+            _separate(lines)
+            lines.extend(rows)
+            continue
+        heading, rows = payload  # type: ignore[misc]
+        if not isinstance(rows, list) or not rows:
+            continue
+        _separate(lines)
+        lines.append(heading)
+        lines.append("")
+        lines.extend(rows)
+    return lines
+
+
 def assemble_index(chunks_by_heading: dict[str, list[list[str]]]) -> str:
     lines = ["# Tasks"]
     any_items = False
@@ -349,8 +413,7 @@ def assemble_index(chunks_by_heading: dict[str, list[list[str]]]) -> str:
         any_items = True
         _separate(lines)
         lines.append(f"## {heading}")
-        for chunk in chunks:
-            _extend(lines, chunk)
+        _extend(lines, _merge_section(chunks))
     if not any_items:
         lines.append("")
         return "\n".join(lines).rstrip() + "\n"

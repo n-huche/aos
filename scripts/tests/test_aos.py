@@ -1212,6 +1212,100 @@ w
             text,
         )
 
+    def test_same_section_joins_after_heading(self) -> None:
+        ongoing = self.root / "user/tasks/ongoing"
+        pending = self.root / "user/tasks/pending"
+        (ongoing / "breakfast.md").write_text(
+            """---
+type: maintenance
+infinitive: Tomar café da manhã
+status: ongoing
+do_in: "06:30"
+done_on: [2026-09-24]
+cadence:
+  kind: daily
+---
+
+# Café da manhã
+
+## What
+
+x
+
+## How
+
+y
+""",
+            encoding="utf-8",
+        )
+        (ongoing / "college.md").write_text(
+            """---
+type: recurring-independent
+infinitive: Fazer trabalhos da faculdade
+status: ongoing
+due: null
+until_event: Eu me formar
+do_after: breakfast
+done_on: []
+cadence:
+  kind: month-weekday
+  day: mon
+  n: [1, 3]
+---
+
+# Faculdade
+
+## What
+
+x
+
+## How
+
+y
+
+## When
+
+z
+""",
+            encoding="utf-8",
+        )
+        (pending / "end-relationship.md").write_text(
+            """---
+type: unique-independent
+infinitive: Terminar com a namorada
+status: pending
+due: 2026-10-24
+do_after: breakfast
+completed_on: null
+---
+
+# Término
+
+## What
+
+x
+
+## How
+
+y
+
+## Goal
+
+z
+""",
+            encoding="utf-8",
+        )
+        self.aos("reindex", today="2026-09-24")
+        text = self.tasks_md()
+        section = text.split("## 8-30 days", 1)[1].split("\n## ", 1)[0]
+        self.assertEqual(section.count("### Depois de Tomar café da manhã"), 1)
+        self.assertIn(
+            "### Depois de Tomar café da manhã\n\n"
+            "- [ ] [Fazer trabalhos da faculdade](ongoing/college.md)\n"
+            "- [ ] [Terminar com a namorada](pending/end-relationship.md)\n",
+            text,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

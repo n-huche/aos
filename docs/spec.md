@@ -382,7 +382,7 @@ Relative to `user/tasks/`. Unique: 1 line. Recurring (live or unstarted) and mai
 
 The order is a suggestion. The checkbox does not depend on position.
 
-In a bucket that spans more than one day, the occurrence day comes first.
+In a bucket that spans more than one day, the occurrence day comes first. A `###` heading already used in that section is not opened again: later days append their lines under the first one.
 
 `do_in` is `HH:MM` (24h, `America/Sao_Paulo`). `do_after` is a task slug. A task has one of them, or neither. Both is an error. A cycle, or a slug that does not exist, is an index error.
 
