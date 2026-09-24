@@ -240,19 +240,14 @@ def _render_children(
     visible = [c for c in children if c.present or kids.get(c.slug)]
     if not visible:
         return
-    if depth == 0:
+    if parent.clock is not None and depth == 0:
         lines.append("")
         lines.append(f"### {HEADING_AFTER} {parent.infinitive}")
-        lines.append("")
-    elif depth == 1:
-        lines.append("")
-        lines.append(f"#### {HEADING_AFTER} {parent.infinitive}")
         lines.append("")
     for child in visible:
         if child.present:
             lines.append(_line(child))
-        nxt = depth + 1 if depth < 2 else 2
-        _render_children(child, kids, order, depth=nxt, lines=lines)
+        _render_children(child, kids, order, depth=depth + 1, lines=lines)
 
 
 def render_placed(
@@ -278,7 +273,7 @@ def render_placed(
         if node is None or not node.after or node.after not in catalog:
             return
         parent = catalog[node.after]
-        if node not in kids[parent.slug]:
+        if not any(existing.slug == node.slug for existing in kids[parent.slug]):
             kids[parent.slug].append(node)
         ensure_ancestor(parent.slug, seen)
 
