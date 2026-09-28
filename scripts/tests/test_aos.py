@@ -522,6 +522,137 @@ do
         )
         self.assertEqual(data.get("done_on") or [], [])
 
+    def test_daily_close_twice_keeps_satisfactory_close(self) -> None:
+        box = self.root / "user/tasks/ongoing/box.md"
+        box.write_text(
+            """---
+type: maintenance
+status: ongoing
+infinitive: Box upkeep
+done_on:
+  - 2026-09-16
+  - 2026-09-17
+cadence:
+  kind: daily
+---
+
+# Box upkeep
+
+## What
+
+keep
+
+## How
+
+do
+""",
+            encoding="utf-8",
+        )
+        write_unique(
+            self.root,
+            "send-email",
+            "Send email",
+            "2026-09-16",
+            folder="completed",
+            status="completed",
+            completed_on="2026-09-16",
+        )
+        self.aos("daily-close", "2026-09-16", today="2026-09-17")
+        daily_path = self.root / "user/daily/2026-09-16.md"
+        first = daily_path.read_text(encoding="utf-8")
+        self.assertIn("**Result:** satisfactory", first)
+        self.assertNotIn("## Failed tasks", first)
+        self.assertIn("ongoing/box.md", first)
+        self.assertIn("completed/send-email.md", first)
+        data, _body = split_frontmatter(box.read_text(encoding="utf-8"))
+        self.assertEqual(
+            [d.isoformat() for d in data.get("done_on") or []],
+            ["2026-09-17"],
+        )
+        head = _git(self.root, "rev-parse", "HEAD").stdout.strip()
+
+        again = self.aos("daily-close", "2026-09-16", today="2026-09-17")
+        self.assertIn("2026-09-16.md", again.stdout)
+        self.assertEqual(daily_path.read_text(encoding="utf-8"), first)
+        data, _body = split_frontmatter(box.read_text(encoding="utf-8"))
+        self.assertEqual(
+            [d.isoformat() for d in data.get("done_on") or []],
+            ["2026-09-17"],
+        )
+        self.assertEqual(_git(self.root, "rev-parse", "HEAD").stdout.strip(), head)
+        self.assertTrue((self.root / "user/tasks/completed/send-email.md").is_file())
+
+        from aos_lib.daily import catch_up
+
+        actions = catch_up(self.root, today=date(2026, 9, 17), commit=False)
+        self.assertEqual(actions, ["catch-up-none"])
+        self.assertEqual(daily_path.read_text(encoding="utf-8"), first)
+
+        self.aos("daily-close", "2026-09-17", today="2026-09-18")
+        self.assertEqual(daily_path.read_text(encoding="utf-8"), first)
+        nxt = (self.root / "user/daily/2026-09-17.md").read_text(encoding="utf-8")
+        self.assertIn("**Result:** satisfactory", nxt)
+        self.assertIn("ongoing/box.md", nxt)
+        data, _body = split_frontmatter(box.read_text(encoding="utf-8"))
+        self.assertEqual(data.get("done_on") or [], [])
+
+    def test_daily_close_existing_file_is_noop(self) -> None:
+        box = self.root / "user/tasks/ongoing/box.md"
+        box.write_text(
+            """---
+type: maintenance
+status: ongoing
+infinitive: Box upkeep
+done_on:
+  - 2026-09-16
+cadence:
+  kind: daily
+---
+
+# Box upkeep
+
+## What
+
+keep
+
+## How
+
+do
+""",
+            encoding="utf-8",
+        )
+        daily_path = self.root / "user/daily/2026-09-16.md"
+        kept = (
+            "# 2026-09-16\n\n"
+            "**Result:** satisfactory\n\n"
+            "## Completed tasks\n\n"
+            "- [Box upkeep](../tasks/ongoing/box.md)\n\n"
+            "## Notes, optional\n\n"
+            "leave this close alone\n"
+        )
+        daily_path.write_text(kept, encoding="utf-8")
+        sched = self.root / "user/schedule/2026/09"
+        sched.mkdir(parents=True)
+        day_page = sched / "16.md"
+        day_page.write_text("# 2026-09-16\n", encoding="utf-8")
+        head = _git(self.root, "rev-parse", "HEAD").stdout.strip()
+
+        self.aos("daily-close", "2026-09-16", today="2026-09-17")
+
+        self.assertEqual(daily_path.read_text(encoding="utf-8"), kept)
+        self.assertNotIn("## Failed tasks", daily_path.read_text(encoding="utf-8"))
+        data, _body = split_frontmatter(box.read_text(encoding="utf-8"))
+        self.assertEqual(
+            [d.isoformat() for d in data.get("done_on") or []],
+            ["2026-09-16"],
+        )
+        self.assertTrue(day_page.is_file())
+        self.assertEqual(_git(self.root, "rev-parse", "HEAD").stdout.strip(), head)
+        self.assertEqual(
+            _git(self.root, "log", "-1", "--pretty=%s").stdout.strip(),
+            "aos: test fixture",
+        )
+
     def test_interval(self) -> None:
         write_recurring(
             self.root,
