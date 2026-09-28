@@ -486,8 +486,8 @@ Timezone `America/Sao_Paulo`. D = the day that **ended**. The next reindex clock
 4. Recurring `until == D` (the series is `ongoing`):
    - D in `done_on`: move `ongoing/` → `completed/`. Daily: done.
    - D not in `done_on`: move to `completed/` anyway. Daily: **not done**.
-5. Write `user/daily/D.md` (idempotent if the set is the same).
-6. Remove D from `done_on`. A later date stays.
+5. Write `user/daily/D.md`. If that file already exists, stop without rewriting the daily, clearing `done_on`, deleting schedule, reindexing, or committing. The first close already removed D from `done_on`; a later pass would score every live series that occurred on D as a failure. Catch-up only closes days that have no daily file, so this no-op does not skip a missed day.
+6. Remove D from `done_on`. A later date stays. Steps 6–9 run only when step 5 created the file.
 7. Delete `schedule` dates ≤ D. Non-date markdown under `schedule/` is left alone.
 8. Reindex with today = D+1.
 9. Commit `aos: daily-close D`. Push if origin.
@@ -600,7 +600,7 @@ Files in `docs/templates/`. Body matches sections 4.x + the listed headings. No 
 1. Tree § 3; `user/` without real life; `preferences.md` empty/minimal is OK.
 2. `docs/spec.md` = this law; `AGENTS.md`; templates; `docs/cron.md`; `README.md`.
 3. The commands work (`reindex`, `watch`, `sync`, `daily-close`, `validate`, `up`).
-4. Tests in `scripts/tests/` (not in `user/`): unique, daily, weekdays, interval, until date — empty sections omitted; Overdue includes a pending recurring past due; `x` on an ongoing line outside Today reverted; `x` unique moves + `completed_on` + commit; `x` ongoing Today fills `done_on` and leaves Today; first `x` on pending recurring starts it; `daily-close` until without x → completed + daily failure; past schedule gone; catch-up closes missed days with no credit and applies `[x]` on the return day; with `user/.git`, daily-close commits in the nested user git and the parent stays clean; recurring `due` null stays pending; maintenance lives in `ongoing/`; `done_on` drops the closed day; `times` is rejected.
+4. Tests in `scripts/tests/` (not in `user/`): unique, daily, weekdays, interval, until date — empty sections omitted; Overdue includes a pending recurring past due; `x` on an ongoing line outside Today reverted; `x` unique moves + `completed_on` + commit; `x` ongoing Today fills `done_on` and leaves Today; first `x` on pending recurring starts it; `daily-close` until without x → completed + daily failure; past schedule gone; catch-up closes missed days with no credit and applies `[x]` on the return day; with `user/.git`, daily-close commits in the nested user git and the parent stays clean; recurring `due` null stays pending; maintenance lives in `ongoing/`; `done_on` drops the closed day; a second `daily-close` for a D that already has `daily/D.md` leaves that file and `done_on` unchanged; `times` is rejected.
 5. `origin` on GitHub; public tree without real-life projects/tasks (`/user/` in gitignore).
 
 ---

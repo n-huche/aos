@@ -15,7 +15,7 @@ AOS_ROOT={root}
 0 0 * * * {root}/scripts/aos daily-close >> {root}/logs/daily-close.log 2>&1
 ```
 
-- Midnight local: `aos daily-close`.
+- Midnight local: `aos daily-close`. If `user/daily/D.md` already exists, the command does nothing. A second runner (another crontab, a hand re-run) cannot replace a satisfactory close with failures.
 - No minute job. No `@reboot`. Those were host persistence.
 
 `aos up` (on return from downtime, or by hand):

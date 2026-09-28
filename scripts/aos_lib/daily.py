@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import re
 from datetime import date, timedelta
 from pathlib import Path
 
@@ -17,8 +16,6 @@ from .index import reindex
 from .sync import finish_recurring_until
 from .taskio import atomic_write, iter_task_files
 from .yamlfm import as_date
-
-NOTES_RE = re.compile(r"^##\s+Notes.*$", re.M)
 
 
 def schedule_date_from_path(path: Path, schedule_root: Path) -> date | None:
@@ -65,38 +62,6 @@ def _prune_empty_parents(start: Path, stop: Path) -> None:
             parent = cur.parent
             cur.rmdir()
             cur = parent
-
-
-def extract_notes(text: str) -> str | None:
-    m = NOTES_RE.search(text)
-    if not m:
-        return None
-    return text[m.start():].rstrip() + "\n"
-
-
-def daily_sets(text: str) -> tuple[set[str], set[str], str | None]:
-    """Parse completed and failed hrefs from an existing daily file."""
-    completed: set[str] = set()
-    failed: set[str] = set()
-    section = ""
-    for line in text.splitlines():
-        if line.startswith("## "):
-            section = line[3:].strip()
-            continue
-        if line.startswith("- ["):
-            href = ""
-            if "](" in line and line.endswith(")"):
-                href = line.rsplit("](", 1)[-1][:-1]
-            if section.startswith("Completed tasks"):
-                completed.add(href)
-            elif section.startswith("Failed tasks"):
-                failed.add(href)
-    result = None
-    for line in text.splitlines():
-        if line.startswith("**Result:**"):
-            result = line.split(":", 1)[-1].strip()
-            break
-    return completed, failed, result
 
 
 def _href_for(task_folder: str, slug: str) -> str:
@@ -210,18 +175,10 @@ def write_daily(
     failed: list[tuple[str, str]],
     early: bool,
 ) -> Path:
+    """Write `user/daily/D.md`. Caller guarantees the file is absent."""
     result = result_of(completed, failed, early)
     path = daily_dir(root) / f"{d.isoformat()}.md"
-    notes = None
-    if path.is_file():
-        old = path.read_text(encoding="utf-8")
-        old_c, old_f, old_r = daily_sets(old)
-        new_c = {href for _t, href in completed}
-        new_f = {href for _t, href in failed}
-        if old_c == new_c and old_f == new_f and old_r == result:
-            return path
-        notes = extract_notes(old)
-    text = render_daily(d, result, completed, failed, notes)
+    text = render_daily(d, result, completed, failed)
     atomic_write(path, text)
     return path
 
@@ -239,6 +196,13 @@ def daily_close(
         today = today_fn(root)
     if d is None:
         d = today - timedelta(days=1)
+    path = daily_dir(root) / f"{d.isoformat()}.md"
+    # The first close already dropped D from done_on. A second pass would
+    # score every live series that occurred on D as a failure, while uniques
+    # with completed_on == D would still look done. Catch-up only asks for
+    # days that have no daily file, so this does not skip a missed day.
+    if path.is_file():
+        return path
     completed, failed, early = collect_daily(root, d)
     path = write_daily(root, d, completed, failed, early)
     _clear_done_on(root, d)
