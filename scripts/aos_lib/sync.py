@@ -6,7 +6,7 @@ from pathlib import Path
 
 from .cadence import day_complete, until_date
 from .config import RECURRING_TYPES, SECTION_TODAY, SERIES_TYPES, UNIQUE_TYPES, today as today_fn
-from .gitutil import commit_user, push_if_origin
+from .gitutil import commit_user, push_or_warn
 from .index import reindex
 from .links import drop_from_schedule, folder_from_href, rewrite_task_links
 from .taskio import TaskFile, load_by_slug, move_task
@@ -157,8 +157,8 @@ def apply_collected(
         mark_series_today(root, task, today)
     reindex(root, today)
     if commit and any(report.values()):
-        if commit_user(root, "aos: sync tasks"):
-            push_if_origin(root)
+        commit_user(root, "aos: sync tasks")
+        push_or_warn(root)
     return report
 
 

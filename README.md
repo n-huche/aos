@@ -22,7 +22,7 @@ user/                 # not in this git — see below
 
 `user/` is a nested git (not a submodule, not `AOS_ROOT`). This tree gitignores `/user/`. Clone your private user repository into `user/`, or mkdir the empty folders from the spec. Scripts still need `user/` on disk next to `scripts/`.
 
-If `user/.git` exists, `aos` commits and pushes life there. Otherwise (tests) it stages `user/` on the parent.
+If `user/.git` exists, `aos` commits and pushes life there. Otherwise (tests) it stages `user/` on the parent. A failed push is logged and retried by `aos watch` every 10 minutes.
 
 ## Commands
 

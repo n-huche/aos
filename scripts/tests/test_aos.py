@@ -5,10 +5,12 @@ import signal
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import unittest
 from datetime import date
 from pathlib import Path
+from unittest import mock
 
 BIN = Path(__file__).resolve().parent.parent / "aos"
 SCRIPTS = Path(__file__).resolve().parent.parent
@@ -1347,6 +1349,77 @@ z
             "- [ ] [Estudar equals](pending/equals.md)\n- [ ] [Estudar Stream](pending/stream.md)",
             text,
         )
+
+
+class GitUtilTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self._td = tempfile.TemporaryDirectory()
+        base = Path(self._td.name)
+        self.remote = base / "remote.git"
+        _git(base, "init", "--bare", "-b", "main", str(self.remote))
+        self.root = base / "aos"
+        self.root.mkdir()
+        init_aos(self.root)
+        _git(self.root, "branch", "-M", "main")
+        _git(self.root, "remote", "add", "origin", str(self.remote))
+        _git(self.root, "push", "-u", "origin", "main")
+        self._env = mock.patch.dict(
+            os.environ,
+            {"AOS_GIT_NAME": "AOS", "AOS_GIT_EMAIL": "aos@localhost"},
+        )
+        self._env.start()
+
+    def tearDown(self) -> None:
+        self._env.stop()
+        self._td.cleanup()
+
+    def remote_head(self) -> str:
+        return _git(self.remote, "rev-parse", "main").stdout.strip()
+
+    def test_commit_waits_for_foreign_index_lock(self) -> None:
+        from aos_lib import gitutil
+
+        lock = self.root / ".git/index.lock"
+        lock.write_text("", encoding="utf-8")
+        (self.root / "user/daily/2026-09-15.md").write_text("# day\n", encoding="utf-8")
+        timer = threading.Timer(0.3, lock.unlink)
+        timer.start()
+        try:
+            with mock.patch.object(gitutil, "INDEX_LOCK_WAIT_S", 0.2):
+                self.assertTrue(gitutil.commit_user(self.root, "aos: test lock"))
+        finally:
+            timer.join()
+        log = _git(self.root, "log", "-1", "--pretty=%s")
+        self.assertEqual(log.stdout.strip(), "aos: test lock")
+
+    def test_push_retries_commit_left_by_failed_push(self) -> None:
+        from aos_lib import gitutil
+
+        (self.root / "user/daily/2026-09-15.md").write_text("# day\n", encoding="utf-8")
+        self.assertTrue(gitutil.commit_user(self.root, "aos: offline commit"))
+        before = self.remote_head()
+        self.assertFalse(gitutil.commit_user(self.root, "aos: nothing new"))
+        self.assertTrue(gitutil.push_if_origin(self.root))
+        self.assertNotEqual(self.remote_head(), before)
+        self.assertEqual(
+            self.remote_head(),
+            _git(self.root, "rev-parse", "HEAD").stdout.strip(),
+        )
+        self.assertFalse(gitutil.push_if_origin(self.root))
+
+    def test_failed_push_does_not_fail_daily_close(self) -> None:
+        from aos_lib.daily import daily_close
+
+        _git(self.root, "remote", "set-url", "origin", str(self.root / "missing.git"))
+        path = daily_close(self.root, date(2026, 9, 15), today=date(2026, 9, 16))
+        self.assertTrue(path.is_file())
+        log = _git(self.root, "log", "-1", "--pretty=%s")
+        self.assertEqual(log.stdout.strip(), "aos: daily-close 2026-09-15")
+
+    def test_git_never_prompts(self) -> None:
+        from aos_lib import gitutil
+
+        self.assertEqual(gitutil._env()["GIT_TERMINAL_PROMPT"], "0")
 
 
 if __name__ == "__main__":

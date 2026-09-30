@@ -12,7 +12,7 @@ from .config import (
     daily_dir,
     schedule_dir,
 )
-from .gitutil import commit_user, push_if_origin
+from .gitutil import commit_user, push_or_warn
 from .index import reindex
 from .sync import finish_recurring_until
 from .taskio import atomic_write, iter_task_files
@@ -245,8 +245,8 @@ def daily_close(
     delete_past_schedule(root, d)
     reindex(root, d + timedelta(days=1))
     if commit:
-        if commit_user(root, f"aos: daily-close {d.isoformat()}"):
-            push_if_origin(root)
+        commit_user(root, f"aos: daily-close {d.isoformat()}")
+        push_or_warn(root)
     return path
 
 

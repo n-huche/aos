@@ -10,7 +10,11 @@ import time
 from pathlib import Path
 
 from .config import tasks_dir, today as today_fn
+from .gitutil import push_if_origin
 from .sync import sync
+
+# A push that failed (offline, auth) is retried this often.
+PUSH_RETRY_S = 600.0
 
 IN_MODIFY = 0x00000002
 IN_CLOSE_WRITE = 0x00000008
@@ -103,6 +107,21 @@ def _file_sig(path: Path) -> tuple[int, int, str]:
     return (st.st_mtime_ns, st.st_size, text)
 
 
+def _retry_push(root: Path, last_error: str) -> str:
+    """Push commits a previous sync left behind. Log an error only when it changes."""
+    try:
+        if push_if_origin(root):
+            sys.stderr.write("aos watch: pushed pending commits\n")
+            sys.stderr.flush()
+        return ""
+    except RuntimeError as exc:
+        error = str(exc)
+        if error != last_error:
+            sys.stderr.write(f"aos watch push error: {error}\n")
+            sys.stderr.flush()
+        return error
+
+
 def watch(root: Path, *, poll_s: float = 1.0) -> None:
     tasks_md = tasks_dir(root) / "tasks.md"
     tasks_md.parent.mkdir(parents=True, exist_ok=True)
@@ -114,8 +133,13 @@ def watch(root: Path, *, poll_s: float = 1.0) -> None:
     fd = _inotify_fd(tasks_md.parent)
     sys.stderr.write(f"aos watch on {tasks_md} ({'inotify' if fd is not None else 'poll'})\n")
     sys.stderr.flush()
+    next_push = time.monotonic()
+    push_error = ""
     try:
         while True:
+            if time.monotonic() >= next_push:
+                push_error = _retry_push(root, push_error)
+                next_push = time.monotonic() + PUSH_RETRY_S
             if fd is not None:
                 try:
                     select.select([fd], [], [], min(poll_s, 2.0))
