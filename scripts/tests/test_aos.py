@@ -1282,17 +1282,17 @@ z
 """,
             encoding="utf-8",
         )
-        (pending / "end-relationship.md").write_text(
+        (pending / "renew-documents.md").write_text(
             """---
 type: unique-independent
-infinitive: Terminar com a namorada
+infinitive: Renovar documentos
 status: pending
 due: 2026-10-24
 do_after: breakfast
 completed_on: null
 ---
 
-# Término
+# Documentos
 
 ## What
 
@@ -1316,7 +1316,7 @@ z
         self.assertIn(
             "### Depois de Tomar café da manhã\n\n"
             "- [ ] [Fazer trabalhos da faculdade](ongoing/college.md)\n"
-            "- [ ] [Terminar com a namorada](pending/end-relationship.md)\n",
+            "- [ ] [Renovar documentos](pending/renew-documents.md)\n",
             text,
         )
 
