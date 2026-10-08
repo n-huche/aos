@@ -232,6 +232,14 @@ def section_items(text: str, heading: str) -> list[str]:
     return items
 
 
+def seed_daily(root: Path, iso: str, text: str) -> Path:
+    y, m, day = iso.split("-")
+    path = root / "user/daily" / y / m / f"{day}.md"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    path.write_text(text, encoding="utf-8")
+    return path
+
+
 def mark_section(text: str, heading: str) -> str:
     cur = None
     out: list[str] = []
@@ -361,7 +369,7 @@ class AOSTest(unittest.TestCase):
         self.assertIn("pending/habit.md", section_items(text, "Undefined")[0])
         self.assertFalse((self.root / "user/tasks/ongoing/habit.md").exists())
         self.aos("daily-close", "2026-09-16", today="2026-09-17")
-        daily = (self.root / "user/daily/2026-09-16.md").read_text(encoding="utf-8")
+        daily = (self.root / "user/daily/2026/09/16.md").read_text(encoding="utf-8")
         self.assertIn("**Result:** satisfactory", daily)
         self.assertNotIn("## Failed tasks", daily)
 
@@ -516,7 +524,7 @@ do
             done_on=["2026-09-16"],
         )
         self.aos("daily-close", "2026-09-16", today="2026-09-17")
-        daily = (self.root / "user/daily/2026-09-16.md").read_text(encoding="utf-8")
+        daily = (self.root / "user/daily/2026/09/16.md").read_text(encoding="utf-8")
         self.assertIn("**Result:** satisfactory", daily)
         self.assertIn("ongoing/water.md", daily)
         data, _body = split_frontmatter(
@@ -676,7 +684,7 @@ do
         self.assertTrue(completed.is_file())
         data, _body = split_frontmatter(completed.read_text(encoding="utf-8"))
         self.assertEqual(str(data.get("status")), "completed")
-        daily = (self.root / "user/daily/2026-09-15.md").read_text(encoding="utf-8")
+        daily = (self.root / "user/daily/2026/09/15.md").read_text(encoding="utf-8")
         self.assertIn("**Result:** failure", daily)
         self.assertIn("## Failed tasks", daily)
         self.assertIn("completed/cycle.md", daily)
@@ -885,7 +893,7 @@ c
             again = self.aos("up", "--watch-only")
             self.assertIn("watch-running", again.stdout)
             self.assertIn(str(pid), again.stdout)
-            self.assertFalse((self.root / "user/daily/2026-09-15.md").exists())
+            self.assertFalse((self.root / "user/daily/2026/09/15.md").exists())
         finally:
             try:
                 os.killpg(pid, signal.SIGTERM)
@@ -904,10 +912,10 @@ c
             missing_close_dates(self.root, today),
             [date(2026, 9, 15)],
         )
-        (self.root / "user/daily/2026-09-15.md").write_text("# 15\n", encoding="utf-8")
+        seeded = seed_daily(self.root, "2026-09-15", "# 15\n")
         self.assertEqual(missing_close_dates(self.root, today), [])
-        (self.root / "user/daily/2026-09-15.md").unlink()
-        (self.root / "user/daily/2026-09-13.md").write_text("# 13\n", encoding="utf-8")
+        seeded.unlink()
+        seed_daily(self.root, "2026-09-13", "# 13\n")
         self.assertEqual(
             missing_close_dates(self.root, today),
             [date(2026, 9, 14), date(2026, 9, 15)],
@@ -944,7 +952,7 @@ c
             [d.isoformat() for d in (data_r.get("done_on") or [])],
             ["2026-09-16"],
         )
-        daily = (self.root / "user/daily/2026-09-15.md").read_text(encoding="utf-8")
+        daily = (self.root / "user/daily/2026/09/15.md").read_text(encoding="utf-8")
         self.assertIn("**Result:** failure", daily)
         self.assertIn("## Failed tasks", daily)
         self.assertIn("send-email.md", daily)
@@ -959,9 +967,10 @@ c
     def test_catch_up_today_unique_completes_on_recovery_day(self) -> None:
         from aos_lib.daily import catch_up
 
-        (self.root / "user/daily/2026-09-14.md").write_text(
+        seed_daily(
+            self.root,
+            "2026-09-14",
             "# 2026-09-14\n\n**Result:** satisfactory\n",
-            encoding="utf-8",
         )
         write_unique(self.root, "today-task", "Today unique", "2026-09-16")
         self.aos("reindex", today="2026-09-16")
@@ -974,15 +983,16 @@ c
         self.assertTrue(done.is_file())
         data, _body = split_frontmatter(done.read_text(encoding="utf-8"))
         self.assertEqual(data.get("completed_on").isoformat(), "2026-09-16")
-        daily = (self.root / "user/daily/2026-09-15.md").read_text(encoding="utf-8")
+        daily = (self.root / "user/daily/2026/09/15.md").read_text(encoding="utf-8")
         self.assertNotIn("today-task.md", daily)
 
     def test_catch_up_two_missed_days(self) -> None:
         from aos_lib.daily import catch_up
 
-        (self.root / "user/daily/2026-09-13.md").write_text(
+        seed_daily(
+            self.root,
+            "2026-09-13",
             "# 2026-09-13\n\n**Result:** satisfactory\n",
-            encoding="utf-8",
         )
         write_unique(self.root, "letter", "Letter", "2026-09-14")
         self.aos("reindex", today="2026-09-14")
@@ -1001,10 +1011,10 @@ c
         self.assertTrue(done.is_file())
         data, _body = split_frontmatter(done.read_text(encoding="utf-8"))
         self.assertEqual(data.get("completed_on").isoformat(), "2026-09-16")
-        d14 = (self.root / "user/daily/2026-09-14.md").read_text(encoding="utf-8")
+        d14 = (self.root / "user/daily/2026/09/14.md").read_text(encoding="utf-8")
         self.assertIn("## Failed tasks", d14)
         self.assertIn("letter.md", d14)
-        d15 = (self.root / "user/daily/2026-09-15.md").read_text(encoding="utf-8")
+        d15 = (self.root / "user/daily/2026/09/15.md").read_text(encoding="utf-8")
         self.assertIn("## Failed tasks", d15)
         self.assertIn("letter.md", d15)
         self.assertFalse((sched / "2026/09/14.md").exists())
@@ -1065,7 +1075,7 @@ c
         log = _git(user, "log", "-1", "--pretty=%s")
         self.assertEqual(log.stdout.strip(), "aos: daily-close 2026-09-15")
         self.assertEqual(_git(user, "status", "--porcelain").stdout.strip(), "")
-        self.assertTrue((user / "daily/2026-09-15.md").is_file())
+        self.assertTrue((user / "daily/2026/09/15.md").is_file())
 
     def test_same_project_ignores_type_order(self) -> None:
         write_project(self.root, "job", status="pending", prefix="J")
@@ -1381,7 +1391,7 @@ class GitUtilTest(unittest.TestCase):
 
         lock = self.root / ".git/index.lock"
         lock.write_text("", encoding="utf-8")
-        (self.root / "user/daily/2026-09-15.md").write_text("# day\n", encoding="utf-8")
+        seed_daily(self.root, "2026-09-15", "# day\n")
         timer = threading.Timer(0.3, lock.unlink)
         timer.start()
         try:
@@ -1395,7 +1405,7 @@ class GitUtilTest(unittest.TestCase):
     def test_push_retries_commit_left_by_failed_push(self) -> None:
         from aos_lib import gitutil
 
-        (self.root / "user/daily/2026-09-15.md").write_text("# day\n", encoding="utf-8")
+        seed_daily(self.root, "2026-09-15", "# day\n")
         self.assertTrue(gitutil.commit_user(self.root, "aos: offline commit"))
         before = self.remote_head()
         self.assertFalse(gitutil.commit_user(self.root, "aos: nothing new"))

@@ -4,10 +4,10 @@
 
 ## Completed tasks
 
-- [Title](../tasks/completed/slug.md)
+- [Title](../../../tasks/completed/slug.md)
 
 ## Failed tasks
 
-- [Title](../tasks/pending/slug.md)
+- [Title](../../../tasks/pending/slug.md)
 
 ## Notes, optional

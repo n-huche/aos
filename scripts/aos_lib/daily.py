@@ -21,9 +21,9 @@ from .yamlfm import as_date
 NOTES_RE = re.compile(r"^##\s+Notes.*$", re.M)
 
 
-def schedule_date_from_path(path: Path, schedule_root: Path) -> date | None:
+def ymd_date_from_path(path: Path, root: Path) -> date | None:
     try:
-        rel = path.relative_to(schedule_root)
+        rel = path.relative_to(root)
     except ValueError:
         return None
     parts = rel.parts
@@ -37,6 +37,14 @@ def schedule_date_from_path(path: Path, schedule_root: Path) -> date | None:
         return date(int(y), int(m), int(day))
     except ValueError:
         return None
+
+
+def schedule_date_from_path(path: Path, schedule_root: Path) -> date | None:
+    return ymd_date_from_path(path, schedule_root)
+
+
+def daily_path(root: Path, d: date) -> Path:
+    return daily_dir(root) / f"{d.year:04d}" / f"{d.month:02d}" / f"{d.day:02d}.md"
 
 
 def delete_past_schedule(root: Path, d: date) -> list[Path]:
@@ -100,7 +108,7 @@ def daily_sets(text: str) -> tuple[set[str], set[str], str | None]:
 
 
 def _href_for(task_folder: str, slug: str) -> str:
-    return f"../tasks/{task_folder}/{slug}.md"
+    return f"../../../tasks/{task_folder}/{slug}.md"
 
 
 def collect_daily(root: Path, d: date) -> tuple[list[tuple[str, str]], list[tuple[str, str]], bool]:
@@ -211,7 +219,7 @@ def write_daily(
     early: bool,
 ) -> Path:
     result = result_of(completed, failed, early)
-    path = daily_dir(root) / f"{d.isoformat()}.md"
+    path = daily_path(root, d)
     notes = None
     if path.is_file():
         old = path.read_text(encoding="utf-8")
@@ -270,11 +278,10 @@ def list_daily_dates(root: Path) -> list[date]:
     found: list[date] = []
     if not base.is_dir():
         return found
-    for path in base.glob("*.md"):
-        try:
-            found.append(date.fromisoformat(path.stem))
-        except ValueError:
-            continue
+    for path in base.rglob("*.md"):
+        when = ymd_date_from_path(path, base)
+        if when is not None:
+            found.append(when)
     found.sort()
     return found
 

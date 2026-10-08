@@ -174,6 +174,7 @@ aos/                        # repo root (wherever it lives)
       obsolete/
       canceled/
     daily/
+      YYYY/MM/DD.md
     research/
     schedule/
       YYYY/MM/DD.md         # unique: the due; pending recurring: the due; recurring: until; only if > today
@@ -486,7 +487,7 @@ Timezone `America/Sao_Paulo`. D = the day that **ended**. The next reindex clock
 4. Recurring `until == D` (the series is `ongoing`):
    - D in `done_on`: move `ongoing/` → `completed/`. Daily: done.
    - D not in `done_on`: move to `completed/` anyway. Daily: **not done**.
-5. Write `user/daily/D.md` (idempotent if the set is the same).
+5. Write `user/daily/YYYY/MM/DD.md` (idempotent if the set is the same).
 6. Remove D from `done_on`. A later date stays.
 7. Delete `schedule` dates ≤ D. Non-date markdown under `schedule/` is left alone.
 8. Reindex with today = D+1.
@@ -508,7 +509,7 @@ If the process was dead while the calendar moved, `aos up` does **catch-up** bef
 
 ## 8. Daily
 
-`user/daily/YYYY-MM-DD.md`
+`user/daily/YYYY/MM/DD.md`
 
 ```markdown
 # YYYY-MM-DD
@@ -517,16 +518,16 @@ If the process was dead while the calendar moved, `aos up` does **catch-up** bef
 
 ## Completed tasks
 
-- [Title](../tasks/completed/slug.md)
+- [Title](../../../tasks/completed/slug.md)
 
 ## Failed tasks
 
-- [Title](../tasks/pending/slug.md)
+- [Title](../../../tasks/pending/slug.md)
 
 ## Notes, optional
 ```
 
-Omit failed if empty. Live series: link `../tasks/ongoing/slug.md`. Recurring closed on `until`: `completed/`.
+Omit failed if empty. Live series: link `../../../tasks/ongoing/slug.md`. Recurring closed on `until`: `completed/`.
 
 **Done on D:** unique with `completed_on == D`; live recurring/maintenance with D in `done_on`.
 
