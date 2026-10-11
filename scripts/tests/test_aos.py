@@ -268,6 +268,15 @@ def seed_daily(root: Path, iso: str, text: str) -> Path:
     return path
 
 
+def mark_slug(text: str, slug: str) -> str:
+    out: list[str] = []
+    for ln in text.splitlines():
+        if ln.startswith("- [ ]") and f"/{slug}.md" in ln:
+            ln = ln.replace("- [ ]", "- [x]", 1)
+        out.append(ln)
+    return "\n".join(out) + "\n"
+
+
 def mark_first(text: str, heading: str) -> str:
     cur = None
     marked = False
@@ -305,16 +314,22 @@ class AOSTest(unittest.TestCase):
     def tearDown(self) -> None:
         self._td.cleanup()
 
-    def env(self, today: str = TODAY) -> dict[str, str]:
+    def env(self, today: str = TODAY, *, now: str | None = None) -> dict[str, str]:
         e = os.environ.copy()
         e["AOS_ROOT"] = str(self.root)
         e["AOS_TODAY"] = today
+        if now is None:
+            e.pop("AOS_NOW", None)
+        else:
+            e["AOS_NOW"] = now
         return e
 
-    def aos(self, *args: str, today: str = TODAY) -> subprocess.CompletedProcess[str]:
+    def aos(
+        self, *args: str, today: str = TODAY, now: str | None = None
+    ) -> subprocess.CompletedProcess[str]:
         proc = subprocess.run(
             [sys.executable, str(BIN), *args],
-            env=self.env(today),
+            env=self.env(today, now=now),
             capture_output=True,
             text=True,
         )
@@ -756,12 +771,12 @@ do
         self.aos("reindex", today="2026-09-16")
         month = self.root / "user/schedule/2026/2026-09.md"
         self.assertTrue(month.is_file())
-        self.assertIn("Send", month.read_text(encoding="utf-8"))
+        self.assertIn("send", month.read_text(encoding="utf-8"))
         self.aos("daily-close", "2026-09-15", today="2026-09-16")
         frozen = month.read_text(encoding="utf-8")
         from aos_lib.schedule import parse_month
 
-        self.assertEqual(parse_month(frozen)[16][7], "Send")
+        self.assertEqual(parse_month(frozen)[16][7], "send")
         send = self.root / "user/tasks/pending/send.md"
         text = send.read_text(encoding="utf-8").replace(
             'do_at: ["07:30"]', 'do_at: ["09:00"]'
@@ -771,7 +786,7 @@ do
         after = parse_month(month.read_text(encoding="utf-8"))
         self.assertEqual(parse_month(frozen)[15], after[15])
         self.assertEqual(after[16][7], "null")
-        self.assertEqual(after[16][9], "Send")
+        self.assertEqual(after[16][9], "send")
 
     def test_validate_ok_and_xor(self) -> None:
         write_unique(self.root, "ok-u", "Ok unique", "2026-09-20")
@@ -889,8 +904,8 @@ c
 
         month = self.root / "user/schedule/2026/2026-09.md"
         cells = parse_month(month.read_text(encoding="utf-8"))
-        self.assertNotIn("Send", cells[16][8])
-        self.assertIn("Keep", cells[20][8])
+        self.assertNotIn("send", cells[16][8])
+        self.assertIn("keep", cells[20][8])
         self.assertTrue((self.root / "user/tasks/completed/send.md").is_file())
 
     def test_watch_syncs_unique_checkbox(self) -> None:
@@ -1536,8 +1551,8 @@ z
         cells = parse_month(
             (self.root / "user/schedule/2026/2026-09.md").read_text(encoding="utf-8")
         )
-        self.assertEqual(cells[16][7], "Split")
-        self.assertEqual(cells[16][18], "Split")
+        self.assertEqual(cells[16][7], "split")
+        self.assertEqual(cells[16][18], "split")
 
     def test_sleep_is_one_evening_line_and_every_grid_hour(self) -> None:
         path = self.root / "user/tasks/ongoing/sleep.md"
@@ -1581,9 +1596,9 @@ Deitar.
         )
         for day in (16, 17):
             for hour in (22, 23, 0, 1, 2, 3, 4, 5):
-                self.assertEqual(cells[day][hour], "Dormir")
-        self.assertEqual(cells[16][9], "Open the month")
-        self.assertNotEqual(cells[17][9], "Dormir")
+                self.assertEqual(cells[day][hour], "dormir")
+        self.assertEqual(cells[16][9], "open the month")
+        self.assertNotEqual(cells[17][9], "dormir")
 
     def test_early_unique_frees_the_window(self) -> None:
         write_unique(self.root, "send", "Send", "2026-09-18", do_at="08:00")
@@ -1626,7 +1641,7 @@ Deitar.
         self.assertIn("| 07:00 | tiktok |", text)
         month = (self.root / "user/daily/2026/2026-09/2026-09.md").read_text(encoding="utf-8")
         self.assertIn("| tiktok | 1 |", month)
-        self.assertIn("| Send | 1 |", month)
+        self.assertIn("| send | 1 |", month)
         tomorrow = self.root / "user/daily/2026/2026-09/2026-09-17.md"
         self.assertTrue(tomorrow.is_file())
         self.assertNotIn("| routine | tasks |", tomorrow.read_text(encoding="utf-8"))
@@ -2263,10 +2278,12 @@ do
             text,
         )
         self.assertIn("| hour | 25 - sun | 26 - mon | 27 - tue | 28 - wed | 29 - thu | 30 - fri | 31 - sat |", text)
+        self.assertIn("## First Week (01/10 - 03/10)", text)
+        self.assertIn("## Fifth Week (25/10 - 31/10)", text)
         cells = parse_month(text)
-        self.assertEqual(cells[11][9], "Send")
-        self.assertEqual(cells[11][7], "Box upkeep")
-        self.assertEqual(cells[1][7], "Box upkeep")
+        self.assertEqual(cells[11][9], "send")
+        self.assertEqual(cells[11][7], "box upkeep")
+        self.assertEqual(cells[1][7], "box upkeep")
         self.assertEqual(cells[12][9], "null")
         self.assertFalse((self.root / "user/schedule/2026/2026-11.md").is_file())
 
@@ -2293,12 +2310,12 @@ do
             (self.root / "user/schedule/2026/2026-10.md").read_text(encoding="utf-8")
         )
         self.assertEqual(october[1][8], "null")
-        self.assertEqual(october[2][8], "Training")
-        self.assertEqual(october[6][8], "Training")
+        self.assertEqual(october[2][8], "training")
+        self.assertEqual(october[6][8], "training")
         november = self.root / "user/schedule/2026/2026-11.md"
         self.assertTrue(november.is_file())
         nov = parse_month(november.read_text(encoding="utf-8"))
-        self.assertEqual(nov[3][8], "Training")
+        self.assertEqual(nov[3][8], "training")
         self.assertFalse((self.root / "user/schedule/2026/2026-12.md").is_file())
 
     def test_recurring_without_until_stops_at_the_current_month(self) -> None:
@@ -2319,8 +2336,8 @@ do
             (self.root / "user/schedule/2026/2026-10.md").read_text(encoding="utf-8")
         )
         self.assertEqual(cells[10][8], "null")
-        self.assertEqual(cells[11][8], "Habit")
-        self.assertEqual(cells[31][8], "Habit")
+        self.assertEqual(cells[11][8], "habit")
+        self.assertEqual(cells[31][8], "habit")
         self.assertFalse((self.root / "user/schedule/2026/2026-11.md").is_file())
 
     def _college(self, *, until: str | None = None, until_event: str | None = None) -> None:
@@ -2380,7 +2397,7 @@ do
         november = parse_month(
             (self.root / "user/schedule/2026/2026-11.md").read_text(encoding="utf-8")
         )
-        label = "Fazer trabalhos da faculdade"
+        label = "fazer trabalhos da faculdade"
         self.assertEqual(october[5][7], "null")
         self.assertEqual(october[12][7], label)
         self.assertEqual(october[26][7], label)
@@ -2406,7 +2423,7 @@ do
         august = parse_month(
             (self.root / "user/schedule/2030/2030-08.md").read_text(encoding="utf-8")
         )
-        label = "Fazer trabalhos da faculdade"
+        label = "fazer trabalhos da faculdade"
         self.assertEqual(october[12][7], label)
         self.assertEqual(october[26][7], label)
         self.assertEqual(november[9][7], label)
@@ -2446,6 +2463,300 @@ do
             (self.root / "user/schedule/2026/2026-09.md").read_text(encoding="utf-8")
         )
         self.assertEqual(cells[16][8], "null")
+
+    def test_today_hours_through_now_stay_frozen(self) -> None:
+        from aos_lib.schedule import parse_month
+
+        write_unique(self.root, "send", "Send", "2026-09-16", do_at="07:30")
+        self.aos("reindex", now="2026-09-16T10:00")
+        send = self.root / "user/tasks/pending/send.md"
+        send.write_text(
+            send.read_text(encoding="utf-8").replace('do_at: ["07:30"]', 'do_at: ["15:00"]'),
+            encoding="utf-8",
+        )
+        write_unique(self.root, "late", "Late", "2026-09-16", do_at="08:00")
+        self.aos("reindex", now="2026-09-16T10:00")
+        cells = parse_month(
+            (self.root / "user/schedule/2026/2026-09.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(cells[16][7], "send")
+        self.assertEqual(cells[16][8], "null")
+        self.assertEqual(cells[16][15], "send")
+
+    def test_same_day_unique_keeps_hours_through_the_check(self) -> None:
+        from aos_lib.schedule import parse_month
+
+        path = write_unique(self.root, "send", "Send", "2026-09-16", do_at="07:00")
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                'do_at: ["07:00"]',
+                'do_at: ["07:00", "08:00", "09:00", "10:00", "11:00"]',
+            ),
+            encoding="utf-8",
+        )
+        self.aos("reindex", now="2026-09-16T10:15")
+        day = self.root / "user/daily/2026/2026-09/2026-09-16.md"
+        day.parent.mkdir(parents=True, exist_ok=True)
+        lines = ["# 2026-09-16", "", "| hour | did |", "| --- | --- |"]
+        for hour in range(24):
+            did = "send" if hour == 11 else "null"
+            lines.append(f"| {hour:02d}:00 | {did} |")
+        lines.append("")
+        day.write_text("\n".join(lines), encoding="utf-8")
+        tasks = self.root / "user/tasks/tasks.md"
+        tasks.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
+        self.aos("reindex", now="2026-09-16T10:15")
+        month = self.root / "user/schedule/2026/2026-09.md"
+        data, _body = split_frontmatter(
+            (self.root / "user/tasks/completed/send.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(data.get("completed_at"), "2026-09-16T10:15")
+        self.aos("reindex", now="2026-09-16T06:00")
+        cells = parse_month(month.read_text(encoding="utf-8"))
+        for hour in (7, 8, 9, 10):
+            self.assertEqual(cells[16][hour], "send", hour)
+        self.assertEqual(cells[16][11], "null")
+        self.assertIn("| 11:00 | send |", day.read_text(encoding="utf-8"))
+
+    def test_same_day_recurring_cuts_today_and_keeps_the_next_do_on(self) -> None:
+        from aos_lib.schedule import parse_month
+
+        path = write_recurring(
+            self.root,
+            "review",
+            "Review",
+            kind="daily",
+            until="2026-12-01",
+            due="2026-09-16",
+            do_at="07:00",
+        )
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                'do_at: ["07:00"]',
+                'do_at: ["07:00", "08:00", "09:00", "10:00", "11:00"]',
+            ),
+            encoding="utf-8",
+        )
+        self.aos("reindex", now="2026-09-16T10:20")
+        tasks = self.root / "user/tasks/tasks.md"
+        tasks.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
+        self.aos("reindex", now="2026-09-16T10:20")
+        data, _body = split_frontmatter(
+            (self.root / "user/tasks/ongoing/review.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(data.get("do_on").isoformat(), "2026-09-17")
+        self.assertEqual(data.get("completed_at"), "2026-09-16T10:20")
+        self.aos("reindex", now="2026-09-16T06:00")
+        cells = parse_month(
+            (self.root / "user/schedule/2026/2026-09.md").read_text(encoding="utf-8")
+        )
+        for hour in (7, 8, 9, 10):
+            self.assertEqual(cells[16][hour], "review", hour)
+        self.assertEqual(cells[16][11], "null")
+        for hour in (7, 8, 9, 10, 11):
+            self.assertEqual(cells[17][hour], "review", hour)
+
+    def test_open_project_keeps_the_window(self) -> None:
+        from aos_lib.schedule import parse_month
+
+        write_project(self.root, "college", status="pending", prefix="C")
+        hub = self.root / "user/projects/pending/college/college.md"
+        hub.write_text(
+            hub.read_text(encoding="utf-8").replace("# college", "# Trabalhos da faculdade")
+            + "\n## Phases\n\n- [Write](phases/c-01-write.md)\n",
+            encoding="utf-8",
+        )
+        phase = self.root / "user/projects/pending/college/phases"
+        phase.mkdir()
+        (phase / "c-01-write.md").write_text(
+            """---
+status: pending
+project: college
+depends_on: []
+---
+
+# Write
+
+## Plan
+
+1. go
+
+## Tasks
+
+- [Draft](../../../../tasks/pending/draft.md)
+- [Slides](../../../../tasks/pending/slides.md)
+""",
+            encoding="utf-8",
+        )
+
+        def project_task(slug: str, title: str, clock: str) -> None:
+            path = write_unique(self.root, slug, title, "2026-09-16", do_at=clock)
+            path.write_text(
+                path.read_text(encoding="utf-8")
+                .replace("type: unique-independent", "type: unique-project")
+                .replace(
+                    f"infinitive: {title}",
+                    f"infinitive: {title}\nproject: college\nphase: c-01-write",
+                ),
+                encoding="utf-8",
+            )
+
+        project_task("draft", "Write the draft", "09:00")
+        project_task("slides", "Make the slides", "11:00")
+        self.aos("reindex", now="2026-09-16T08:00")
+        tasks = self.root / "user/tasks/tasks.md"
+        tasks.write_text(mark_slug(self.tasks_md(), "draft"), encoding="utf-8")
+        self.aos("reindex", now="2026-09-16T08:00")
+        month = self.root / "user/schedule/2026/2026-09.md"
+        cells = parse_month(month.read_text(encoding="utf-8"))
+        self.assertEqual(cells[16][9], "trabalhos da faculdade")
+        self.assertEqual(cells[16][11], "trabalhos da faculdade")
+        tasks.write_text(mark_slug(self.tasks_md(), "slides"), encoding="utf-8")
+        self.aos("reindex", now="2026-09-16T10:15")
+        self.aos("reindex", now="2026-09-16T08:00")
+        cells = parse_month(month.read_text(encoding="utf-8"))
+        self.assertEqual(cells[16][9], "trabalhos da faculdade")
+        self.assertEqual(cells[16][11], "null")
+
+    def test_routine_score_matches_any_report_part(self) -> None:
+        from aos_lib.daily import routine_score
+        from aos_lib.schedule import month_path, render_month
+
+        path = month_path(self.root, 2026, 9)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(
+            render_month(
+                2026,
+                9,
+                {16: {7: "sistemas pessoais", 8: "Dormir", 9: "box upkeep"}},
+            ),
+            encoding="utf-8",
+        )
+        hours = {f"{hour:02d}:00": "null" for hour in range(24)}
+        hours["07:00"] = "sistemas pessoais, Trabalhos da faculdade"
+        hours["08:00"] = "dormir"
+        hours["09:00"] = "tiktok"
+        score, deviations = routine_score(self.root, date(2026, 9, 16), hours)
+        self.assertEqual(score, "67%")
+        self.assertEqual(deviations, [("09:00", "tiktok", ["box upkeep"])])
+
+    def test_grid_labels_are_lowercase(self) -> None:
+        from aos_lib.schedule import parse_month
+
+        path = self.root / "user/tasks/ongoing/sleep.md"
+        path.write_text(
+            """---
+type: maintenance
+status: ongoing
+infinitive: Dormir
+do_at: ["22:00"]
+done_on: []
+cadence:
+  kind: daily
+---
+
+# Dormir
+
+## What
+
+Dormir.
+
+## How
+
+Deitar.
+""",
+            encoding="utf-8",
+        )
+        write_unique(
+            self.root,
+            "college",
+            "Trabalhos da faculdade",
+            "2026-09-16",
+            do_at="09:00",
+        )
+        self.aos("reindex", now="2026-09-16T12:00")
+        month = self.root / "user/schedule/2026/2026-09.md"
+        text = month.read_text(encoding="utf-8")
+        lines = text.splitlines()
+        column = None
+        header_at = None
+        for index, line in enumerate(lines):
+            if line.startswith("| hour |") and "16 - wed" in line:
+                headers = [cell.strip() for cell in line.strip("|").split("|")]
+                column = headers.index("16 - wed")
+                header_at = index
+                break
+        self.assertIsNotNone(column)
+        assert header_at is not None and column is not None
+        for index in range(header_at, len(lines)):
+            if lines[index].startswith("| 08:00 |"):
+                cells = [cell.strip() for cell in lines[index].strip("|").split("|")]
+                cells[column] = "Dormir"
+                lines[index] = "| " + " | ".join(cells) + " |"
+                break
+        month.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        self.aos("reindex", now="2026-09-16T12:00")
+        cells = parse_month(month.read_text(encoding="utf-8"))
+        self.assertEqual(cells[16][8], "Dormir")
+        self.assertEqual(cells[16][9], "trabalhos da faculdade")
+        self.assertEqual(cells[16][22], "dormir")
+        self.assertIn("[Dormir](ongoing/sleep.md)", self.tasks_md())
+
+    def test_october_2026_week_titles(self) -> None:
+        from aos_lib.schedule import month_path, parse_month, render_month, week_spans, week_title
+
+        write_unique(self.root, "send", "Send", "2026-10-11", do_at="09:00")
+        seed_daily(
+            self.root,
+            "2026-10-01",
+            """# 2026-10-01
+
+| hour | did |
+| --- | --- |
+| 00:00 | null |
+
+| routine | tasks |
+| --- | --- |
+| null | null |
+""",
+        )
+        month = month_path(self.root, 2026, 10)
+        month.parent.mkdir(parents=True, exist_ok=True)
+        month.write_text(
+            "\n".join(
+                [
+                    "# 2026-10",
+                    "",
+                    "### Legacy",
+                    "",
+                    "| hour | 1 - thu | 2 - fri | 3 - sat |",
+                    "| --- | --- | --- | --- |",
+                    "| 09:00 | Kept | null | null |",
+                    "",
+                ]
+            ),
+            encoding="utf-8",
+        )
+        bare = "# 2026-10\n\n| hour | 11 - sun |\n| --- | --- |\n| 09:00 | Kept |\n"
+        titled = "## Third Week (11/10 - 17/10)\n\n" + bare
+        self.assertEqual(parse_month(month.read_text(encoding="utf-8"))[1][9], "Kept")
+        self.assertEqual(parse_month(bare)[11][9], "Kept")
+        self.assertEqual(parse_month(titled)[11][9], "Kept")
+        self.aos("reindex", today="2026-10-11", now="2026-10-11T08:00")
+        text = month.read_text(encoding="utf-8")
+        self.assertIn("### First Week (01/10 - 03/10)", text)
+        self.assertIn("### Second Week (04/10 - 10/10)", text)
+        self.assertIn("### Third Week (11/10 - 17/10)", text)
+        self.assertIn("### Fourth Week (18/10 - 24/10)", text)
+        self.assertIn("### Fifth Week (25/10 - 31/10)", text)
+        self.assertNotIn("### Legacy", text)
+        self.assertFalse(any(line.startswith("## ") for line in text.splitlines()))
+        cells = parse_month(text)
+        self.assertEqual(cells[1][9], "Kept")
+        self.assertEqual(cells[11][9], "send")
+        start, end = week_spans(2026, 5)[-1]
+        self.assertEqual(week_title(5, start, end, 5), "Sixth Week (31/05 - 31/05)")
+        self.assertIn("## Sixth Week (31/05 - 31/05)", render_month(2026, 5, {}))
 
     def test_sync_command_is_gone(self) -> None:
         proc = subprocess.run(

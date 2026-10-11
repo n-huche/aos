@@ -1,9 +1,12 @@
 """Month grid derived from do_on, do_at, and cadence.
 
 One file per month. Inside it, one table per Sunday–Saturday week, clipped
-to the month. Closed days are frozen: a column whose date already has a
-closed daily is never rewritten. The first time a month file is created,
-every column is written once, including days that are already closed.
+to the month. Each table has a week heading (`First Week (01/10 - 03/10)`).
+Closed days are frozen: a column on or before the last closed daily is
+never rewritten. Today, in a file that already exists, keeps cells whose
+hour is less than or equal to the current hour. The first time a month
+file is created, every column is written once, including days that are
+already closed.
 
 A month file is opened by a unique `do_on`, or by a recurring `do_on` or
 `until`. The months between those dates are not opened. Maintenance and a
@@ -20,11 +23,16 @@ from datetime import date
 from pathlib import Path
 
 from .cadence import do_on_date, occurs_on, until_date
-from .config import RECURRING_TYPES, UNIQUE_TYPES, WEEKDAYS, schedule_dir
+from .config import RECURRING_TYPES, UNIQUE_TYPES, WEEKDAYS, now as now_fn, schedule_dir
 from .taskio import iter_task_files
+from .yamlfm import as_date
 
 _HEADER_DAY = re.compile(r"^(\d{1,2})\s*-\s*[a-z]{3}$")
 _MONTH_STEM = re.compile(r"^(\d{4})-(\d{2})$")
+_MONTH_TITLE = re.compile(r"^#\s+\d{4}-\d{2}$")
+_STAMP_RE = re.compile(r"^(\d{4}-\d{2}-\d{2})[T ](\d{2}):(\d{2})")
+_PROJECT_TYPES = frozenset({"unique-project", "recurring-project"})
+_ORDINALS = ("First", "Second", "Third", "Fourth", "Fifth", "Sixth")
 
 
 def month_path(root: Path, year: int, month: int) -> Path:
@@ -42,6 +50,36 @@ def week_spans(year: int, month: int) -> list[tuple[int, int]]:
         spans.append((start, end))
         start = end + 1
     return spans
+
+
+def week_title(month: int, start: int, end: int, index: int) -> str:
+    """`First Week (01/10 - 03/10)`. The range is this month's days only."""
+    name = _ORDINALS[index]
+    return f"{name} Week ({start:02d}/{month:02d} - {end:02d}/{month:02d})"
+
+
+def _heading_level(text: str) -> int:
+    """Level of the heading already sitting above a week table.
+
+    The month H1 (`# YYYY-MM`) is not a week title. No week heading means 2.
+    """
+    pending: int | None = None
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line:
+            continue
+        if _MONTH_TITLE.match(line):
+            pending = None
+            continue
+        if line.startswith("#"):
+            marks = len(line) - len(line.lstrip("#"))
+            if 1 <= marks <= 6 and (len(line) == marks or line[marks] == " "):
+                pending = marks
+                continue
+        if line.startswith("|") and pending is not None:
+            return pending
+        pending = None
+    return 2
 
 
 def _on_grid(task) -> bool:
@@ -120,28 +158,125 @@ def _planned_on(task, day: date, today: date) -> bool:
     return False
 
 
+def _stamp(task) -> tuple[date, int] | None:
+    raw = task.data.get("completed_at")
+    if not isinstance(raw, str):
+        return None
+    match = _STAMP_RE.match(raw.strip())
+    if not match:
+        return None
+    try:
+        when = date.fromisoformat(match.group(1))
+    except ValueError:
+        return None
+    return when, int(match.group(2))
+
+
+def _project_slug(task) -> str:
+    return str(task.data.get("project") or "").strip()
+
+
+def _done(task) -> bool:
+    return task.status == "completed" or task.folder == "completed"
+
+
+def _ignored(task) -> bool:
+    return task.status in {"canceled", "obsolete"} or task.folder in {"canceled", "obsolete"}
+
+
+def _project_windows(root: Path) -> dict[str, tuple[bool, tuple[date, int] | None]]:
+    """slug -> (still open, finish stamp).
+
+    Canceled and obsolete tasks do not hold the window open. The finish
+    stamp is the latest `completed_at` once every remaining task is done.
+    """
+    groups: dict[str, list] = {}
+    for task in iter_task_files(root):
+        if task.type not in _PROJECT_TYPES:
+            continue
+        slug = _project_slug(task)
+        if not slug:
+            continue
+        groups.setdefault(slug, []).append(task)
+    found: dict[str, tuple[bool, tuple[date, int] | None]] = {}
+    for slug, tasks in groups.items():
+        relevant = [task for task in tasks if not _ignored(task)]
+        if not relevant:
+            found[slug] = (False, None)
+            continue
+        if any(not _done(task) for task in relevant):
+            found[slug] = (True, None)
+            continue
+        stamps = [stamp for stamp in (_stamp(task) for task in relevant) if stamp]
+        finish = max(stamps, key=lambda item: (item[0].toordinal(), item[1])) if stamps else None
+        found[slug] = (False, finish)
+    return found
+
+
+def _show(task, day: date, hour: int, projects: dict) -> bool:
+    """Whether this task still occupies `hour` on `day`."""
+    kind = task.type
+    if kind in _PROJECT_TYPES:
+        if _ignored(task) or task.status == "paused" or task.folder == "paused":
+            return False
+        slug = _project_slug(task)
+        if not slug:
+            return _on_grid(task) and _planned_on(task, day, day)
+        open_, finish = projects.get(slug, (True, None))
+        if open_:
+            return _planned_on(task, day, day)
+        if finish is None or day != finish[0] or hour > finish[1]:
+            return False
+        return _planned_on(task, day, day)
+    if kind == "unique-independent":
+        if _done(task):
+            stamp = _stamp(task)
+            when = do_on_date(task.data)
+            done = as_date(task.data.get("completed_on"))
+            if stamp and when == day and done == day and stamp[0] == day:
+                return hour <= stamp[1]
+            return False
+        return _on_grid(task) and _planned_on(task, day, day)
+    if kind == "recurring-independent":
+        stamp = _stamp(task)
+        if stamp and stamp[0] == day:
+            if hour > stamp[1]:
+                return False
+            if do_on_date(task.data) != day or _done(task):
+                return True
+        if not _on_grid(task):
+            return False
+        return _planned_on(task, day, day)
+    if not _on_grid(task):
+        return False
+    return _planned_on(task, day, day)
+
+
 def _labels_for_day(root: Path, day: date, today: date) -> dict[int, list[str]]:
     """hour -> labels, for one unfrozen day."""
+    del today
     from .index import CLASS_RANK, clocks_of, infinitive_of, project_order
 
     order = project_order(root)
+    projects = _project_windows(root)
     buckets: dict[int, list[tuple[tuple, str]]] = {}
     for task in iter_task_files(root):
-        if not _on_grid(task):
-            continue
         try:
             clocks = clocks_of(task.data)
         except ValueError:
             continue
         if not clocks:
             continue
-        if not _planned_on(task, day, today):
+        try:
+            label = _label(task, order, infinitive_of)
+        except ValueError:
             continue
-        label = _label(task, order, infinitive_of)
         rank = CLASS_RANK.get(task.type, 9)
         seen_hours: set[int] = set()
         for hour, _minute in clocks:
             if hour in seen_hours:
+                continue
+            if not _show(task, day, hour, projects):
                 continue
             seen_hours.add(hour)
             buckets.setdefault(hour, []).append(((rank, label.casefold(), task.slug), label))
@@ -152,8 +287,49 @@ def _labels_for_day(root: Path, day: date, today: date) -> dict[int, list[str]]:
     return out
 
 
+def _releases_for_day(root: Path, day: date) -> list[tuple[str, int]]:
+    """Labels that leave after an hour on `day`, as (casefold, last hour)."""
+    from .index import infinitive_of, project_order
+
+    order = project_order(root)
+    projects = _project_windows(root)
+    found: list[tuple[str, int]] = []
+    seen: set[tuple[str, int]] = set()
+    for task in iter_task_files(root):
+        last: int | None = None
+        if task.type == "unique-independent" and _done(task):
+            stamp = _stamp(task)
+            when = do_on_date(task.data)
+            done = as_date(task.data.get("completed_on"))
+            if stamp and when == day and done == day and stamp[0] == day:
+                last = stamp[1]
+        elif task.type == "recurring-independent":
+            stamp = _stamp(task)
+            if stamp and stamp[0] == day:
+                last = stamp[1]
+        elif task.type in _PROJECT_TYPES:
+            slug = _project_slug(task)
+            if not slug:
+                continue
+            open_, finish = projects.get(slug, (True, None))
+            if not open_ and finish and finish[0] == day:
+                last = finish[1]
+        if last is None:
+            continue
+        try:
+            text = _label(task, order, infinitive_of)
+        except ValueError:
+            continue
+        key = (text.casefold(), last)
+        if key in seen:
+            continue
+        seen.add(key)
+        found.append(key)
+    return found
+
+
 def _label(task, order: dict, infinitive_of) -> str:
-    if task.type in {"unique-project", "recurring-project"}:
+    if task.type in _PROJECT_TYPES:
         placed = order.get(task.slug)
         if placed is not None:
             text = placed[0]
@@ -161,13 +337,32 @@ def _label(task, order: dict, infinitive_of) -> str:
             text = str(task.data.get("project") or "").strip() or infinitive_of(task)
     else:
         text = infinitive_of(task)
-    return text.replace("|", "/")
+    return text.replace("|", "/").lower()
+
+
+def _strip_released(cell: str, calculated: list[str], releases: list[tuple[str, int]], hour: int) -> str:
+    """Drop a finished label past its hour. Keep every other frozen letter."""
+    if not cell or cell.strip().lower() == "null":
+        return "null"
+    still = {part.casefold() for part in calculated}
+    released = {label for label, last in releases if hour > last}
+    kept: list[str] = []
+    for part in (piece.strip() for piece in cell.split(",")):
+        if not part or part.lower() == "null":
+            continue
+        folded = part.casefold()
+        if folded in released and folded not in still:
+            continue
+        kept.append(part)
+    return ", ".join(kept) if kept else "null"
 
 
 def parse_month(text: str) -> dict[int, dict[int, str]]:
     """day -> hour -> cell text, from an existing month file.
 
     A month file holds one table per week. Each table has its own header.
+    A week heading (`## First Week (01/10 - 03/10)`) and a file that has
+    no week heading both parse the same way: only table rows are cells.
     """
     found: dict[int, dict[int, str]] = {}
     days: list[int | None] = []
@@ -198,9 +393,16 @@ def parse_month(text: str) -> dict[int, dict[int, str]]:
     return found
 
 
-def render_month(year: int, month: int, cells: dict[int, dict[int, str]]) -> str:
+def render_month(
+    year: int, month: int, cells: dict[int, dict[int, str]], *, level: int = 2
+) -> str:
+    if not 1 <= level <= 6:
+        level = 2
+    marks = "#" * level
     lines = [f"# {year:04d}-{month:02d}", ""]
-    for start, end in week_spans(year, month):
+    for index, (start, end) in enumerate(week_spans(year, month)):
+        lines.append(f"{marks} {week_title(month, start, end, index)}")
+        lines.append("")
         headers = ["hour"]
         for day_num in range(start, end + 1):
             when = date(year, month, day_num)
@@ -237,19 +439,26 @@ def regenerate_schedule(root: Path, today: date, *, frozen_through: date | None 
     Months that already have a file are refreshed too, so a completed task
     leaves the open cells. A new month is written for a unique `do_on`, or
     for the `do_on` and `until` months of a recurring that has `until`.
+    On today, hours through the current hour stay as written when the file
+    already existed. Week headings are rewritten on every table.
     """
     from .daily import last_closed_day
     from .taskio import atomic_write
 
     if frozen_through is None:
         frozen_through = last_closed_day(root)
+    clock = now_fn()
+    current_hour = clock.hour if clock.date() == today else -1
     months = _months_for(root, today) | _existing_months(root)
     for year, month in sorted(months):
         path = month_path(root, year, month)
         previous: dict[int, dict[int, str]] = {}
         existed = path.is_file()
+        level = 2
         if existed:
-            previous = parse_month(path.read_text(encoding="utf-8"))
+            raw = path.read_text(encoding="utf-8")
+            previous = parse_month(raw)
+            level = _heading_level(raw)
         last = calendar.monthrange(year, month)[1]
         cells: dict[int, dict[int, str]] = {}
         for day_num in range(1, last + 1):
@@ -261,11 +470,23 @@ def regenerate_schedule(root: Path, today: date, *, frozen_through: date | None 
                     cells[day_num].setdefault(hour, "null")
                 continue
             labels = _labels_for_day(root, when, today)
+            releases = _releases_for_day(root, when) if when == today else []
             cells[day_num] = {}
             for hour in range(24):
                 row = labels.get(hour) or []
+                freeze_hour = (
+                    existed
+                    and when == today
+                    and hour <= current_hour
+                    and hour in previous.get(day_num, {})
+                )
+                if freeze_hour:
+                    cells[day_num][hour] = _strip_released(
+                        previous[day_num][hour], row, releases, hour
+                    )
+                    continue
                 cells[day_num][hour] = ", ".join(row) if row else "null"
-        atomic_write(path, render_month(year, month, cells))
+        atomic_write(path, render_month(year, month, cells, level=level))
 
 
 def plan_cell(root: Path, when: date, hour: int) -> str | None:

@@ -101,6 +101,29 @@ def today(_root: Path | None = None) -> date:
     return datetime.now(TZ).date()
 
 
+def now(_root: Path | None = None) -> datetime:
+    """Current clock in America/Sao_Paulo.
+
+    `AOS_NOW` is `YYYY-MM-DDTHH:MM`. A pinned `AOS_TODAY` with no clock is
+    the start of that day, so a test that does not set the hour does not
+    freeze the rest of today.
+    """
+    override = os.environ.get("AOS_NOW")
+    if override:
+        raw = override.strip().replace(" ", "T")
+        if len(raw) == 16:
+            raw = raw + ":00"
+        parsed = datetime.fromisoformat(raw)
+        if parsed.tzinfo is None:
+            parsed = parsed.replace(tzinfo=TZ)
+        return parsed.astimezone(TZ)
+    pinned = os.environ.get("AOS_TODAY")
+    if pinned:
+        day = date.fromisoformat(pinned)
+        return datetime(day.year, day.month, day.day, tzinfo=TZ)
+    return datetime.now(TZ)
+
+
 def user_dir(root: Path) -> Path:
     return root / "user"
 

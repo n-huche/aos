@@ -202,7 +202,7 @@ aos/                        # repo root (wherever it lives)
       YYYY/YYYY-MM/YYYY-MM.md     # month rollup of closed days
     research/
     schedule/
-      YYYY/YYYY-MM.md       # hour rows; one table per Sun–Sat week; closed days frozen
+      YYYY/YYYY-MM.md       # hour rows; one titled table per Sun–Sat week; closed days frozen
     vocabulary.md           # hour labels the user maintains; scripts do not require it
 ```
 
@@ -233,6 +233,7 @@ status: pending              # pending | paused | completed | obsolete | cancele
 do_on: 2026-09-18            # YYYY-MM-DD; omit when paused
 do_at: ["09:00"]             # clocks; omit when there is no hour
 completed_on: null           # filled on check; YYYY-MM-DD
+completed_at: null           # filled on check; YYYY-MM-DDTHH:MM, America/Sao_Paulo
 infinitive: Do the thing     # index label; required
 project: my-project          # unique-project only
 phase: mp-01-my-phase        # unique-project only; filename stem
@@ -270,7 +271,7 @@ cadence:
 
 `status: pending` while unstarted and dated (folder `pending/`). `status: ongoing` while live (folder `ongoing/`). `status: paused` with no `do_on`.
 
-`do_on` on a live series is the next occurrence. While it is before today, the index stacks one line per cadence day from `do_on` through the last one before today. One `[x]` records today in `done_on` and moves `do_on` one cadence step after the scheduled day, never after today. There is no intra-day quota. Several clocks are one index line, at the first `do_at` in the order written, and one grid cell per clock for that same occurrence. `done_on` holds at most that open day. On daily-close of D, D is removed. A later date stays. The history of the day lives in `daily/`.
+`do_on` on a live series is the next occurrence. While it is before today, the index stacks one line per cadence day from `do_on` through the last one before today. One `[x]` records today in `done_on` and moves `do_on` one cadence step after the scheduled day, never after today. A check on that scheduled day also records `completed_at` (`YYYY-MM-DDTHH:MM`, `America/Sao_Paulo`). A recurring-project records it on every check. There is no intra-day quota. Several clocks are one index line, at the first `do_at` in the order written, and one grid cell per clock for that same occurrence. `done_on` holds at most that open day. On daily-close of D, D is removed. A later date stays. The history of the day lives in `daily/`.
 
 ### 4.2.1 Maintenance
 
@@ -457,9 +458,9 @@ The phrase `Sem horário` is fixed, as are the four block names. Scripts do not 
 
 ### 5.5 Schedule
 
-`user/schedule/YYYY/YYYY-MM.md` (October 2026 is `user/schedule/2026/2026-10.md`). One row per hour `00:00`–`23:00`. The days of the month are split into one table per week. A week runs Sunday through Saturday and is clipped to the month. October 2026 is five tables: `1 - thu` through `3 - sat`, `4 - sun` through `10 - sat`, `11 - sun` through `17 - sat`, `18 - sun` through `24 - sat`, and `25 - sun` through `31 - sat`. A month can have four, five, or six tables. Scripts write this file. The AI does not. There is no `routine-base.md` and no `routine.md`. There is no per-day file under `schedule/`.
+`user/schedule/YYYY/YYYY-MM.md` (October 2026 is `user/schedule/2026/2026-10.md`). One row per hour `00:00`–`23:00`. The days of the month are split into one table per week. A week runs Sunday through Saturday and is clipped to the month. October 2026 is five tables: `1 - thu` through `3 - sat`, `4 - sun` through `10 - sat`, `11 - sun` through `17 - sat`, `18 - sun` through `24 - sat`, and `25 - sun` through `31 - sat`. A month can have four, five, or six tables. Each table has a heading: the English week ordinal and the days of that month in the table, `DD/MM`. October 2026 is `## First Week (01/10 - 03/10)`, `## Second Week (04/10 - 10/10)`, `## Third Week (11/10 - 17/10)`, `## Fourth Week (18/10 - 24/10)`, and `## Fifth Week (25/10 - 31/10)`. A six-week month uses `Sixth` the same way. The first and last weeks can be partial. The month H1 stays `# YYYY-MM`. A file with no week heading gets `##`. If a table already has a heading above it, the rewrite keeps that level and replaces the text. The heading is rewritten on every table, including a week that contains a closed day and a file that had another title or none. Scripts write this file. The AI does not. There is no `routine-base.md` and no `routine.md`. There is no per-day file under `schedule/`. The parser reads a month with the week headings and a month without them.
 
-A cell is a window. Empty is the literal `null`. A project task shows the project H1. Anything else shows `infinitive`. Several tasks in the same day and hour are comma-separated. A clock with minutes falls in the full hour (`07:30` → `07:00`). Every clock in `do_at` fills its hour. The index does not: one line, at the first clock in the list as written. A task with no `do_at` is off the grid. Paused, completed, canceled, and obsolete tasks are off the open grid. A date that used to live only on `schedule/YYYY/MM/DD.md` is kept on the task under `## When` by `aos migrate-layout` (§ 10). That command does not put the date on this grid and does not set `do_on`.
+A cell is a window. Empty is the literal `null`. A project task shows the project H1. Anything else shows `infinitive`. Text this rebuild writes is that name passed through `lower()`: `Dormir` is `dormir`, `Trabalhos da faculdade` is `trabalhos da faculdade`. A cell this rebuild does not recalculate keeps the letters it already has. Several tasks in the same day and hour are comma-separated. A clock with minutes falls in the full hour (`07:30` → `07:00`). Every clock in `do_at` fills its hour. The index does not: one line, at the first clock in the list as written, and the index is not lowercased. A task with no `do_at` is off the grid. Paused, canceled, and obsolete tasks are off the grid. A date that used to live only on `schedule/YYYY/MM/DD.md` is kept on the task under `## When` by `aos migrate-layout` (§ 10). That command does not put the date on this grid and does not set `do_on`.
 
 What lands on a day:
 
@@ -471,7 +472,11 @@ What lands on a day:
 
 Months built: the month of a unique `do_on` that has a clock, and, for a recurring with `until`, the month of `do_on` and the month of `until`. Not the months in between. A new month is filled with the maintenances, the `until_event` recurrings, the `until` recurrings that cover that month, and the task that opened it. An existing month file stays and its open columns are rebuilt. Not every future year.
 
-Closed days are frozen. A column whose date already has a closed daily is never rewritten. The first time a month file is created, every column is written once, including days already closed. After that, only open columns move. Completing a task frees its window on open days. Cron does not delete the file.
+Closed days are frozen. A column on or before the last closed daily is never rewritten. The first time a month file is created, every column is written once, including days already closed. After that, open columns move, except today. In a month file that already exists, a cell of today whose hour is less than or equal to the current hour in `America/Sao_Paulo` stays as written. Only later hours of today are rebuilt. The clock is the time the command runs. Cron does not delete the file.
+
+An independent task checked on its own day stays through the hour of the check. `completed_at` is written when the `[x]` is applied. On that day the grid keeps every clock hour up to and including that hour, and later hours become `null`. A task at 07 through 11 checked at 10:xx stays from 07 through 10 and frees 11. The cut uses `completed_at`, not the daily. A unique checked before `do_on` leaves the open grid. A recurring checked on its `do_on` keeps that partial day and then shows only the next `do_on`, with every clock. A recurring checked on a different day does not paint a partial today; the grid shows the next `do_on`.
+
+A project window belongs to the project. The cell is the project name. Completing one task does not free its hours while any other task of that project is still open. Canceled and obsolete tasks do not count. The window leaves only when every remaining task is completed. Then the same cut applies on the day of the latest `completed_at`: hours through that hour stay, and later hours become `null`.
 
 `user/preferences.md`: prose; **scripts do not read it**.
 
@@ -525,9 +530,9 @@ First `[x]` on a `pending` recurring, any section:
 
 Early check is OK; **do not** change `do_on`.
 
-1. `status: completed`, `completed_on: <today>`
+1. `status: completed`, `completed_on: <today>`, `completed_at: <today>T<HH:MM>` (`America/Sao_Paulo`)
 2. Move `pending/` → `completed/`
-3. The next schedule rebuild drops it from open columns (§ 5.5). Closed columns stay.
+3. The next schedule rebuild applies the grid cut in § 5.5. A unique checked on `do_on` stays through that hour. A unique checked before `do_on` leaves open columns. Closed columns stay.
 4. Rewrite links § 6.4
 5. The same `reindex` commits `aos reindex` and pushes if origin.
 
@@ -547,7 +552,7 @@ Timezone `America/Sao_Paulo`. D = the day that **ended**. The next reindex clock
 4. Live recurring **with** `do_on`: failure when `do_on<=D` and D is not in `done_on`. If D is in `done_on`, that occurrence is done even when `do_on` has already moved on. A dateless live recurring, and maintenance, fail when the cadence includes D and D is not in `done_on`.
 5. Paused tasks do not fail and are not planned.
 6. Recurring `until == D` (the series is `ongoing`): move to `completed/`. Daily: done if D is in `done_on` or `do_on` is already after D; otherwise not done.
-7. Rebuild the schedule while D is still open, so a completion frees that window. Then write the daily. D is frozen from then on.
+7. Rebuild the schedule while D is still open, so the grid cut in § 5.5 lands before D freezes. Then write the daily. D is frozen from then on.
 8. Remove D from `done_on`. A later date stays.
 9. Create D+1's daily if it is missing: the hour table only, every cell `null`, no metrics yet.
 10. Update `user/daily/YYYY/YYYY-MM/YYYY-MM.md` from closed days only.
@@ -601,7 +606,7 @@ The hour table is 24 rows, `00:00`–`23:00`. A cell the user did not fill is `n
 
 **Failure on D:** unique `do_on<=D` still pending; recurring still `pending` with `do_on<=D`; live recurring with `do_on<=D` and D not in `done_on`; dateless live recurring or maintenance whose cadence includes D and D is not in `done_on` (including `until==D` without the day). Paused tasks do not fail. An early unique is not a failure on `do_on`.
 
-**routine** = hours where the report equals one comma-separated token of the plan cell, divided by hours where **both** the plan and the report are non-null. A `null` plan or a `null` report is not in the count and is not a deviation. A deviation is a planned hour whose report matches none of the tokens. The category is the report text. Each planned name in that cell counts toward "tasks most deviated".
+**routine** = hours where any comma-separated part of the report equals any comma-separated part of the plan, compared with casefold and strip, divided by hours where **both** the plan and the report are non-null. `sistemas pessoais, Trabalhos da faculdade` matches a plan of `sistemas pessoais`. `dormir` matches `Dormir`. A `null` plan or a `null` report is not in the count and is not a deviation. A deviation is a planned hour where no report part matches any plan part. The category is the whole report text. Each planned name in that cell counts toward "tasks most deviated".
 
 **tasks** = tasks done that day / tasks planned that day. Planned: unique with `do_on==D` or still pending with `do_on<D`; recurring with `do_on==D`, or `do_on<D` still open, or checked on D; maintenance whose cadence includes D. Paused excluded. Denominator 0 → that percentage is `null` and the day is left out of the month average.
 
