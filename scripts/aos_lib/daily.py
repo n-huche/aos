@@ -104,63 +104,87 @@ def collect_daily(
             continue
         if task.status in {"paused", "canceled", "obsolete"}:
             continue
-        t = task.type
-        if t in UNIQUE_TYPES:
-            completed_on = as_date(task.data.get("completed_on"))
-            when = do_on_date(task.data)
-            href = _href_for(task.folder, task.slug)
-            if completed_on == d:
-                completed.append((task.title, href))
-                planned.append((href, True))
-            elif task.folder == "pending" and when is not None and when <= d:
-                failed.append((task.title, _href_for("pending", task.slug)))
-                planned.append((_href_for("pending", task.slug), False))
+        if task.type in UNIQUE_TYPES:
+            _collect_unique(task, d, completed, failed, planned)
             continue
-        if t not in SERIES_TYPES:
+        if task.type not in SERIES_TYPES:
             continue
-        if t in RECURRING_TYPES and task.status == "pending":
-            when = do_on_date(task.data)
-            if when is not None and when <= d:
-                href = _href_for("pending", task.slug)
-                failed.append((task.title, href))
-                planned.append((href, False))
-            continue
-        until = until_date(task.data)
-        if t in RECURRING_TYPES and until == d and task.folder == "ongoing":
-            done = day_complete(task.data, d) or (
-                do_on_date(task.data) is not None and do_on_date(task.data) > d
-            )
-            finish_recurring_until(root, task)
-            href = _href_for("completed", task.slug)
-            planned.append((href, done))
-            if done:
-                completed.append((task.title, href))
-            else:
-                failed.append((task.title, href))
-            continue
-        when = do_on_date(task.data)
-        if t in RECURRING_TYPES and task.status == "ongoing" and when is not None:
-            href = _href_for(task.folder, task.slug)
-            checked = day_complete(task.data, d)
-            if checked:
-                completed.append((task.title, href))
-                planned.append((href, True))
-            elif when <= d:
-                failed.append((task.title, href))
-                planned.append((href, False))
-            continue
-        if not occurs_on(task.data, d):
-            continue
-        href = _href_for(task.folder, task.slug)
-        done = day_complete(task.data, d)
-        planned.append((href, done))
-        if done:
-            completed.append((task.title, href))
-        else:
-            failed.append((task.title, href))
+        _collect_series(root, task, d, completed, failed, planned)
     completed.sort(key=lambda item: item[0].lower())
     failed.sort(key=lambda item: item[0].lower())
     return completed, failed, planned
+
+
+def _collect_unique(task, d: date, completed, failed, planned) -> None:
+    completed_on = as_date(task.data.get("completed_on"))
+    when = do_on_date(task.data)
+    href = _href_for(task.folder, task.slug)
+    if completed_on == d:
+        completed.append((task.title, href))
+        planned.append((href, True))
+    elif task.folder == "pending" and when is not None and when <= d:
+        failed.append((task.title, _href_for("pending", task.slug)))
+        planned.append((_href_for("pending", task.slug), False))
+
+
+def _collect_series(root: Path, task, d: date, completed, failed, planned) -> None:
+    t = task.type
+    if t in RECURRING_TYPES and task.status == "pending":
+        _collect_pending_recurring(task, d, failed, planned)
+        return
+    until = until_date(task.data)
+    if t in RECURRING_TYPES and until == d and task.folder == "ongoing":
+        _collect_until_day(root, task, d, completed, failed, planned)
+        return
+    when = do_on_date(task.data)
+    if t in RECURRING_TYPES and task.status == "ongoing" and when is not None:
+        _collect_dated_recurring(task, d, when, completed, failed, planned)
+        return
+    if not occurs_on(task.data, d):
+        return
+    _collect_occurrence(task, d, completed, failed, planned)
+
+
+def _collect_pending_recurring(task, d: date, failed, planned) -> None:
+    when = do_on_date(task.data)
+    if when is not None and when <= d:
+        href = _href_for("pending", task.slug)
+        failed.append((task.title, href))
+        planned.append((href, False))
+
+
+def _collect_until_day(root: Path, task, d: date, completed, failed, planned) -> None:
+    done = day_complete(task.data, d) or (
+        do_on_date(task.data) is not None and do_on_date(task.data) > d
+    )
+    finish_recurring_until(root, task)
+    href = _href_for("completed", task.slug)
+    planned.append((href, done))
+    if done:
+        completed.append((task.title, href))
+    else:
+        failed.append((task.title, href))
+
+
+def _collect_dated_recurring(task, d: date, when: date, completed, failed, planned) -> None:
+    href = _href_for(task.folder, task.slug)
+    checked = day_complete(task.data, d)
+    if checked:
+        completed.append((task.title, href))
+        planned.append((href, True))
+    elif when <= d:
+        failed.append((task.title, href))
+        planned.append((href, False))
+
+
+def _collect_occurrence(task, d: date, completed, failed, planned) -> None:
+    href = _href_for(task.folder, task.slug)
+    done = day_complete(task.data, d)
+    planned.append((href, done))
+    if done:
+        completed.append((task.title, href))
+    else:
+        failed.append((task.title, href))
 
 
 def _percent(done: int, total: int) -> str:
@@ -474,6 +498,58 @@ def _day_percents(root: Path, d: date) -> tuple[float | None, float | None]:
 
 
 def render_month_rollup(root: Path, year: int, month: int) -> str:
+    day_rows, hour_counts, category_counts, task_counts = _rollup_counts(root, year, month)
+    routines = [routine for _when, routine, _tasks in day_rows if routine is not None]
+    tasks = [tasks for _when, _routine, tasks in day_rows if tasks is not None]
+    lines = [f"# {year:04d}-{month:02d}", ""]
+    lines.extend(_days_table(day_rows))
+    lines.extend(_weekdays_table(day_rows))
+    lines.extend(
+        [
+            "",
+            "## Month",
+            "",
+            METRICS_MARK,
+            "| --- | --- |",
+            f"| {_avg(routines)} | {_avg(tasks)} |",
+        ]
+    )
+    lines.extend(
+        _ranked_table(
+            "Hours with the most deviations",
+            "| hour | deviations |",
+            "| --- | --- |",
+            sorted(hour_counts.items(), key=lambda item: (-item[1], item[0])),
+        )
+    )
+    lines.extend(
+        _ranked_table(
+            "Deviations by category",
+            "| category | count |",
+            "| --- | --- |",
+            sorted(category_counts.items(), key=lambda item: (-item[1], item[0].casefold())),
+        )
+    )
+    lines.extend(
+        _ranked_table(
+            "Tasks most deviated",
+            "| task | count |",
+            "| --- | --- |",
+            sorted(task_counts.items(), key=lambda item: (-item[1], item[0].casefold())),
+        )
+    )
+    lines.append("")
+    return "\n".join(lines)
+
+
+def _rollup_counts(
+    root: Path, year: int, month: int
+) -> tuple[
+    list[tuple[date, float | None, float | None]],
+    dict[str, int],
+    dict[str, int],
+    dict[str, int],
+]:
     import calendar
 
     last = calendar.monthrange(year, month)[1]
@@ -493,13 +569,17 @@ def render_month_rollup(root: Path, year: int, month: int) -> str:
             category_counts[category] = category_counts.get(category, 0) + 1
             for token in tokens:
                 task_counts[token] = task_counts.get(token, 0) + 1
+    return day_rows, hour_counts, category_counts, task_counts
 
-    def avg(values: list[float]) -> str:
-        if not values:
-            return "null"
-        return f"{round(sum(values) / len(values))}%"
 
-    lines = [f"# {year:04d}-{month:02d}", "", "## Days", "", "| day | weekday | routine | tasks |", "| --- | --- | --- | --- |"]
+def _avg(values: list[float]) -> str:
+    if not values:
+        return "null"
+    return f"{round(sum(values) / len(values))}%"
+
+
+def _days_table(day_rows: list[tuple[date, float | None, float | None]]) -> list[str]:
+    lines = ["## Days", "", "| day | weekday | routine | tasks |", "| --- | --- | --- | --- |"]
     for when, routine, tasks in day_rows:
         lines.append(
             "| {day} | {weekday} | {routine} | {tasks} |".format(
@@ -509,56 +589,33 @@ def render_month_rollup(root: Path, year: int, month: int) -> str:
                 tasks="null" if tasks is None else f"{round(tasks)}%",
             )
         )
-    lines.extend(["", "## Weekdays", "", "| weekday | routine | tasks |", "| --- | --- | --- |"])
+    return lines
+
+
+def _weekdays_table(day_rows: list[tuple[date, float | None, float | None]]) -> list[str]:
+    lines = ["", "## Weekdays", "", "| weekday | routine | tasks |", "| --- | --- | --- |"]
     for name in WEEKDAYS:
-        routines = [routine for when, routine, _tasks in day_rows if WEEKDAYS[when.weekday()] == name and routine is not None]
-        tasks = [tasks for when, _routine, tasks in day_rows if WEEKDAYS[when.weekday()] == name and tasks is not None]
+        routines = [
+            routine
+            for when, routine, _tasks in day_rows
+            if WEEKDAYS[when.weekday()] == name and routine is not None
+        ]
+        tasks = [
+            tasks
+            for when, _routine, tasks in day_rows
+            if WEEKDAYS[when.weekday()] == name and tasks is not None
+        ]
         if not routines and not tasks:
             continue
-        lines.append(f"| {name} | {avg(routines)} | {avg(tasks)} |")
-    routines = [routine for _when, routine, _tasks in day_rows if routine is not None]
-    tasks = [tasks for _when, _routine, tasks in day_rows if tasks is not None]
-    lines.extend(
-        [
-            "",
-            "## Month",
-            "",
-            METRICS_MARK,
-            "| --- | --- |",
-            f"| {avg(routines)} | {avg(tasks)} |",
-            "",
-            "## Hours with the most deviations",
-            "",
-            "| hour | deviations |",
-            "| --- | --- |",
-        ]
-    )
-    for hour, count in sorted(hour_counts.items(), key=lambda item: (-item[1], item[0])):
-        lines.append(f"| {hour} | {count} |")
-    lines.extend(
-        [
-            "",
-            "## Deviations by category",
-            "",
-            "| category | count |",
-            "| --- | --- |",
-        ]
-    )
-    for category, count in sorted(category_counts.items(), key=lambda item: (-item[1], item[0].casefold())):
-        lines.append(f"| {category} | {count} |")
-    lines.extend(
-        [
-            "",
-            "## Tasks most deviated",
-            "",
-            "| task | count |",
-            "| --- | --- |",
-        ]
-    )
-    for task, count in sorted(task_counts.items(), key=lambda item: (-item[1], item[0].casefold())):
-        lines.append(f"| {task} | {count} |")
-    lines.append("")
-    return "\n".join(lines)
+        lines.append(f"| {name} | {_avg(routines)} | {_avg(tasks)} |")
+    return lines
+
+
+def _ranked_table(title: str, header: str, rule: str, rows: list[tuple[str, int]]) -> list[str]:
+    lines = ["", f"## {title}", "", header, rule]
+    for label, count in rows:
+        lines.append(f"| {label} | {count} |")
+    return lines
 
 
 def write_month_rollup(root: Path, d: date) -> Path:

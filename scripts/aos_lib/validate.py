@@ -58,69 +58,85 @@ def _validate_common(task) -> list[str]:
 def _validate_tasks(root: Path) -> list[str]:
     errors: list[str] = []
     seen: dict[str, Path] = {}
-    tasks = []
     for task in iter_task_files(root):
         slug = task.slug
         if slug in seen:
-            errors.append(
-                f"duplicate slug {slug!r}: {seen[slug]} and {task.path}"
-            )
+            errors.append(f"duplicate slug {slug!r}: {seen[slug]} and {task.path}")
         else:
             seen[slug] = task.path
-        tasks.append(task)
-        t = task.type
-        if t not in ALL_TYPES:
-            errors.append(f"{task.path}: invalid type {t!r}")
-            continue
-        st = task.status
-        expected_folder = STATUS_FOLDER.get(st)
-        if expected_folder and task.folder != expected_folder:
-            errors.append(
-                f"{task.path}: status {st!r} does not match folder {task.folder!r}"
-            )
-        errors.extend(_validate_common(task))
-        if t in UNIQUE_TYPES:
-            if st not in UNIQUE_STATUSES:
-                errors.append(f"{task.path}: invalid unique status {st!r}")
-            if task.folder == "ongoing":
-                errors.append(f"{task.path}: unique type in ongoing/")
-            if t == "unique-project":
-                if not task.data.get("project") or not task.data.get("phase"):
-                    errors.append(f"{task.path}: unique-project needs project and phase")
-            if st == "pending" and do_on_date(task.data) is None:
-                errors.append(f"{task.path}: pending unique needs do_on")
-            if st == "paused" and do_on_date(task.data) is not None:
-                errors.append(f"{task.path}: paused unique has no do_on")
-            continue
-        if t in RECURRING_TYPES:
-            if st not in RECURRING_STATUSES:
-                errors.append(f"{task.path}: invalid recurring status {st!r}")
-            if task.folder == "pending" and st != "pending":
-                errors.append(f"{task.path}: unstarted recurring needs status pending")
-            if task.folder == "ongoing" and st != "ongoing":
-                errors.append(f"{task.path}: live recurring needs status ongoing")
-            if task.data.get("start") is not None:
-                errors.append(f"{task.path}: recurring has no start")
-            if st == "pending" and do_on_date(task.data) is None:
-                errors.append(f"{task.path}: pending recurring needs do_on")
-            if st == "paused" and do_on_date(task.data) is not None:
-                errors.append(f"{task.path}: paused recurring has no do_on")
-            errors.extend(_validate_recurrence(task.path, task.data, t))
-            continue
-        if t == "maintenance":
-            if st not in MAINTENANCE_STATUSES:
-                errors.append(f"{task.path}: invalid maintenance status {st!r}")
-            if task.folder not in {"ongoing", "paused", "canceled"}:
-                errors.append(
-                    f"{task.path}: maintenance lives in ongoing/, paused/, or canceled/"
-                )
-            if task.data.get("start") is not None or task.data.get("do_on") is not None:
-                errors.append(f"{task.path}: maintenance has no start or do_on")
-            if until_date(task.data) is not None or (
-                task.data.get("until_event") not in (None, "", False)
-            ):
-                errors.append(f"{task.path}: maintenance has no until")
-            errors.extend(_validate_recurrence(task.path, task.data, t))
+        errors.extend(_validate_one_task(task))
+    return errors
+
+
+def _validate_one_task(task) -> list[str]:
+    t = task.type
+    if t not in ALL_TYPES:
+        return [f"{task.path}: invalid type {t!r}"]
+    errors = _status_folder_errors(task)
+    errors.extend(_validate_common(task))
+    st = task.status
+    if t in UNIQUE_TYPES:
+        errors.extend(_validate_unique(task, st))
+    elif t in RECURRING_TYPES:
+        errors.extend(_validate_recurring_task(task, st))
+    elif t == "maintenance":
+        errors.extend(_validate_maintenance(task, st))
+    return errors
+
+
+def _status_folder_errors(task) -> list[str]:
+    st = task.status
+    expected_folder = STATUS_FOLDER.get(st)
+    if expected_folder and task.folder != expected_folder:
+        return [f"{task.path}: status {st!r} does not match folder {task.folder!r}"]
+    return []
+
+
+def _validate_unique(task, st: str) -> list[str]:
+    errors: list[str] = []
+    if st not in UNIQUE_STATUSES:
+        errors.append(f"{task.path}: invalid unique status {st!r}")
+    if task.folder == "ongoing":
+        errors.append(f"{task.path}: unique type in ongoing/")
+    if task.type == "unique-project":
+        if not task.data.get("project") or not task.data.get("phase"):
+            errors.append(f"{task.path}: unique-project needs project and phase")
+    if st == "pending" and do_on_date(task.data) is None:
+        errors.append(f"{task.path}: pending unique needs do_on")
+    if st == "paused" and do_on_date(task.data) is not None:
+        errors.append(f"{task.path}: paused unique has no do_on")
+    return errors
+
+
+def _validate_recurring_task(task, st: str) -> list[str]:
+    errors: list[str] = []
+    if st not in RECURRING_STATUSES:
+        errors.append(f"{task.path}: invalid recurring status {st!r}")
+    if task.folder == "pending" and st != "pending":
+        errors.append(f"{task.path}: unstarted recurring needs status pending")
+    if task.folder == "ongoing" and st != "ongoing":
+        errors.append(f"{task.path}: live recurring needs status ongoing")
+    if task.data.get("start") is not None:
+        errors.append(f"{task.path}: recurring has no start")
+    if st == "pending" and do_on_date(task.data) is None:
+        errors.append(f"{task.path}: pending recurring needs do_on")
+    if st == "paused" and do_on_date(task.data) is not None:
+        errors.append(f"{task.path}: paused recurring has no do_on")
+    errors.extend(_validate_recurrence(task.path, task.data, task.type))
+    return errors
+
+
+def _validate_maintenance(task, st: str) -> list[str]:
+    errors: list[str] = []
+    if st not in MAINTENANCE_STATUSES:
+        errors.append(f"{task.path}: invalid maintenance status {st!r}")
+    if task.folder not in {"ongoing", "paused", "canceled"}:
+        errors.append(f"{task.path}: maintenance lives in ongoing/, paused/, or canceled/")
+    if task.data.get("start") is not None or task.data.get("do_on") is not None:
+        errors.append(f"{task.path}: maintenance has no start or do_on")
+    if until_date(task.data) is not None or task.data.get("until_event") not in (None, "", False):
+        errors.append(f"{task.path}: maintenance has no until")
+    errors.extend(_validate_recurrence(task.path, task.data, task.type))
     return errors
 
 
