@@ -8,24 +8,22 @@ from .config import get_root
 from .daily import daily_close
 from .index import reindex
 from .layout import migrate_layout
-from .vaultmigrate import migrate_vault
-from .sync import sync
 from .up import run_up
 from .validate import validate
+from .vaultmigrate import migrate_vault
 from .watch import watch, watch_loop
 
 
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="aos", description="Agency Operating System")
     sub = p.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("reindex", help="rebuild user/tasks/tasks.md")
-    w = sub.add_parser("watch", help="watch tasks.md and sync on checkbox")
+    sub.add_parser("reindex", help="apply checks, rebuild tasks.md and the schedule")
+    w = sub.add_parser("watch", help="watch tasks.md and reindex on checkbox")
     w.add_argument(
         "--loop",
         action="store_true",
         help="restart watch() after a crash until interrupted",
     )
-    sub.add_parser("sync", help="apply checked boxes in tasks.md")
     dc = sub.add_parser("daily-close", help="close day D (default: yesterday)")
     dc.add_argument("date", nargs="?", help="YYYY-MM-DD to close")
     ml = sub.add_parser(
@@ -74,12 +72,6 @@ def main(argv: list[str] | None = None) -> int:
     if cmd == "reindex":
         path = reindex(root)
         print(path)
-        return 0
-    if cmd == "sync":
-        report = sync(root)
-        for key in ("unique", "recurring", "reverted"):
-            for slug in report[key]:
-                print(f"{key}: {slug}")
         return 0
     if cmd == "watch":
         if args.loop:

@@ -11,7 +11,7 @@ from pathlib import Path
 
 from .config import tasks_dir, today as today_fn
 from .gitutil import push_if_origin
-from .sync import sync
+from .index import reindex
 
 # A push that failed (offline, auth) is retried this often.
 PUSH_RETRY_S = 600.0
@@ -108,7 +108,7 @@ def _file_sig(path: Path) -> tuple[int, int, str]:
 
 
 def _retry_push(root: Path, last_error: str) -> str:
-    """Push commits a previous sync left behind. Log an error only when it changes."""
+    """Push commits a previous reindex left behind. Log an error only when it changes."""
     try:
         if push_if_origin(root):
             sys.stderr.write("aos watch: pushed pending commits\n")
@@ -126,8 +126,6 @@ def watch(root: Path, *, poll_s: float = 1.0) -> None:
     tasks_md = tasks_dir(root) / "tasks.md"
     tasks_md.parent.mkdir(parents=True, exist_ok=True)
     if not tasks_md.exists():
-        from .index import reindex
-
         reindex(root)
     last = _file_sig(tasks_md)
     fd = _inotify_fd(tasks_md.parent)
@@ -153,9 +151,9 @@ def watch(root: Path, *, poll_s: float = 1.0) -> None:
             if sig == last:
                 continue
             try:
-                sync(root, today_fn(root))
+                reindex(root, today_fn(root))
             except Exception as exc:  # noqa: BLE001 — keep watch alive
-                sys.stderr.write(f"aos watch sync error: {exc}\n")
+                sys.stderr.write(f"aos watch reindex error: {exc}\n")
                 sys.stderr.flush()
             last = _file_sig(tasks_md)
     except KeyboardInterrupt:

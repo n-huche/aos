@@ -32,7 +32,6 @@ Python 3, stdlib only.
 scripts/aos reindex
 scripts/aos watch
 scripts/aos watch --loop
-scripts/aos sync
 scripts/aos daily-close          # optional YYYY-MM-DD
 scripts/aos migrate --dry-run    # optional today YYYY-MM-DD
 scripts/aos migrate              # optional today YYYY-MM-DD

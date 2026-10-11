@@ -1,6 +1,6 @@
 """Move tasks and hubs to the folder their dates and children require.
 
-Runs from sync, and also from reindex and daily-close so a date edit is
+Runs from reindex and daily-close so a date edit is
 visible without a separate checkbox pass.
 """
 
