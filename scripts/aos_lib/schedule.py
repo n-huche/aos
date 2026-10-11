@@ -5,9 +5,11 @@ to the month. Closed days are frozen: a column whose date already has a
 closed daily is never rewritten. The first time a month file is created,
 every column is written once, including days that are already closed.
 
-A month file is opened by a unique or a recurring that has both do_on and
-do_at. Maintenance does not open a month. It fills cadence days in months
-that already exist.
+A month file is opened by a unique `do_on`, or by a recurring `do_on` or
+`until`. The months between those dates are not opened. Maintenance and a
+recurring with `until_event` do not open a month. They fill cadence days
+in months that already exist. A recurring with `until` fills those months
+through that date, inclusive.
 """
 
 from __future__ import annotations
@@ -42,23 +44,6 @@ def week_spans(year: int, month: int) -> list[tuple[int, int]]:
     return spans
 
 
-def _last_day(when: date) -> date:
-    return date(when.year, when.month, calendar.monthrange(when.year, when.month)[1])
-
-
-def _months_between(start: date, end: date) -> set[tuple[int, int]]:
-    found: set[tuple[int, int]] = set()
-    year, month = start.year, start.month
-    stop = (end.year, end.month)
-    while (year, month) <= stop:
-        found.add((year, month))
-        month += 1
-        if month == 13:
-            year += 1
-            month = 1
-    return found
-
-
 def _on_grid(task) -> bool:
     if task.folder in {"paused", "completed", "canceled", "obsolete"}:
         return False
@@ -67,48 +52,43 @@ def _on_grid(task) -> bool:
     return True
 
 
-def _recurring_span(task, today: date) -> tuple[date, date] | None:
-    """Inclusive days a recurring opens, or None when it has no do_on.
+def _has_clock(task) -> bool:
+    from .index import clocks_of
 
-    With until, the span runs from do_on through until. Without until, it
-    runs from do_on through the end of the current month. A do_on in a
-    later month opens only that month.
-    """
-    when = do_on_date(task.data)
-    if when is None:
-        return None
-    until = until_date(task.data)
-    if until is not None:
-        if until < when:
-            return None
-        return when, until
-    if (when.year, when.month) > (today.year, today.month):
-        return when, _last_day(when)
-    return when, _last_day(today)
+    try:
+        return bool(clocks_of(task.data))
+    except ValueError:
+        return False
 
 
 def _months_for(root: Path, today: date) -> set[tuple[int, int]]:
-    from .index import clocks_of
+    """Months that do not exist yet and must be created.
 
+    A unique opens the month of `do_on`. A recurring with `until` opens the
+    month of `do_on` and the month of `until`, not the months between them.
+    Maintenance and `until_event` open nothing.
+    """
+    del today
     months: set[tuple[int, int]] = set()
     for task in iter_task_files(root):
-        if not _on_grid(task):
-            continue
-        try:
-            clocks = clocks_of(task.data)
-        except ValueError:
-            continue
-        if not clocks:
+        if not _on_grid(task) or not _has_clock(task):
             continue
         if task.type in UNIQUE_TYPES:
             when = do_on_date(task.data)
             if when is not None:
                 months.add((when.year, when.month))
             continue
-        if task.type in RECURRING_TYPES:
-            span = _recurring_span(task, today)
-            if span is not None:
-                months |= _months_between(span[0], span[1])
+        if task.type not in RECURRING_TYPES:
+            continue
+        until = until_date(task.data)
+        if until is None:
+            continue
+        when = do_on_date(task.data)
+        if when is not None and until < when:
+            continue
+        if when is not None:
+            months.add((when.year, when.month))
+        months.add((until.year, until.month))
     return months
 
 
@@ -122,17 +102,17 @@ def _schedule_occurs(task, day: date) -> bool:
 
 
 def _planned_on(task, day: date, today: date) -> bool:
+    del today
     when = do_on_date(task.data)
     if task.type in UNIQUE_TYPES:
         return when == day
     if task.type in RECURRING_TYPES:
-        span = _recurring_span(task, today)
-        if span is None:
-            if task.status != "ongoing":
-                return False
-            return _schedule_occurs(task, day)
-        start, end = span
-        if day < start or day > end:
+        if when is not None and day < when:
+            return False
+        until = until_date(task.data)
+        if until is not None and day > until:
+            return False
+        if when is None and task.status != "ongoing":
             return False
         return _schedule_occurs(task, day)
     if task.type == "maintenance":
@@ -255,8 +235,8 @@ def regenerate_schedule(root: Path, today: date, *, frozen_through: date | None 
     """Rewrite open columns. Leave columns on or before frozen_through.
 
     Months that already have a file are refreshed too, so a completed task
-    leaves the open cells. A new month is written only when a unique or a
-    recurring with do_on and do_at lands there.
+    leaves the open cells. A new month is written for a unique `do_on`, or
+    for the `do_on` and `until` months of a recurring that has `until`.
     """
     from .daily import last_closed_day
     from .taskio import atomic_write

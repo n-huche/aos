@@ -464,12 +464,12 @@ A cell is a window. Empty is the literal `null`. A project task shows the projec
 What lands on a day:
 
 - unique: `do_on`, if it has a clock
-- recurring with `do_on` and a clock, pending or ongoing: each cadence day from `do_on` through `until`. The index still shows a pending recurring only on `do_on`
-- recurring with `do_on`, a clock, and no `until`: the same intersection, from `do_on` through the last day of the current month. A `do_on` in a later month opens only that month. The next month appears when `reindex` runs in a month that reaches it
-- recurring with no `do_on`: does not open a month. An ongoing one fills its cadence days in months some other task already opened
+- recurring with `until` and a clock, pending or ongoing: each cadence day from `do_on` through `until`, inclusive, in every month that has a grid. The index still shows a pending recurring only on `do_on`
+- recurring with `until_event` and a clock: the same as maintenance. Every cadence day from `do_on` on, in every month that has a grid, with no end date, until the user says the event happened
+- recurring with no `do_on`: does not open a month. An ongoing one fills its cadence days in months that already have a grid. `until` still caps that
 - maintenance with a clock: each cadence day in the months the grid builds. Maintenance does not open a month
 
-Months built: the month of a unique `do_on` that has a clock, and every month from a recurring `do_on` through `until` (or through the current month when `until` is absent). An existing month file stays and its open columns are rebuilt. Not every future year.
+Months built: the month of a unique `do_on` that has a clock, and, for a recurring with `until`, the month of `do_on` and the month of `until`. Not the months in between. A new month is filled with the maintenances, the `until_event` recurrings, the `until` recurrings that cover that month, and the task that opened it. An existing month file stays and its open columns are rebuilt. Not every future year.
 
 Closed days are frozen. A column whose date already has a closed daily is never rewritten. The first time a month file is created, every column is written once, including days already closed. After that, only open columns move. Completing a task frees its window on open days. Cron does not delete the file.
 
