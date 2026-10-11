@@ -265,6 +265,78 @@ def render_placeholder(d: date) -> str:
     return "\n".join(lines)
 
 
+def completed_rows(root: Path, d: date) -> list[tuple[str, str]]:
+    """Tasks done on D. Does not move files or finish a series."""
+    rows: list[tuple[str, str]] = []
+    for task in iter_task_files(root):
+        if task.folder in {"paused", "canceled", "obsolete"}:
+            continue
+        if task.status in {"paused", "canceled", "obsolete"}:
+            continue
+        if task.type in UNIQUE_TYPES:
+            if as_date(task.data.get("completed_on")) == d:
+                rows.append((task.title, _href_for(task.folder, task.slug)))
+            continue
+        if task.type in SERIES_TYPES and day_complete(task.data, d):
+            rows.append((task.title, _href_for(task.folder, task.slug)))
+    rows.sort(key=lambda item: item[0].lower())
+    return rows
+
+
+def render_open_daily(
+    d: date,
+    hours: dict[str, str],
+    completed: list[tuple[str, str]],
+    notes: str | None = None,
+) -> str:
+    """Hour table plus completed tasks. No metrics, so the day stays open."""
+    lines = [f"# {d.isoformat()}", "", "| hour | did |", "| --- | --- |"]
+    for hour in range(24):
+        label = f"{hour:02d}:00"
+        did = hours.get(label, "null") or "null"
+        lines.append(f"| {label} | {did} |")
+    if completed:
+        lines.extend(["", "## Completed tasks", ""])
+        for title, href in completed:
+            lines.append(f"- [{title}]({href})")
+    if notes:
+        notes = notes.rstrip() + "\n"
+        if not notes.startswith("## "):
+            lines.append("")
+            lines.append("## Notes, optional")
+            lines.append("")
+        else:
+            lines.append("")
+        lines.append(notes.rstrip())
+    lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def write_open_completed(root: Path, d: date) -> Path | None:
+    """Record tasks done on D in that day's open daily.
+
+    Keeps the did column and the notes. A closed day is left alone. An
+    empty list does not create a file.
+    """
+    path = daily_path(root, d)
+    completed = completed_rows(root, d)
+    hours: dict[str, str] = {}
+    notes = None
+    if path.is_file():
+        old = path.read_text(encoding="utf-8")
+        if daily_is_closed(old):
+            return path
+        hours = extract_hours(old)
+        notes = extract_notes(old)
+    elif not completed:
+        return None
+    text = render_open_daily(d, hours, completed, notes)
+    if path.is_file() and path.read_text(encoding="utf-8") == text:
+        return path
+    atomic_write(path, text)
+    return path
+
+
 def write_daily(
     root: Path,
     d: date,
@@ -515,7 +587,13 @@ def daily_close(
     _clear_done_on(root, d)
     ensure_placeholder(root, d + timedelta(days=1))
     write_month_rollup(root, d)
-    reindex(root, d + timedelta(days=1))
+    reindex(
+        root,
+        d + timedelta(days=1),
+        apply_checks=False,
+        note_completed=False,
+        commit=False,
+    )
     if commit:
         commit_user(root, f"aos: daily-close {d.isoformat()}")
         push_or_warn(root)

@@ -64,7 +64,7 @@ def _git_dir(root: Path) -> Path:
 
 @contextmanager
 def git_lock(root: Path) -> Iterator[None]:
-    """Serialize AOS writes to one git repo: watch sync, cron daily-close, catch-up."""
+    """Serialize AOS writes to one git repo: watch reindex, cron daily-close, catch-up."""
     fd = os.open(_git_dir(root) / GIT_LOCK_NAME, os.O_CREAT | os.O_RDWR, 0o644)
     try:
         fcntl.flock(fd, fcntl.LOCK_EX)

@@ -1,8 +1,13 @@
-"""Month grid derived from do_on and do_at.
+"""Month grid derived from do_on, do_at, and cadence.
 
-Closed days are frozen: a column whose date already has a closed daily
-is never rewritten. The first time a month file is created, every column
-is written once, including days that are already closed.
+One file per month. Inside it, one table per Sunday–Saturday week, clipped
+to the month. Closed days are frozen: a column whose date already has a
+closed daily is never rewritten. The first time a month file is created,
+every column is written once, including days that are already closed.
+
+A month file is opened by a unique or a recurring that has both do_on and
+do_at. Maintenance does not open a month. It fills cadence days in months
+that already exist.
 """
 
 from __future__ import annotations
@@ -13,14 +18,45 @@ from datetime import date
 from pathlib import Path
 
 from .cadence import do_on_date, occurs_on, until_date
-from .config import RECURRING_TYPES, SERIES_TYPES, UNIQUE_TYPES, WEEKDAYS, schedule_dir
+from .config import RECURRING_TYPES, UNIQUE_TYPES, WEEKDAYS, schedule_dir
 from .taskio import iter_task_files
 
 _HEADER_DAY = re.compile(r"^(\d{1,2})\s*-\s*[a-z]{3}$")
+_MONTH_STEM = re.compile(r"^(\d{4})-(\d{2})$")
 
 
 def month_path(root: Path, year: int, month: int) -> Path:
     return schedule_dir(root) / f"{year:04d}" / f"{year:04d}-{month:02d}.md"
+
+
+def week_spans(year: int, month: int) -> list[tuple[int, int]]:
+    """Inclusive day numbers, Sunday through Saturday, clipped to the month."""
+    last = calendar.monthrange(year, month)[1]
+    spans: list[tuple[int, int]] = []
+    start = 1
+    while start <= last:
+        when = date(year, month, start)
+        end = min(last, start + (5 - when.weekday()) % 7)
+        spans.append((start, end))
+        start = end + 1
+    return spans
+
+
+def _last_day(when: date) -> date:
+    return date(when.year, when.month, calendar.monthrange(when.year, when.month)[1])
+
+
+def _months_between(start: date, end: date) -> set[tuple[int, int]]:
+    found: set[tuple[int, int]] = set()
+    year, month = start.year, start.month
+    stop = (end.year, end.month)
+    while (year, month) <= stop:
+        found.add((year, month))
+        month += 1
+        if month == 13:
+            year += 1
+            month = 1
+    return found
 
 
 def _on_grid(task) -> bool:
@@ -29,6 +65,26 @@ def _on_grid(task) -> bool:
     if task.status in {"paused", "completed", "canceled", "obsolete"}:
         return False
     return True
+
+
+def _recurring_span(task, today: date) -> tuple[date, date] | None:
+    """Inclusive days a recurring opens, or None when it has no do_on.
+
+    With until, the span runs from do_on through until. Without until, it
+    runs from do_on through the end of the current month. A do_on in a
+    later month opens only that month.
+    """
+    when = do_on_date(task.data)
+    if when is None:
+        return None
+    until = until_date(task.data)
+    if until is not None:
+        if until < when:
+            return None
+        return when, until
+    if (when.year, when.month) > (today.year, today.month):
+        return when, _last_day(when)
+    return when, _last_day(today)
 
 
 def _months_for(root: Path, today: date) -> set[tuple[int, int]]:
@@ -44,25 +100,47 @@ def _months_for(root: Path, today: date) -> set[tuple[int, int]]:
             continue
         if not clocks:
             continue
-        if task.type in UNIQUE_TYPES or (
-            task.type in RECURRING_TYPES and task.status == "pending"
-        ):
+        if task.type in UNIQUE_TYPES:
             when = do_on_date(task.data)
             if when is not None:
                 months.add((when.year, when.month))
             continue
-        if task.type in SERIES_TYPES or task.type in RECURRING_TYPES:
-            months.add((today.year, today.month))
-            when = do_on_date(task.data)
-            if when is not None:
-                months.add((when.year, when.month))
-            until = until_date(task.data)
-            if until is not None:
-                months.add((until.year, until.month))
+        if task.type in RECURRING_TYPES:
+            span = _recurring_span(task, today)
+            if span is not None:
+                months |= _months_between(span[0], span[1])
     return months
 
 
-def _labels_for_day(root: Path, day: date) -> dict[int, list[str]]:
+def _schedule_occurs(task, day: date) -> bool:
+    """Cadence match. A pending recurring is projected as if it were live."""
+    data = task.data
+    if task.type in RECURRING_TYPES and task.status != "ongoing":
+        data = dict(data)
+        data["status"] = "ongoing"
+    return occurs_on(data, day)
+
+
+def _planned_on(task, day: date, today: date) -> bool:
+    when = do_on_date(task.data)
+    if task.type in UNIQUE_TYPES:
+        return when == day
+    if task.type in RECURRING_TYPES:
+        span = _recurring_span(task, today)
+        if span is None:
+            if task.status != "ongoing":
+                return False
+            return _schedule_occurs(task, day)
+        start, end = span
+        if day < start or day > end:
+            return False
+        return _schedule_occurs(task, day)
+    if task.type == "maintenance":
+        return occurs_on(task.data, day)
+    return False
+
+
+def _labels_for_day(root: Path, day: date, today: date) -> dict[int, list[str]]:
     """hour -> labels, for one unfrozen day."""
     from .index import CLASS_RANK, clocks_of, infinitive_of, project_order
 
@@ -77,7 +155,7 @@ def _labels_for_day(root: Path, day: date) -> dict[int, list[str]]:
             continue
         if not clocks:
             continue
-        if not _planned_on(task, day):
+        if not _planned_on(task, day, today):
             continue
         label = _label(task, order, infinitive_of)
         rank = CLASS_RANK.get(task.type, 9)
@@ -106,43 +184,32 @@ def _label(task, order: dict, infinitive_of) -> str:
     return text.replace("|", "/")
 
 
-def _planned_on(task, day: date) -> bool:
-    when = do_on_date(task.data)
-    if task.type in UNIQUE_TYPES:
-        return when == day
-    if task.type in RECURRING_TYPES and task.status == "pending":
-        return when == day
-    if task.type in RECURRING_TYPES and task.status == "ongoing":
-        if when is not None and day < when:
-            return False
-        until = until_date(task.data)
-        if until is not None and day > until:
-            return False
-        return occurs_on(task.data, day)
-    if task.type == "maintenance":
-        return occurs_on(task.data, day)
-    return False
-
-
 def parse_month(text: str) -> dict[int, dict[int, str]]:
-    """day -> hour -> cell text, from an existing month file."""
-    lines = [line.strip() for line in text.splitlines() if line.strip().startswith("|")]
-    if len(lines) < 2:
-        return {}
-    header = [cell.strip() for cell in lines[0].strip("|").split("|")]
-    days: list[int | None] = []
-    for cell in header[1:]:
-        match = _HEADER_DAY.match(cell.strip())
-        days.append(int(match.group(1)) if match else None)
+    """day -> hour -> cell text, from an existing month file.
+
+    A month file holds one table per week. Each table has its own header.
+    """
     found: dict[int, dict[int, str]] = {}
-    for line in lines[2:]:
+    days: list[int | None] = []
+    for raw in text.splitlines():
+        line = raw.strip()
+        if not line.startswith("|"):
+            continue
         cells = [cell.strip() for cell in line.strip("|").split("|")]
         if not cells:
             continue
-        hour_text = cells[0]
-        if len(hour_text) < 2 or not hour_text[:2].isdigit():
+        head = cells[0]
+        if head == "hour":
+            days = []
+            for cell in cells[1:]:
+                match = _HEADER_DAY.match(cell.strip())
+                days.append(int(match.group(1)) if match else None)
             continue
-        hour = int(hour_text[:2])
+        if head.startswith("---"):
+            continue
+        if len(head) < 2 or not head[:2].isdigit():
+            continue
+        hour = int(head[:2])
         for index, day in enumerate(days):
             if day is None:
                 continue
@@ -152,27 +219,21 @@ def parse_month(text: str) -> dict[int, dict[int, str]]:
 
 
 def render_month(year: int, month: int, cells: dict[int, dict[int, str]]) -> str:
-    last = calendar.monthrange(year, month)[1]
-    headers = ["hour"]
-    for day_num in range(1, last + 1):
-        when = date(year, month, day_num)
-        headers.append(f"{day_num} - {WEEKDAYS[when.weekday()]}")
-    lines = [
-        f"# {year:04d}-{month:02d}",
-        "",
-        "| " + " | ".join(headers) + " |",
-        "| " + " | ".join("---" for _ in headers) + " |",
-    ]
-    for hour in range(24):
-        row = [f"{hour:02d}:00"]
-        for day_num in range(1, last + 1):
-            row.append(cells.get(day_num, {}).get(hour, "null"))
-        lines.append("| " + " | ".join(row) + " |")
-    lines.append("")
-    return "\n".join(lines)
-
-
-_MONTH_STEM = re.compile(r"^(\d{4})-(\d{2})$")
+    lines = [f"# {year:04d}-{month:02d}", ""]
+    for start, end in week_spans(year, month):
+        headers = ["hour"]
+        for day_num in range(start, end + 1):
+            when = date(year, month, day_num)
+            headers.append(f"{day_num} - {WEEKDAYS[when.weekday()]}")
+        lines.append("| " + " | ".join(headers) + " |")
+        lines.append("| " + " | ".join("---" for _ in headers) + " |")
+        for hour in range(24):
+            row = [f"{hour:02d}:00"]
+            for day_num in range(start, end + 1):
+                row.append(cells.get(day_num, {}).get(hour, "null"))
+            lines.append("| " + " | ".join(row) + " |")
+        lines.append("")
+    return "\n".join(lines).rstrip() + "\n"
 
 
 def _existing_months(root: Path) -> set[tuple[int, int]]:
@@ -194,7 +255,8 @@ def regenerate_schedule(root: Path, today: date, *, frozen_through: date | None 
     """Rewrite open columns. Leave columns on or before frozen_through.
 
     Months that already have a file are refreshed too, so a completed task
-    leaves the open cells.
+    leaves the open cells. A new month is written only when a unique or a
+    recurring with do_on and do_at lands there.
     """
     from .daily import last_closed_day
     from .taskio import atomic_write
@@ -218,7 +280,7 @@ def regenerate_schedule(root: Path, today: date, *, frozen_through: date | None 
                 for hour in range(24):
                     cells[day_num].setdefault(hour, "null")
                 continue
-            labels = _labels_for_day(root, when)
+            labels = _labels_for_day(root, when, today)
             cells[day_num] = {}
             for hour in range(24):
                 row = labels.get(hour) or []
@@ -236,4 +298,3 @@ def plan_cell(root: Path, when: date, hour: int) -> str | None:
     if raw is None or raw.strip().lower() == "null" or not raw.strip():
         return None
     return raw.strip()
-

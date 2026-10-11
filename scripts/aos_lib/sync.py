@@ -12,10 +12,8 @@ from .config import (
     SECTION_TODAY,
     SERIES_TYPES,
     UNIQUE_TYPES,
-    today as today_fn,
 )
 from .gitutil import commit_user, push_or_warn
-from .index import reindex
 from .links import folder_from_href, rewrite_task_links
 from .taskio import TaskFile, load_by_slug, move_task
 from .yamlfm import as_date_list
@@ -162,7 +160,7 @@ def _ongoing_check_allowed(task: TaskFile, section: str) -> bool:
 
 
 def collect_checked(root: Path) -> dict[str, list[str]]:
-    """Slugs that sync() would apply, without mutating files.
+    """Slugs that a check pass would apply, without mutating files.
 
     Catch-up snapshots this before daily-close rewrites tasks.md.
     """
@@ -200,13 +198,8 @@ def collect_checked(root: Path) -> dict[str, list[str]]:
     return report
 
 
-def apply_collected(
-    root: Path,
-    report: dict[str, list[str]],
-    today: date,
-    *,
-    commit: bool = True,
-) -> dict[str, list[str]]:
+def apply_report(root: Path, report: dict[str, list[str]], today: date) -> None:
+    """Apply a snapshotted check list. Does not rebuild the index."""
     for slug in report["unique"]:
         task = load_by_slug(root, slug)
         if task is None:
@@ -222,15 +215,25 @@ def apply_collected(
         if task is None:
             continue
         mark_series_today(root, task, today)
-    reindex(root, today)
+
+
+def apply_collected(
+    root: Path,
+    report: dict[str, list[str]],
+    today: date,
+    *,
+    commit: bool = True,
+) -> dict[str, list[str]]:
+    """Apply checks that were snapshotted before a rebuild wiped tasks.md.
+
+    Catch-up uses this so the return day gets the credit, not the missed days.
+    The rebuild does not read tasks.md again.
+    """
+    from .index import reindex
+
+    apply_report(root, report, today)
+    reindex(root, today, apply_checks=False, note_completed=True, commit=False)
     if commit and any(report.values()):
-        commit_user(root, "aos: sync tasks")
+        commit_user(root, "aos: reindex")
         push_or_warn(root)
     return report
-
-
-def sync(root: Path, today: date | None = None, *, commit: bool = True) -> dict[str, list[str]]:
-    if today is None:
-        today = today_fn(root)
-    report = collect_checked(root)
-    return apply_collected(root, report, today, commit=commit)

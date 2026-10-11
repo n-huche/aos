@@ -27,8 +27,8 @@ Markdown is the source of truth. After creating or editing tasks/projects, run `
 - No `do_on`: ask at the end, after writing. Recurring `do_on` (the next occurrence, including the first): same. If they will not give one, omit `do_on`. The file is `paused`. Do not ask for a clock. It is not in the index and it does not fail.
 - When a `do_on` is set, ask `do_at` (one or more `HH:MM`). If they still do not choose, omit it. The task goes under `Sem horário` and stays off the month grid.
 - Maintenance has no `do_on`. Ask `do_at` when creating it. If they still do not choose, omit it. It stays active.
-- Unique with `do_on`: the day is the YAML date. Scripts build `user/schedule/YYYY/YYYY-MM.md` from clocks. Do not write the grid by hand. Complete → scripts drop it from open columns. Closed columns stay.
-- Recurring: `do_on` moves when they check it, from the scheduled day, not from today. A missed day does not move it. The series starts on the first check.
+- Unique with `do_on`: the day is the YAML date. Scripts build `user/schedule/YYYY/YYYY-MM.md` from clocks, one table per Sunday–Saturday week. Do not write the grid by hand. Complete → scripts drop it from open columns. Closed columns stay.
+- Recurring: `do_on` moves when they check it, from the scheduled day, not from today. A missed day does not move it. The series starts on the first check. On the grid, cadence days run from `do_on` through `until`, or through the current month when `until` is absent.
 - The same action twice in one day is two clocks in `do_at`, or two task files when they are two actions. There is no `times`.
 - H1 is the thing (`# Café da manhã`). Slug is that title in English. `infinitive` is the index phrase (`Tomar café da manhã`), required, no exceptions.
 - Schedule vs task YAML conflict → the task wins.
@@ -53,7 +53,7 @@ Markdown is the source of truth. After creating or editing tasks/projects, run `
 - Do not invent people, addresses, personal dates, habits.
 - Do not check `x` in the user's place.
 - Do not complete a unique via cron (and the AI does not simulate cron).
-- Do not cancel a project, and do not declare its Goal true, unless they asked. Other project and phase statuses follow the tasks: `aos sync`, `reindex`, and `daily-close` move the folder.
+- Do not cancel a project, and do not declare its Goal true, unless they asked. Other project and phase statuses follow the tasks: `reindex` and `daily-close` move the folder.
 - A project they marked `completed` or `canceled` stays that way.
 
 ## After writing

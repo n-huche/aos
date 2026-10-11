@@ -449,17 +449,52 @@ def collect_index(root: Path, today: date) -> dict[str, list[list[str]]]:
     return out
 
 
-def reindex(root: Path, today: date | None = None) -> Path:
+def reindex(
+    root: Path,
+    today: date | None = None,
+    *,
+    apply_checks: bool = True,
+    note_completed: bool | None = None,
+    commit: bool | None = None,
+) -> Path:
+    """Rebuild the index and the open schedule.
+
+    By default, read `[x]` in tasks.md first and apply it: complete a unique,
+    start a recurring, advance `do_on`, or drop a forbidden check. Then
+    reconcile folders, rebuild the schedule, and rewrite tasks.md. When a
+    check was applied, write `## Completed tasks` on today's open daily and
+    commit. `daily-close` passes apply_checks=False so a midnight rebuild
+    does not consume a checkbox.
+    """
     from .config import today as today_fn
     from .reconcile import reconcile_all
     from .schedule import regenerate_schedule
+    from .sync import apply_report, collect_checked
 
     if today is None:
         today = today_fn(root)
+    report = {"reverted": [], "unique": [], "recurring": [], "start": []}
+    if apply_checks:
+        report = collect_checked(root)
+        apply_report(root, report, today)
+    applied = any(report.values())
+    if note_completed is None:
+        note_completed = applied
+    if commit is None:
+        commit = applied
     reconcile_all(root)
     regenerate_schedule(root, today)
+    if note_completed:
+        from .daily import write_open_completed
+
+        write_open_completed(root, today)
     items = collect_index(root, today)
     text = assemble_index(items)
     path = tasks_dir(root) / "tasks.md"
     atomic_write(path, text)
+    if commit and applied:
+        from .gitutil import commit_user, push_or_warn
+
+        commit_user(root, "aos: reindex")
+        push_or_warn(root)
     return path

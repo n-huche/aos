@@ -84,7 +84,7 @@ Otherwise, from the tasks that name this project (`canceled` and `obsolete` task
 | `paused` and `completed`, none `pending` | `ongoing` |
 | no `pending` and no `paused` | `completed` |
 
-`aos sync` applies this and moves the whole `{slug}/` folder. `reindex` and `daily-close` apply the same rule first, so a date edit shows up without a separate checkbox pass. Links *inside* the project do not change. Links from outside that contain `projects/{status}/{slug}` are rewritten. No `projects.md`.
+`aos reindex` applies this and moves the whole `{slug}/` folder. `daily-close` applies the same rule first, so a date edit shows up without a checkbox pass. Links *inside* the project do not change. Links from outside that contain `projects/{status}/{slug}` are rewritten. No `projects.md`.
 
 An old hub may still carry `do_on`. That value is history. It is not a deadline. New hubs omit the key. The key `due` is not a field.
 
@@ -202,7 +202,7 @@ aos/                        # repo root (wherever it lives)
       YYYY/YYYY-MM/YYYY-MM.md     # month rollup of closed days
     research/
     schedule/
-      YYYY/YYYY-MM.md       # one row per hour, one column per day; closed days frozen
+      YYYY/YYYY-MM.md       # hour rows; one table per Sun–Sat week; closed days frozen
     vocabulary.md           # hour labels the user maintains; scripts do not require it
 ```
 
@@ -216,7 +216,7 @@ A folder may exist with only a note. Links `[text](relative)` — never wiki lin
 
 Two gits, one disk. This law (`scripts/`, `docs/`) is the public repo; `origin` = `https://github.com/n-huche/aos.git`. Life (`user/`) is a **nested** git at `user/.git` — a private repo, not a submodule, not `AOS_ROOT`. The public clone gitignores `/user/` and does not ship real projects/tasks. On disk the root still needs `user/`: clone your private user repository into `user/`, or mkdir the empty tree from this § 3.
 
-`commit_user` / `push_if_origin`: if `user/.git` exists, add/commit/push **there**. Otherwise (test fixtures) the parent runs `git add user`. Sync and daily-close push if **that** git has an `origin` and commits `origin` does not have (a push that failed earlier goes out with the next one). Git never prompts (`GIT_TERMINAL_PROMPT=0`). A failed push is printed and does not fail sync or daily-close; `aos watch` retries unpushed commits every 10 minutes. AOS git writes take `aos-git.lock` in that git dir, so watch and cron do not collide; while another process holds `index.lock`, add/commit wait and retry for about 10 seconds. Parent `.gitignore`: `.obsidian/`, `__pycache__/`, `.DS_Store`, `logs/`, `/user/`. Do not change `git config`.
+`commit_user` / `push_if_origin`: if `user/.git` exists, add/commit/push **there**. Otherwise (test fixtures) the parent runs `git add user`. Reindex (when it applied a check) and daily-close push if **that** git has an `origin` and commits `origin` does not have (a push that failed earlier goes out with the next one). Git never prompts (`GIT_TERMINAL_PROMPT=0`). A failed push is printed and does not fail reindex or daily-close; `aos watch` retries unpushed commits every 10 minutes. AOS git writes take `aos-git.lock` in that git dir, so watch and cron do not collide; while another process holds `index.lock`, add/commit wait and retry for about 10 seconds. Parent `.gitignore`: `.obsidian/`, `__pycache__/`, `.DS_Store`, `logs/`, `/user/`. Do not change `git config`.
 
 ---
 
@@ -457,18 +457,19 @@ The phrase `Sem horário` is fixed, as are the four block names. Scripts do not 
 
 ### 5.5 Schedule
 
-`user/schedule/YYYY/YYYY-MM.md` (October 2026 is `user/schedule/2026/2026-10.md`). One row per hour `00:00`–`23:00`. One column per day of that month, headed `1 - thu`, `2 - fri`, and so on. The file is created when some task has a date in that month. It is derived from `do_on`, `do_at`, and cadence. There is no `routine-base.md` and no `routine.md`. There is no per-day file under `schedule/`.
+`user/schedule/YYYY/YYYY-MM.md` (October 2026 is `user/schedule/2026/2026-10.md`). One row per hour `00:00`–`23:00`. The days of the month are split into one table per week. A week runs Sunday through Saturday and is clipped to the month. October 2026 is five tables: `1 - thu` through `3 - sat`, `4 - sun` through `10 - sat`, `11 - sun` through `17 - sat`, `18 - sun` through `24 - sat`, and `25 - sun` through `31 - sat`. A month can have four, five, or six tables. Scripts write this file. The AI does not. There is no `routine-base.md` and no `routine.md`. There is no per-day file under `schedule/`.
 
 A cell is a window. Empty is the literal `null`. A project task shows the project H1. Anything else shows `infinitive`. Several tasks in the same day and hour are comma-separated. A clock with minutes falls in the full hour (`07:30` → `07:00`). A task with no `do_at` is off the grid. Paused, completed, canceled, and obsolete tasks are off the open grid. A date that used to live only on `schedule/YYYY/MM/DD.md` is kept on the task under `## When` by `aos migrate-layout` (§ 10). That command does not put the date on this grid and does not set `do_on`.
 
 What lands on a day:
 
 - unique: `do_on`, if it has a clock
-- unstarted recurring: that `do_on` only, not every cadence day
-- live recurring with a clock: each cadence day from `do_on` (or from the start of the open month, if it has no `do_on`) through `until`
-- maintenance with a clock: each cadence day in the months the grid builds
+- recurring with `do_on` and a clock, pending or ongoing: each cadence day from `do_on` through `until`. The index still shows a pending recurring only on `do_on`
+- recurring with `do_on`, a clock, and no `until`: the same intersection, from `do_on` through the last day of the current month. A `do_on` in a later month opens only that month. The next month appears when `reindex` runs in a month that reaches it
+- recurring with no `do_on`: does not open a month. An ongoing one fills its cadence days in months some other task already opened
+- maintenance with a clock: each cadence day in the months the grid builds. Maintenance does not open a month
 
-Months built: any month that holds a unique or unstarted `do_on`, a live `do_on`, an `until`, or the current month when a live series or a maintenance has a clock. Not every future year.
+Months built: the month of a unique `do_on` that has a clock, and every month from a recurring `do_on` through `until` (or through the current month when `until` is absent). An existing month file stays and its open columns are rebuilt. Not every future year.
 
 Closed days are frozen. A column whose date already has a closed daily is never rewritten. The first time a month file is created, every column is written once, including days already closed. After that, only open columns move. Completing a task frees its window on open days. Cron does not delete the file.
 
@@ -478,13 +479,13 @@ Schedule vs task YAML conflict → **the task wins**.
 
 ---
 
-## 6. Checkbox — `aos watch` / `aos sync`
+## 6. Checkbox — `aos watch` / `aos reindex`
 
-Watch: inotify or poll ≤2 s on `user/tasks/tasks.md`.
+Watch: inotify or poll ≤2 s on `user/tasks/tasks.md`. On a change, it runs `reindex`.
 
 ### 6.1 How to read the section
 
-Walk the file top to bottom. A line `## …` sets the current section. `###` does not. Each `- [x]` or `- [X]` inherits that section.
+`reindex` reads `tasks.md` before it rewrites the file. Walk top to bottom. A line `## …` sets the current section. `###` does not. Each `- [x]` or `- [X]` inherits that section.
 
 One pass, rules in this order. Two lines of the same slug (two clocks) are one check.
 
@@ -494,9 +495,9 @@ One pass, rules in this order. Two lines of the same slug (two clocks) are one c
 4. An `[x]` `pending/` line whose task `type` is recurring-* → start the series (§ 6.2), in any section.
 5. An `[x]` `pending/` unique (any section) → § 6.3.
 
-Then `reindex` (rebuilds the MD and the open schedule). If the only action was reverting rule 1, still write `tasks.md` unchecked.
+Then the rest of `reindex`: placement, the open schedule, today's open daily when a check was applied, and `tasks.md`. Commit `aos: reindex` and push if `origin` exists, including when the only action was reverting rule 1. A rebuild that found no `[x]` does not commit. `daily-close` rebuilds without reading `[x]`.
 
-Before the checkbox pass, and again inside `reindex`, placement is reconciled: a unique or unstarted recurring with `do_on` is `pending`; without `do_on` it is `paused`. Maintenance and an already-`ongoing` recurring are not paused for lack of a date. Project and phase status are derived (§ 2.2, § 2.3).
+Inside `reindex`, after the checkbox pass, placement is reconciled: a unique or unstarted recurring with `do_on` is `pending`; without `do_on` it is `paused`. Maintenance and an already-`ongoing` recurring are not paused for lack of a date. Project and phase status are derived (§ 2.2, § 2.3). `daily-close` reconciles before it scores the day.
 
 ### 6.2 Series check
 
@@ -505,7 +506,6 @@ Maintenance, and a live recurring with no `do_on`, in **Today**:
 1. Record today in `done_on` (drop earlier dates; keep a later date).
 2. Recurring with `until == today`: `status: completed`, move `ongoing/` → `completed/`, rewrite links (§ 6.4).
 3. Otherwise the file stays in `ongoing/`. Reindex drops the Today line.
-4. Commit `aos: sync tasks`. Push if `origin` exists.
 
 Live recurring **with** `do_on` (Today, Overdue, or a later bucket):
 
@@ -529,7 +529,7 @@ Early check is OK; **do not** change `do_on`.
 2. Move `pending/` → `completed/`
 3. The next schedule rebuild drops it from open columns (§ 5.5). Closed columns stay.
 4. Rewrite links § 6.4
-5. Reindex, commit, push if origin
+5. The same `reindex` commits `aos: reindex` and pushes if origin.
 
 ### 6.4 Rewrite links
 
@@ -551,10 +551,10 @@ Timezone `America/Sao_Paulo`. D = the day that **ended**. The next reindex clock
 8. Remove D from `done_on`. A later date stays.
 9. Create D+1's daily if it is missing: the hour table only, every cell `null`, no metrics yet.
 10. Update `user/daily/YYYY/YYYY-MM/YYYY-MM.md` from closed days only.
-11. Reindex with today = D+1.
+11. Reindex with today = D+1. This rebuild does not read `[x]`.
 12. Commit `aos: daily-close D`. Push if origin.
 
-Cron **does not** complete uniques. **Does not** start a recurring series. It does derive project and phase status, same as sync. Until **event** and canceling maintenance: AI command only. The schedule is not deleted.
+Cron **does not** complete uniques. **Does not** start a recurring series. It does derive project and phase status, same as reindex. Until **event** and canceling maintenance: AI command only. The schedule is not deleted.
 
 `daily-close` can also be run by hand. Document the crontab in `docs/cron.md`. Watch is a separate process: `aos up` starts it if it is dead; keeping it alive after that is the host, not AOS.
 
@@ -595,7 +595,7 @@ If the process was dead while the calendar moved, `aos up` does **catch-up** bef
 ## Notes, optional
 ```
 
-The hour table is 24 rows, `00:00`–`23:00`. A cell the user did not fill is `null`. Close keeps the hour column and the notes, and writes the metrics. Omit failed if empty. Live series: link `../../../tasks/ongoing/slug.md`. Recurring closed on `until`: `completed/`.
+The hour table is 24 rows, `00:00`–`23:00`. A cell the user did not fill is `null`. While the day is open, `reindex` may write `## Completed tasks` under that table when a check lands on the day. It keeps the `did` column and the notes. It does not write `routine` / `tasks`, so the day stays open. Close keeps the hour column and the notes, and writes the metrics and the same completed list. Omit failed if empty. Live series: link `../../../tasks/ongoing/slug.md`. Recurring closed on `until`: `completed/`.
 
 **Done on D:** unique with `completed_on == D` (including one done early); live recurring or maintenance with D in `done_on`.
 
@@ -624,7 +624,7 @@ The implementation writes this (it may be the body of `AGENTS.md`), pointing at 
 - When `do_on` is set, ask `do_at` (one or more `HH:MM`). If they still do not choose, omit it. The task sits under `Sem horário` and off the grid.
 - Maintenance has no `do_on`. Ask `do_at` when creating it. If they still do not choose, omit it. It stays `ongoing`.
 - Unique with `do_on`: the day is the YAML date. The month grid picks it up when it has a clock. Do not write a schedule file by hand. Complete → scripts drop it from open columns.
-- Recurring on the grid: the scheduled `do_on`, and once it is `ongoing`, the cadence days in the open months. Not a hand-written list.
+- Recurring on the grid: each cadence day from `do_on` through `until` (or through the current month when `until` is absent), at `do_at`. Pending and ongoing both project. Not a hand-written list. Maintenance fills those months and does not open one.
 - The same action twice in one day is two clocks in `do_at` on one task, or two task files when they are actually two actions. There is no `times`.
 - Several concrete forms, or a vague how → `user/research/`, not a task.
 - Do not declare a Goal or Tests true.
@@ -646,7 +646,6 @@ Python 3, **stdlib only**. `scripts/aos`:
 aos reindex
 aos watch
 aos watch --loop         # restart if the inner loop dies
-aos sync
 aos daily-close          # D = yesterday in the timezone, override by arg
 aos migrate               # optional today YYYY-MM-DD; --dry-run writes nothing
 aos migrate-layout       # optional today YYYY-MM-DD; default America/Sao_Paulo
@@ -657,7 +656,7 @@ aos up --quiet           # no stdout on success
 aos up --watch-only      # watch only; no crontab or catch-up
 ```
 
-`reindex` does not start a recurring series. It does not apply `until` (only `daily-close` and the last day's `x`). It does reconcile paused/pending and derived project status, and it rebuilds open schedule columns.
+`reindex` reads `[x]` before it rewrites `tasks.md` (§ 6). That pass can start a recurring series. It does not apply `until` on its own (only `daily-close`, and a check whose next day would pass `until`). It reconciles paused/pending and derived project status, rebuilds open schedule columns, and, when a check was applied, writes `## Completed tasks` on today's open daily. `daily-close` calls the rebuild with the check pass off.
 
 `aos migrate` brings this vault onto `do_on`, `do_at`, `paused`, and the YYYY-MM paths. It is not an importer of another person's tree. Today is the argument, or the `America/Sao_Paulo` date when the argument is omitted. `--dry-run` prints the path diff and writes nothing. A second run does not change file bytes.
 
@@ -690,7 +689,7 @@ Files in `docs/templates/`. Body matches sections 4.x + the listed headings. No 
 
 1. Tree § 3; `user/` without real life; `preferences.md` empty/minimal is OK.
 2. `docs/spec.md` = this law; `AGENTS.md`; templates; `docs/cron.md`; `README.md`.
-3. The commands work (`reindex`, `watch`, `sync`, `daily-close`, `migrate`, `migrate-layout`, `validate`, `up`).
+3. The commands work (`reindex`, `watch`, `daily-close`, `migrate`, `migrate-layout`, `validate`, `up`).
 4. Tests in `scripts/tests/` (not in `user/`): unique buckets; a unique with no `do_on` is paused and off the index; daily, weekdays, interval, until date — empty sections omitted; Overdue holds a past unique and a live recurring whose `do_on` is past; `x` on a dateless ongoing line outside Today reverted; `x` on an overdue recurring advances one `do_on` and the line stays while the date is still past; `x` unique moves + `completed_on` + commit and does not change `do_on`; early complete frees the open window and is not a failure on `do_on`; `x` ongoing Today fills `done_on` and leaves Today when the series has no `do_on`; first `x` on pending recurring starts it and advances `do_on`; `daily-close` until without x → completed + the day in Failed tasks; closed schedule columns stay, open columns follow the clocks; catch-up closes missed days with no credit and applies `[x]` on the return day; with `user/.git`, daily-close commits in the nested user git and the parent stays clean; recurring with no `do_on` while still pending is paused and does not fail; maintenance lives in `ongoing/`; `done_on` drops the closed day; `times` and `do_in` are rejected; a project follows its tasks into `paused`; null hours stay out of the routine percentage; commit waits out a foreign `index.lock`; a commit left by a failed push goes out on the next push; a failed push does not fail daily-close.
 5. `origin` on GitHub; public tree without real-life projects/tasks (`/user/` in gitignore).
 

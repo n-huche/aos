@@ -132,6 +132,7 @@ def write_recurring(
     phase: str | None = None,
     due: str | None = None,
     times: int | None = None,
+    do_at: str | None = None,
 ) -> Path:
     lines = [
         "---",
@@ -143,6 +144,8 @@ def write_recurring(
         lines.append("do_on: null")
     else:
         lines.append(f"do_on: {due}")
+    if do_at is not None:
+        lines.append(f'do_at: ["{do_at}"]')
     if until is not None:
         lines.append(f"until: {until}")
     if until_event is not None:
@@ -400,7 +403,7 @@ class AOSTest(unittest.TestCase):
         (self.root / "user/tasks/tasks.md").write_text(
             mark_section(text, "Today"), encoding="utf-8"
         )
-        self.aos("sync")
+        self.aos("reindex")
         self.assertFalse((self.root / "user/tasks/pending/habit.md").exists())
         path = self.root / "user/tasks/ongoing/habit.md"
         self.assertTrue(path.is_file())
@@ -442,7 +445,7 @@ class AOSTest(unittest.TestCase):
         self.aos("reindex")
         text = mark_section(self.tasks_md(), "+30 days")
         (self.root / "user/tasks/tasks.md").write_text(text, encoding="utf-8")
-        self.aos("sync")
+        self.aos("reindex")
         self.assertFalse((self.root / "user/tasks/pending/habit.md").exists())
         path = self.root / "user/tasks/ongoing/habit.md"
         self.assertTrue(path.is_file())
@@ -499,7 +502,7 @@ do
         )
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
-        self.aos("sync")
+        self.aos("reindex")
         rec = self.root / "user/tasks/ongoing/water.md"
         data, _body = split_frontmatter(rec.read_text(encoding="utf-8"))
         self.assertEqual([d.isoformat() for d in data.get("done_on") or []], [TODAY])
@@ -623,7 +626,7 @@ do
         self.aos("reindex")
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "1 day"), encoding="utf-8")
-        self.aos("sync")
+        self.aos("reindex")
         data, _body = split_frontmatter(
             (self.root / "user/tasks/ongoing/water.md").read_text(encoding="utf-8")
         )
@@ -638,7 +641,7 @@ do
         self.aos("reindex")
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "2-3 days"), encoding="utf-8")
-        self.aos("sync")
+        self.aos("reindex")
         old = self.root / "user/tasks/pending/send-email.md"
         new = self.root / "user/tasks/completed/send-email.md"
         self.assertFalse(old.exists())
@@ -648,7 +651,7 @@ do
         self.assertEqual(data.get("completed_on").isoformat(), TODAY)
         self.assertEqual(data.get("do_on").isoformat(), "2026-09-18")
         log = _git(self.root, "log", "-1", "--pretty=%s")
-        self.assertEqual(log.stdout.strip(), "aos: sync tasks")
+        self.assertEqual(log.stdout.strip(), "aos: reindex")
         self.assertNotIn("send-email", self.tasks_md())
 
     def test_x_recurring_today_fills_done_on(self) -> None:
@@ -662,14 +665,14 @@ do
         self.aos("reindex")
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
-        self.aos("sync")
+        self.aos("reindex")
         rec = self.root / "user/tasks/ongoing/water.md"
         self.assertTrue(rec.is_file())
         data, _body = split_frontmatter(rec.read_text(encoding="utf-8"))
         done = data.get("done_on") or []
         self.assertEqual([d.isoformat() for d in done], [TODAY])
         log = _git(self.root, "log", "-1", "--pretty=%s")
-        self.assertEqual(log.stdout.strip(), "aos: sync tasks")
+        self.assertEqual(log.stdout.strip(), "aos: reindex")
         text = self.tasks_md()
         self.assertNotIn("## Today", text)
         self.assertEqual(headings(text), ["1 day"])
@@ -826,7 +829,7 @@ c
         self.aos("reindex")
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
-        self.aos("sync")
+        self.aos("reindex")
         phase_path = (
             self.root / "user/projects/completed/demo/phases/de-01-one.md"
         )
@@ -840,7 +843,7 @@ c
         self.aos("reindex")
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
-        self.aos("sync")
+        self.aos("reindex")
         from aos_lib.schedule import parse_month
 
         month = self.root / "user/schedule/2026/2026-09.md"
@@ -1388,7 +1391,7 @@ z
         self.assertIn("ongoing/water.md", section_items(self.tasks_md(), "Overdue")[0])
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "Overdue"), encoding="utf-8")
-        self.aos("sync")
+        self.aos("reindex")
         data, _body = split_frontmatter(
             (self.root / "user/tasks/ongoing/water.md").read_text(encoding="utf-8")
         )
@@ -1422,7 +1425,7 @@ z
         self.aos("reindex", today="2026-09-16")
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "2-3 days"), encoding="utf-8")
-        self.aos("sync", today="2026-09-16")
+        self.aos("reindex", today="2026-09-16")
         data, _body = split_frontmatter(
             (self.root / "user/tasks/completed/send.md").read_text(encoding="utf-8")
         )
@@ -2038,11 +2041,7 @@ the goal
 
         self.assertFalse(day.exists())
         self.assertIn("2026-10-12", paused)
-        grid = self.root / "user/schedule/2026/2026-10.md"
-        self.assertTrue(grid.is_file())
-        from aos_lib.schedule import parse_month
-
-        self.assertEqual(parse_month(grid.read_text(encoding="utf-8"))[11][7], "Breakfast")
+        self.assertFalse((self.root / "user/schedule/2026/2026-10.md").is_file())
         today = self.root / "user/daily/2026/2026-10/2026-10-11.md"
         self.assertTrue(today.is_file())
         self.assertNotIn("| routine | tasks |", today.read_text(encoding="utf-8"))
@@ -2055,6 +2054,144 @@ the goal
         first = _tree_bytes(self.root)
         self.aos("migrate", "2026-10-11")
         self.assertEqual(first, _tree_bytes(self.root))
+
+    def test_october_weeks_and_maintenance_does_not_open_a_month(self) -> None:
+        from aos_lib.schedule import parse_month, week_spans
+
+        self.assertEqual(week_spans(2026, 10), [(1, 3), (4, 10), (11, 17), (18, 24), (25, 31)])
+        self.assertEqual(len(week_spans(2026, 2)), 4)
+        self.assertEqual(len(week_spans(2026, 5)), 6)
+        box = self.root / "user/tasks/ongoing/box.md"
+        box.write_text(
+            """---
+type: maintenance
+status: ongoing
+infinitive: Box upkeep
+do_at: ["07:00"]
+done_on: []
+cadence:
+  kind: daily
+---
+
+# Box upkeep
+
+## What
+
+keep
+
+## How
+
+do
+""",
+            encoding="utf-8",
+        )
+        self.aos("reindex", today="2026-10-11")
+        self.assertFalse((self.root / "user/schedule/2026/2026-10.md").is_file())
+        write_unique(self.root, "send", "Send", "2026-10-11", do_at="09:00")
+        self.aos("reindex", today="2026-10-11")
+        month = self.root / "user/schedule/2026/2026-10.md"
+        text = month.read_text(encoding="utf-8")
+        self.assertEqual(text.count("\n| hour |"), 5)
+        self.assertIn("| hour | 1 - thu | 2 - fri | 3 - sat |", text)
+        self.assertIn(
+            "| hour | 4 - sun | 5 - mon | 6 - tue | 7 - wed | 8 - thu | 9 - fri | 10 - sat |",
+            text,
+        )
+        self.assertIn("| hour | 25 - sun | 26 - mon | 27 - tue | 28 - wed | 29 - thu | 30 - fri | 31 - sat |", text)
+        cells = parse_month(text)
+        self.assertEqual(cells[11][9], "Send")
+        self.assertEqual(cells[11][7], "Box upkeep")
+        self.assertEqual(cells[1][7], "Box upkeep")
+        self.assertEqual(cells[12][9], "null")
+        self.assertFalse((self.root / "user/schedule/2026/2026-11.md").is_file())
+
+    def test_recurring_projects_cadence_through_until(self) -> None:
+        from aos_lib.schedule import parse_month
+
+        write_recurring(
+            self.root,
+            "training",
+            "Training",
+            kind="weekdays",
+            days=["tue", "fri"],
+            until="2026-11-30",
+            due="2026-10-01",
+            do_at="08:00",
+            folder="pending",
+            status="pending",
+        )
+        self.aos("reindex", today="2026-10-11")
+        text = self.tasks_md()
+        self.assertIn("pending/training.md", section_items(text, "Overdue")[0])
+        self.assertNotIn("## 1 day", text)
+        october = parse_month(
+            (self.root / "user/schedule/2026/2026-10.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(october[1][8], "null")
+        self.assertEqual(october[2][8], "Training")
+        self.assertEqual(october[6][8], "Training")
+        november = self.root / "user/schedule/2026/2026-11.md"
+        self.assertTrue(november.is_file())
+        nov = parse_month(november.read_text(encoding="utf-8"))
+        self.assertEqual(nov[3][8], "Training")
+        self.assertFalse((self.root / "user/schedule/2026/2026-12.md").is_file())
+
+    def test_recurring_without_until_stops_at_the_current_month(self) -> None:
+        from aos_lib.schedule import parse_month
+
+        write_recurring(
+            self.root,
+            "habit",
+            "Habit",
+            kind="daily",
+            due="2026-10-11",
+            do_at="08:00",
+        )
+        self.aos("reindex", today="2026-10-11")
+        cells = parse_month(
+            (self.root / "user/schedule/2026/2026-10.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(cells[10][8], "null")
+        self.assertEqual(cells[11][8], "Habit")
+        self.assertEqual(cells[31][8], "Habit")
+        self.assertFalse((self.root / "user/schedule/2026/2026-11.md").is_file())
+
+    def test_reindex_writes_completed_on_the_open_daily(self) -> None:
+        write_unique(self.root, "send", "Send", "2026-09-16", do_at="08:00")
+        self.aos("reindex")
+        day = self.root / "user/daily/2026/2026-09/2026-09-16.md"
+        day.parent.mkdir(parents=True, exist_ok=True)
+        lines = ["# 2026-09-16", "", "| hour | did |", "| --- | --- |"]
+        for hour in range(24):
+            did = "tiktok" if hour == 7 else "null"
+            lines.append(f"| {hour:02d}:00 | {did} |")
+        lines.extend(["", "## Notes, optional", "", "kept", ""])
+        day.write_text("\n".join(lines), encoding="utf-8")
+        path = self.root / "user/tasks/tasks.md"
+        path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
+        self.aos("reindex")
+        text = day.read_text(encoding="utf-8")
+        self.assertIn("## Completed tasks", text)
+        self.assertIn("tasks/completed/send.md", text)
+        self.assertIn("| 07:00 | tiktok |", text)
+        self.assertIn("kept", text)
+        self.assertNotIn("| routine | tasks |", text)
+        from aos_lib.schedule import parse_month
+
+        cells = parse_month(
+            (self.root / "user/schedule/2026/2026-09.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(cells[16][8], "null")
+
+    def test_sync_command_is_gone(self) -> None:
+        proc = subprocess.run(
+            [sys.executable, str(BIN), "sync"],
+            env=self.env(),
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("sync", proc.stderr.lower())
 
 
 def _tree_bytes(root: Path) -> dict[str, bytes]:
