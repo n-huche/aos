@@ -31,8 +31,13 @@ def until_date(data: dict[str, Any]) -> date | None:
     return as_date(data.get("until"))
 
 
+def do_on_date(data: dict[str, Any]) -> date | None:
+    return as_date(data.get("do_on"))
+
+
 def due_date(data: dict[str, Any]) -> date | None:
-    return as_date(data.get("due"))
+    """Alias of do_on_date. The day field is do_on."""
+    return do_on_date(data)
 
 
 def done_count(data: dict[str, Any], d: date) -> int:
@@ -202,6 +207,20 @@ def _next_month_weekday(data: dict[str, Any], cad: dict[str, Any], start: date) 
             month = 1
             year += 1
     return None
+
+
+def next_cadence_date(data: dict[str, Any], start: date) -> date | None:
+    """First cadence day on or after start, ignoring done_on.
+
+    Used to advance do_on from the scheduled day. until still bounds it.
+    A pending series is treated as live for this lookup.
+    """
+    shadow = dict(data)
+    shadow["done_on"] = []
+    shadow["status"] = "ongoing"
+    if not str(shadow.get("type") or "").strip():
+        shadow["type"] = "recurring-independent"
+    return next_occurrence(shadow, start)
 
 
 def next_occurrence(data: dict[str, Any], start: date) -> date | None:
