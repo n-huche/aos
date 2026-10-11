@@ -18,7 +18,9 @@ from .config import (
     UNIQUE_STATUSES,
     UNIQUE_TYPES,
     WEEKDAYS,
+    daily_dir,
     projects_dir,
+    schedule_dir,
     user_dir,
 )
 from .taskio import iter_task_files
@@ -32,6 +34,7 @@ def validate(root: Path) -> list[str]:
     errors.extend(_validate_tasks(root))
     errors.extend(_validate_projects(root))
     errors.extend(_validate_links(root))
+    errors.extend(_validate_layout(root))
     return errors
 
 
@@ -231,6 +234,38 @@ def _validate_projects(root: Path) -> list[str]:
                                 )
                     _ = pbody
     return errors
+
+
+_OLD_YEAR = re.compile(r"^\d{4}$")
+_OLD_MONTH = re.compile(r"^\d{2}$")
+
+
+def _validate_layout(root: Path) -> list[str]:
+    """Leftover day files and `YYYY/MM.md` paths from before the YYYY-MM layout."""
+    errors: list[str] = []
+    for base, kind in ((daily_dir(root), "daily"), (schedule_dir(root), "schedule")):
+        if not base.is_dir():
+            continue
+        for year_dir in sorted(path for path in base.iterdir() if path.is_dir()):
+            if not _OLD_YEAR.match(year_dir.name):
+                continue
+            for child in sorted(year_dir.iterdir()):
+                if child.is_dir() and _OLD_MONTH.match(child.name):
+                    errors.append(f"{_display(root, child)}: old {kind} month folder")
+                elif (
+                    child.is_file()
+                    and child.suffix == ".md"
+                    and _OLD_MONTH.match(child.stem)
+                ):
+                    errors.append(f"{_display(root, child)}: old {kind} path")
+    return errors
+
+
+def _display(root: Path, path: Path) -> str:
+    try:
+        return path.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 def _validate_links(root: Path) -> list[str]:

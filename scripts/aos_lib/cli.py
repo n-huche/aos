@@ -7,6 +7,7 @@ from datetime import date
 from .config import get_root
 from .daily import daily_close
 from .index import reindex
+from .layout import migrate_layout
 from .sync import sync
 from .up import run_up
 from .validate import validate
@@ -26,6 +27,15 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("sync", help="apply checked boxes in tasks.md")
     dc = sub.add_parser("daily-close", help="close day D (default: yesterday)")
     dc.add_argument("date", nargs="?", help="YYYY-MM-DD to close")
+    ml = sub.add_parser(
+        "migrate-layout",
+        help="move dailies and the schedule onto YYYY-MM paths",
+    )
+    ml.add_argument(
+        "date",
+        nargs="?",
+        help="today as YYYY-MM-DD (default: America/Sao_Paulo)",
+    )
     sub.add_parser("validate", help="check types, slugs, cadence, links")
     up = sub.add_parser(
         "up",
@@ -73,6 +83,17 @@ def main(argv: list[str] | None = None) -> int:
         d = date.fromisoformat(args.date) if args.date else None
         path = daily_close(root, d)
         print(path)
+        return 0
+    if cmd == "migrate-layout":
+        d = date.fromisoformat(args.date) if args.date else None
+        notes = migrate_layout(root, d)
+        if notes:
+            for line in notes:
+                print(line)
+        else:
+            print("ok")
+        if any(line.startswith("kept:") for line in notes):
+            return 1
         return 0
     if cmd == "validate":
         errors = validate(root)

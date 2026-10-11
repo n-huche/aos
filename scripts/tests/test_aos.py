@@ -1526,6 +1526,302 @@ depends_on: []
         self.assertNotEqual(proc.returncode, 0)
         self.assertIn("do_in is not a field", proc.stderr)
 
+    def test_migrate_layout_moves_paths_and_is_idempotent(self) -> None:
+        from aos_lib.config import WEEKDAYS
+
+        def paused(slug: str, title: str, when: str | None = None) -> Path:
+            section = f"\n## When\n\n{when}\n" if when else ""
+            path = self.root / "user/tasks/paused" / f"{slug}.md"
+            path.write_text(
+                f"""---
+type: unique-independent
+status: paused
+do_on: null
+completed_on: null
+infinitive: {title}
+---
+
+# {title}
+
+## What
+
+do it
+
+## How
+
+step by step
+{section}
+## Goal
+
+the state
+""",
+                encoding="utf-8",
+            )
+            return path
+
+        study = paused("study-sql", "Study SQL", "12/10/2026, depois do café da manhã.")
+        apply = paused("apply", "Apply")
+        both = paused("both-days", "Both days")
+        hours = ["# 2026-10-08", "", "| hour | did |", "| --- | --- |"]
+        for hour in range(24):
+            did = "walk" if hour == 8 else "null"
+            hours.append(f"| {hour:02d}:00 | {did} |")
+        hours.append("")
+        old_hour = self.root / "user/daily/2026/10/08.md"
+        old_hour.parent.mkdir(parents=True)
+        old_hour.write_text("\n".join(hours), encoding="utf-8")
+        (self.root / "user/daily/2026/10/09.md").write_text(
+            """# 2026-10-09
+
+**Result:** satisfactory
+
+## Completed tasks
+
+- [Study SQL](../../../tasks/paused/study-sql.md)
+
+## Failed tasks
+
+- [Apply](../../../tasks/paused/apply.md)
+""",
+            encoding="utf-8",
+        )
+        (self.root / "user/daily/2026/10/10.md").write_text(
+            """# 2026-10-10
+
+**Result:** failure
+
+See [prior](../09/15.md).
+
+## Completed tasks
+
+## Failed tasks
+
+- [Study SQL](../../../tasks/paused/study-sql.md)
+- [Apply](../../../tasks/paused/apply.md)
+""",
+            encoding="utf-8",
+        )
+        (self.root / "user/daily/2026/09").mkdir(parents=True)
+        (self.root / "user/daily/2026/09/15.md").write_text(
+            """# 2026-09-15
+
+**Result:** satisfactory
+
+## Completed tasks
+""",
+            encoding="utf-8",
+        )
+        (self.root / "user/daily/2026/09.md").write_text("# old rollup\n", encoding="utf-8")
+        grid = "# 2026-10\n\n| hour | 1 - thu |\n| --- | --- |\n| 07:00 | Breakfast |\n"
+        (self.root / "user/schedule/2026").mkdir(parents=True)
+        (self.root / "user/schedule/2026/10.md").write_text(grid, encoding="utf-8")
+        day_dir = self.root / "user/schedule/2026/10"
+        day_dir.mkdir()
+        (day_dir / "12.md").write_text(
+            "# 2026-10-12\n\n- [Study SQL](../../../tasks/paused/study-sql.md)\n",
+            encoding="utf-8",
+        )
+        (day_dir / "13.md").write_text(
+            "# 2026-10-13\n\n- [Apply](../../../tasks/paused/apply.md)\n",
+            encoding="utf-8",
+        )
+        (day_dir / "14.md").write_text(
+            "# 2026-10-14\n\n- [Both](../../../tasks/paused/both-days.md)\n",
+            encoding="utf-8",
+        )
+        (day_dir / "16.md").write_text(
+            "# 2026-10-16\n\n- [Both](../../../tasks/paused/both-days.md)\n",
+            encoding="utf-8",
+        )
+        nov = self.root / "user/schedule/2026/11"
+        nov.mkdir()
+        (nov / "03.md").write_text(
+            "# 2026-11-03\n\n- [Apply](../../../tasks/paused/apply.md)\n",
+            encoding="utf-8",
+        )
+        (nov / "04.md").write_text("# 2026-11-04\n", encoding="utf-8")
+        june = self.root / "user/schedule/2027/06"
+        june.mkdir(parents=True)
+        (june / "01.md").write_text(
+            "# 2027-06-01\n\n- [Study SQL](../../../tasks/paused/study-sql.md)\n",
+            encoding="utf-8",
+        )
+        (self.root / "user/research/paths.md").write_text(
+            """# Paths
+
+[day](../daily/2026/10/10.md)
+
+[sched-day](../schedule/2026/10/12.md)
+
+[grid](../schedule/2026/10.md)
+
+Also daily/2026/09/15.md.
+""",
+            encoding="utf-8",
+        )
+        before = subprocess.run(
+            [sys.executable, str(BIN), "validate"],
+            env=self.env(),
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(before.returncode, 0)
+        self.assertIn("old daily", before.stderr)
+        self.assertIn("old schedule", before.stderr)
+
+        self.aos("migrate-layout", "2026-10-11")
+
+        self.assertFalse((self.root / "user/daily/2026/10").exists())
+        self.assertFalse((self.root / "user/daily/2026/09").exists())
+        self.assertFalse((self.root / "user/daily/2026/09.md").exists())
+        self.assertFalse((self.root / "user/schedule/2026/10.md").exists())
+        self.assertFalse(day_dir.exists())
+        self.assertFalse(nov.exists())
+        self.assertFalse((self.root / "user/schedule/2027").exists())
+        self.assertFalse((self.root / "user/daily/2026/2026-09/2026-09-16.md").exists())
+
+        moved_hour = self.root / "user/daily/2026/2026-10/2026-10-08.md"
+        self.assertIn("| 08:00 | walk |", moved_hour.read_text(encoding="utf-8"))
+        self.assertNotIn("| routine | tasks |", moved_hour.read_text(encoding="utf-8"))
+
+        oct_9 = (self.root / "user/daily/2026/2026-10/2026-10-09.md").read_text(encoding="utf-8")
+        self.assertIn("**Result:** satisfactory", oct_9)
+        self.assertIn("| null | 50% |", oct_9)
+        self.assertIn("paused/study-sql.md", oct_9)
+        self.assertIn("paused/apply.md", oct_9)
+
+        oct_10 = (self.root / "user/daily/2026/2026-10/2026-10-10.md").read_text(encoding="utf-8")
+        self.assertIn("**Result:** failure", oct_10)
+        self.assertIn("| null | 0% |", oct_10)
+        self.assertIn("../2026-09/2026-09-15.md", oct_10)
+        self.assertNotIn("../09/15.md", oct_10)
+        self.assertEqual(oct_10.count("| 00:00 | null |"), 1)
+
+        sept = (self.root / "user/daily/2026/2026-09/2026-09-15.md").read_text(encoding="utf-8")
+        self.assertIn("**Result:** satisfactory", sept)
+        self.assertIn("| null | null |", sept)
+        self.assertNotIn("## Failed tasks", sept)
+
+        today = (self.root / "user/daily/2026/2026-10/2026-10-11.md").read_text(encoding="utf-8")
+        hour_rows = [
+            line for line in today.splitlines() if line.startswith("| ") and ":00 |" in line
+        ]
+        self.assertEqual(len(hour_rows), 24)
+        self.assertNotIn("| routine | tasks |", today)
+
+        month = (self.root / "user/daily/2026/2026-10/2026-10.md").read_text(encoding="utf-8")
+        self.assertIn(
+            f"| 09 | {WEEKDAYS[date(2026, 10, 9).weekday()]} | null | 50% |",
+            month,
+        )
+        self.assertIn(
+            f"| 10 | {WEEKDAYS[date(2026, 10, 10).weekday()]} | null | 0% |",
+            month,
+        )
+        self.assertNotIn("| 08 |", month)
+        self.assertNotIn("| 11 |", month)
+        self.assertIn("| null | 25% |", month)
+        sept_month = (self.root / "user/daily/2026/2026-09/2026-09.md").read_text(encoding="utf-8")
+        self.assertIn(
+            f"| 15 | {WEEKDAYS[date(2026, 9, 15).weekday()]} | null | null |",
+            sept_month,
+        )
+        self.assertNotIn("old rollup", sept_month)
+
+        renamed = (self.root / "user/schedule/2026/2026-10.md").read_text(encoding="utf-8")
+        self.assertEqual(renamed, grid)
+
+        study_text = study.read_text(encoding="utf-8")
+        self.assertIn("12/10/2026", study_text)
+        self.assertNotIn("2026-10-12", study_text)
+        self.assertIn("2027-06-01", study_text)
+        self.assertIn("do_on: null", study_text)
+        apply_text = apply.read_text(encoding="utf-8")
+        apply_when = apply_text.split("## When", 1)[1]
+        self.assertLess(apply_when.index("2026-10-13"), apply_when.index("2026-11-03"))
+        self.assertIn("do_on: null", apply_text)
+        both_when = both.read_text(encoding="utf-8").split("## When", 1)[1]
+        self.assertLess(both_when.index("2026-10-14"), both_when.index("2026-10-16"))
+
+        paths = (self.root / "user/research/paths.md").read_text(encoding="utf-8")
+        self.assertIn("../daily/2026/2026-10/2026-10-10.md", paths)
+        self.assertIn("../schedule/2026/2026-10.md", paths)
+        self.assertIn("daily/2026/2026-09/2026-09-15.md", paths)
+        self.assertNotIn("daily/2026/10/10.md", paths)
+        self.assertNotIn("schedule/2026/10/12.md", paths)
+        self.assertNotIn("schedule/2026/10.md)", paths)
+
+        self.aos("validate")
+        first = _tree_bytes(self.root)
+        self.aos("migrate-layout", "2026-10-11")
+        self.assertEqual(first, _tree_bytes(self.root))
+
+    def test_migrate_layout_defaults_to_sao_paulo_today(self) -> None:
+        self.aos("migrate-layout", today="2026-10-11")
+        today = self.root / "user/daily/2026/2026-10/2026-10-11.md"
+        self.assertTrue(today.is_file())
+        self.assertNotIn("| routine | tasks |", today.read_text(encoding="utf-8"))
+        self.assertTrue((self.root / "user/daily/2026/2026-10/2026-10.md").is_file())
+        first = _tree_bytes(self.root)
+        self.aos("migrate-layout", today="2026-10-11")
+        self.assertEqual(first, _tree_bytes(self.root))
+
+    def test_migrate_layout_keeps_a_differing_grid(self) -> None:
+        year = self.root / "user/schedule/2026"
+        year.mkdir(parents=True)
+        (year / "10.md").write_text("# old\n", encoding="utf-8")
+        (year / "2026-10.md").write_text("# new\n", encoding="utf-8")
+        proc = subprocess.run(
+            [sys.executable, str(BIN), "migrate-layout", "2026-10-11"],
+            env=self.env(),
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("kept:", proc.stdout)
+        self.assertEqual((year / "10.md").read_text(encoding="utf-8"), "# old\n")
+        self.assertEqual((year / "2026-10.md").read_text(encoding="utf-8"), "# new\n")
+        first = _tree_bytes(self.root)
+        again = subprocess.run(
+            [sys.executable, str(BIN), "migrate-layout", "2026-10-11"],
+            env=self.env(),
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(again.returncode, 0)
+        self.assertEqual(first, _tree_bytes(self.root))
+
+    def test_migrate_layout_keeps_an_unresolved_day(self) -> None:
+        day = self.root / "user/schedule/2026/10/12.md"
+        day.parent.mkdir(parents=True)
+        day.write_text("# 2026-10-12\n\n- leftover note\n", encoding="utf-8")
+        proc = subprocess.run(
+            [sys.executable, str(BIN), "migrate-layout", "2026-10-11"],
+            env=self.env(),
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertTrue(day.is_file())
+        self.assertIn("leftover note", day.read_text(encoding="utf-8"))
+        first = _tree_bytes(self.root)
+        again = subprocess.run(
+            [sys.executable, str(BIN), "migrate-layout", "2026-10-11"],
+            env=self.env(),
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(again.returncode, 0)
+        self.assertEqual(first, _tree_bytes(self.root))
+
+
+def _tree_bytes(root: Path) -> dict[str, bytes]:
+    found: dict[str, bytes] = {}
+    for path in sorted((root / "user").rglob("*")):
+        if path.is_file():
+            found[path.relative_to(root).as_posix()] = path.read_bytes()
+    return found
+
 
 class GitUtilTest(unittest.TestCase):
     def setUp(self) -> None:

@@ -459,7 +459,7 @@ The phrase `Sem horário` is fixed, as are the four block names. Scripts do not 
 
 `user/schedule/YYYY/YYYY-MM.md` (October 2026 is `user/schedule/2026/2026-10.md`). One row per hour `00:00`–`23:00`. One column per day of that month, headed `1 - thu`, `2 - fri`, and so on. The file is created when some task has a date in that month. It is derived from `do_on`, `do_at`, and cadence. There is no `routine-base.md` and no `routine.md`. There is no per-day file under `schedule/`.
 
-A cell is a window. Empty is the literal `null`. A project task shows the project H1. Anything else shows `infinitive`. Several tasks in the same day and hour are comma-separated. A clock with minutes falls in the full hour (`07:30` → `07:00`). A task with no `do_at` is off the grid. Paused, completed, canceled, and obsolete tasks are off the open grid.
+A cell is a window. Empty is the literal `null`. A project task shows the project H1. Anything else shows `infinitive`. Several tasks in the same day and hour are comma-separated. A clock with minutes falls in the full hour (`07:30` → `07:00`). A task with no `do_at` is off the grid. Paused, completed, canceled, and obsolete tasks are off the open grid. A date that used to live only on `schedule/YYYY/MM/DD.md` is kept on the task under `## When` by `aos migrate-layout` (§ 10). That command does not put the date on this grid and does not set `do_on`.
 
 What lands on a day:
 
@@ -605,7 +605,7 @@ The hour table is 24 rows, `00:00`–`23:00`. A cell the user did not fill is `n
 
 **tasks** = tasks done that day / tasks planned that day. Planned: unique with `do_on==D` or still pending with `do_on<D`; recurring with `do_on==D`, or `do_on<D` still open, or checked on D; maintenance whose cadence includes D. Paused excluded. Denominator 0 → that percentage is `null` and the day is left out of the month average.
 
-`user/daily/YYYY/YYYY-MM/YYYY-MM.md`, rewritten every close, averages **closed** days only: each day, each weekday, the month; hours with the most deviations; deviation counts by category; tasks most deviated. A day that is all `null` and a day at 100% average to 100%.
+`user/daily/YYYY/YYYY-MM/YYYY-MM.md`, rewritten every close, averages **closed** days only: each day, each weekday, the month; hours with the most deviations; deviation counts by category; tasks most deviated. A day that is all `null` and a day at 100% average to 100%. A placeholder (the hour table, no metrics) is not a closed day and is not in the average. `tasks` with nothing planned is `null` and is left out of the average. `routine` on a day from before the hour report is `null`.
 
 ---
 
@@ -648,14 +648,24 @@ aos watch
 aos watch --loop         # restart if the inner loop dies
 aos sync
 aos daily-close          # D = yesterday in the timezone, override by arg
+aos migrate-layout       # optional today YYYY-MM-DD; default America/Sao_Paulo
 aos validate             # type vs folder, unique slug, XOR until,
-                         # valid cadence, status vs folder, links
+                         # valid cadence, status vs folder, links, layout
 aos up                   # calendar crontab + catch-up + watch if dead
 aos up --quiet           # no stdout on success
 aos up --watch-only      # watch only; no crontab or catch-up
 ```
 
 `reindex` does not start a recurring series. It does not apply `until` (only `daily-close` and the last day's `x`). It does reconcile paused/pending and derived project status, and it rebuilds open schedule columns.
+
+`aos migrate-layout` rewrites this vault's schedule and daily paths. It is not an importer of another person's tree. Today is the argument, or the `America/Sao_Paulo` date when the argument is omitted. A second run does not change file bytes. `validate` reports a leftover old path. The command:
+
+1. Moves `user/daily/YYYY/MM/DD.md` to `user/daily/YYYY/YYYY-MM/YYYY-MM-DD.md`. A file that already has the hour table moves unchanged. A legacy daily becomes that table with every hour `null`, `routine` `null`, and `tasks` counted from the completed and failed lists (both empty → `null`). `**Result:**` stays in the notes. An existing day file at the new path is not overwritten. If the new file is already the hour table and the old one is too, the old one is removed. If they disagree and the old one is legacy, both stay.
+2. Renames `user/schedule/YYYY/MM.md` to `user/schedule/YYYY/YYYY-MM.md`. The grid is not rebuilt. If both files exist and differ, both stay.
+3. For each `user/schedule/YYYY/MM/DD.md` whose every line is a link to an existing task, appends that ISO date under the task's `## When` when the body does not already name the day (`YYYY-MM-DD`, `D/M/YYYY`, or `DD/MM/YYYY`). It does not set `do_on` and it does not invent a clock: a paused task cannot carry `do_on`, and a task with no `do_at` stays off the grid. Then it deletes the day file and the empty month directory. A day file with any other line stays.
+4. Rewrites links that still name an old path, including a relative link whose target is one of those files. A link to a schedule day file points at the month grid.
+5. Creates today's daily when it is missing: the hour table only, no metrics.
+6. Writes the month file for every month that has a closed daily, and for today's month. Days before the hour report keep `routine` `null`.
 
 ---
 
@@ -671,7 +681,7 @@ Files in `docs/templates/`. Body matches sections 4.x + the listed headings. No 
 
 1. Tree § 3; `user/` without real life; `preferences.md` empty/minimal is OK.
 2. `docs/spec.md` = this law; `AGENTS.md`; templates; `docs/cron.md`; `README.md`.
-3. The commands work (`reindex`, `watch`, `sync`, `daily-close`, `validate`, `up`).
+3. The commands work (`reindex`, `watch`, `sync`, `daily-close`, `migrate-layout`, `validate`, `up`).
 4. Tests in `scripts/tests/` (not in `user/`): unique buckets; a unique with no `do_on` is paused and off the index; daily, weekdays, interval, until date — empty sections omitted; Overdue holds a past unique and a live recurring whose `do_on` is past; `x` on a dateless ongoing line outside Today reverted; `x` on an overdue recurring advances one `do_on` and the line stays while the date is still past; `x` unique moves + `completed_on` + commit and does not change `do_on`; early complete frees the open window and is not a failure on `do_on`; `x` ongoing Today fills `done_on` and leaves Today when the series has no `do_on`; first `x` on pending recurring starts it and advances `do_on`; `daily-close` until without x → completed + the day in Failed tasks; closed schedule columns stay, open columns follow the clocks; catch-up closes missed days with no credit and applies `[x]` on the return day; with `user/.git`, daily-close commits in the nested user git and the parent stays clean; recurring with no `do_on` while still pending is paused and does not fail; maintenance lives in `ongoing/`; `done_on` drops the closed day; `times` and `do_in` are rejected; a project follows its tasks into `paused`; null hours stay out of the routine percentage; commit waits out a foreign `index.lock`; a commit left by a failed push goes out on the next push; a failed push does not fail daily-close.
 5. `origin` on GitHub; public tree without real-life projects/tasks (`/user/` in gitignore).
 
