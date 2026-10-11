@@ -283,8 +283,20 @@ def _labels_for_day(root: Path, day: date, today: date) -> dict[int, list[str]]:
     out: dict[int, list[str]] = {}
     for hour, rows in buckets.items():
         rows.sort(key=lambda item: item[0])
-        out[hour] = [label for _key, label in rows]
+        out[hour] = _first_labels(label for _key, label in rows)
     return out
+
+
+def _first_labels(labels) -> list[str]:
+    """Keep the first occurrence of each label. Later copies of the same name drop."""
+    seen: set[str] = set()
+    unique: list[str] = []
+    for label in labels:
+        if label in seen:
+            continue
+        seen.add(label)
+        unique.append(label)
+    return unique
 
 
 def _releases_for_day(root: Path, day: date) -> list[tuple[str, int]]:

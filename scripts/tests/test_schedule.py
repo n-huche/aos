@@ -600,3 +600,58 @@ Deitar.
         start, end = week_spans(2026, 5)[-1]
         self.assertEqual(week_title(5, start, end, 5), "Sixth Week (31/05 - 31/05)")
         self.assertIn("## Sixth Week (31/05 - 31/05)", render_month(2026, 5, {}))
+
+    def _project_task(self, slug: str, title: str, clock: str, project: str) -> None:
+        path = write_unique(self.root, slug, title, "2026-09-16", do_at=clock)
+        path.write_text(
+            path.read_text(encoding="utf-8")
+            .replace("type: unique-independent", "type: unique-project")
+            .replace(
+                f"infinitive: {title}",
+                f"infinitive: {title}\nproject: {project}\nphase: j-01",
+            ),
+            encoding="utf-8",
+        )
+
+    def test_same_project_in_one_slot_is_one_label(self) -> None:
+        from aos_lib.schedule import parse_month
+
+        write_project(self.root, "first-job", status="ongoing", prefix="J")
+        self._project_task("draft", "Write the draft", "09:00", "first-job")
+        self._project_task("slides", "Make the slides", "09:00", "first-job")
+        self.aos("reindex", now="2026-09-16T08:00")
+        cells = parse_month(
+            (self.root / "user/schedule/2026/2026-09.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(cells[16][9], "first-job")
+
+    def test_independent_and_project_keep_two_labels_in_order(self) -> None:
+        from aos_lib.schedule import parse_month
+
+        write_project(self.root, "first-job", status="ongoing", prefix="J")
+        write_unique(self.root, "note", "Send the note", "2026-09-16", do_at="09:00")
+        self._project_task("draft", "Write the draft", "09:00", "first-job")
+        self._project_task("slides", "Make the slides", "09:00", "first-job")
+        self.aos("reindex", now="2026-09-16T08:00")
+        cells = parse_month(
+            (self.root / "user/schedule/2026/2026-09.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(cells[16][9], "send the note, first-job")
+
+    def test_frozen_hour_keeps_a_repeated_label(self) -> None:
+        from aos_lib.schedule import parse_month
+
+        write_project(self.root, "first-job", status="ongoing", prefix="J")
+        self._project_task("draft", "Write the draft", "09:00", "first-job")
+        self._project_task("slides", "Make the slides", "09:00", "first-job")
+        self.aos("reindex", now="2026-09-16T08:00")
+        month = self.root / "user/schedule/2026/2026-09.md"
+        text = month.read_text(encoding="utf-8")
+        self.assertIn("| first-job |", text)
+        month.write_text(
+            text.replace("| first-job |", "| first-job, first-job |", 1),
+            encoding="utf-8",
+        )
+        self.aos("reindex", now="2026-09-16T09:30")
+        cells = parse_month(month.read_text(encoding="utf-8"))
+        self.assertEqual(cells[16][9], "first-job, first-job")
