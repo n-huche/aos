@@ -51,10 +51,32 @@ def _mark_done_on(task: TaskFile, day: date) -> None:
     task.data["done_on"] = kept
 
 
+def _stamp_check(task: TaskFile, day: date) -> None:
+    """Record the check as YYYY-MM-DDTHH:MM in America/Sao_Paulo."""
+    from .config import now as now_fn
+
+    clock = now_fn()
+    task.data["completed_at"] = f"{day.isoformat()}T{clock.hour:02d}:{clock.minute:02d}"
+
+
+def _stamp_series(task: TaskFile, day: date) -> None:
+    """Stamp a same-day independent check, and every project-series check.
+
+    An independent recurring checked on some other day keeps the old rule:
+    the grid shows the next `do_on` and does not paint a partial today.
+    """
+    if task.type not in RECURRING_TYPES:
+        return
+    scheduled = do_on_date(task.data)
+    if scheduled == day or task.type == "recurring-project":
+        _stamp_check(task, day)
+
+
 def complete_unique(root: Path, task: TaskFile, day: date) -> None:
     old = task.folder
     task.data["status"] = "completed"
     task.data["completed_on"] = day
+    _stamp_check(task, day)
     task.save()
     if old != "completed":
         move_task(task, "completed", root)
@@ -96,6 +118,7 @@ def _advance_do_on(task: TaskFile, day: date) -> bool:
 
 def mark_series_today(root: Path, task: TaskFile, day: date) -> None:
     if task.type in RECURRING_TYPES and do_on_date(task.data) is not None:
+        _stamp_series(task, day)
         finished = _advance_do_on(task, day)
         if finished:
             _move_status(root, task, "completed")
@@ -112,6 +135,7 @@ def mark_series_today(root: Path, task: TaskFile, day: date) -> None:
 
 def start_recurring(root: Path, task: TaskFile, day: date) -> None:
     """First check begins the series, in any section, and advances do_on."""
+    _stamp_series(task, day)
     finished = _advance_do_on(task, day)
     if finished:
         _move_status(root, task, "completed")

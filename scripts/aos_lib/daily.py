@@ -184,8 +184,10 @@ def routine_score(root: Path, d: date, hours: dict[str, str]) -> tuple[str, list
         if plan is None or report_empty:
             continue
         tokens = [part.strip() for part in plan.split(",") if part.strip()]
+        plan_parts = {part.casefold() for part in tokens}
+        report_parts = [part.strip().casefold() for part in report.split(",") if part.strip()]
         comparable += 1
-        if report in tokens:
+        if any(part in plan_parts for part in report_parts):
             matched += 1
             continue
         deviations.append((label, report, tokens))
