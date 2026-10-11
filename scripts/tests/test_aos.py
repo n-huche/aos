@@ -2304,6 +2304,7 @@ do
     def test_recurring_without_until_stops_at_the_current_month(self) -> None:
         from aos_lib.schedule import parse_month
 
+        write_unique(self.root, "open", "Open", "2026-10-11", do_at="09:00")
         write_recurring(
             self.root,
             "habit",
@@ -2311,6 +2312,7 @@ do
             kind="daily",
             due="2026-10-11",
             do_at="08:00",
+            until_event="later",
         )
         self.aos("reindex", today="2026-10-11")
         cells = parse_month(
@@ -2320,6 +2322,103 @@ do
         self.assertEqual(cells[11][8], "Habit")
         self.assertEqual(cells[31][8], "Habit")
         self.assertFalse((self.root / "user/schedule/2026/2026-11.md").is_file())
+
+    def _college(self, *, until: str | None = None, until_event: str | None = None) -> None:
+        lines = [
+            "---",
+            "type: recurring-independent",
+            "infinitive: Fazer trabalhos da faculdade",
+            "status: ongoing",
+            "do_on: 2026-10-12",
+            'do_at: ["07:00"]',
+            "done_on: []",
+        ]
+        if until is not None:
+            lines.append(f"until: {until}")
+        if until_event is not None:
+            lines.append(f"until_event: {until_event}")
+        lines.extend(
+            [
+                "cadence:",
+                "  kind: month-weekday",
+                "  day: mon",
+                "  n: [2, 4]",
+                "---",
+                "",
+                "# Trabalhos da faculdade",
+                "",
+                "## What",
+                "",
+                "assignments",
+                "",
+                "## How",
+                "",
+                "do them",
+                "",
+            ]
+        )
+        path = self.root / "user/tasks/ongoing/college-assignments.md"
+        path.write_text("\n".join(lines), encoding="utf-8")
+
+    def _touch_month(self, year: int, month: int) -> None:
+        from aos_lib.schedule import month_path
+
+        path = month_path(self.root, year, month)
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text(f"# {year:04d}-{month:02d}\n", encoding="utf-8")
+
+    def test_college_until_event_fills_existing_october_and_november(self) -> None:
+        from aos_lib.schedule import parse_month
+
+        self._touch_month(2026, 10)
+        self._touch_month(2026, 11)
+        self._college(until_event="graduation")
+        self.aos("reindex", today="2026-10-11")
+        october = parse_month(
+            (self.root / "user/schedule/2026/2026-10.md").read_text(encoding="utf-8")
+        )
+        november = parse_month(
+            (self.root / "user/schedule/2026/2026-11.md").read_text(encoding="utf-8")
+        )
+        label = "Fazer trabalhos da faculdade"
+        self.assertEqual(october[5][7], "null")
+        self.assertEqual(october[12][7], label)
+        self.assertEqual(october[26][7], label)
+        self.assertEqual(november[2][7], "null")
+        self.assertEqual(november[9][7], label)
+        self.assertEqual(november[23][7], label)
+        self.assertFalse((self.root / "user/schedule/2026/2026-12.md").is_file())
+
+    def test_college_until_fills_existing_months_and_stops_on_the_date(self) -> None:
+        from aos_lib.schedule import parse_month
+
+        self._touch_month(2026, 10)
+        self._touch_month(2026, 11)
+        self._touch_month(2030, 8)
+        self._college(until="2030-07-01")
+        self.aos("reindex", today="2026-10-11")
+        october = parse_month(
+            (self.root / "user/schedule/2026/2026-10.md").read_text(encoding="utf-8")
+        )
+        november = parse_month(
+            (self.root / "user/schedule/2026/2026-11.md").read_text(encoding="utf-8")
+        )
+        august = parse_month(
+            (self.root / "user/schedule/2030/2030-08.md").read_text(encoding="utf-8")
+        )
+        label = "Fazer trabalhos da faculdade"
+        self.assertEqual(october[12][7], label)
+        self.assertEqual(october[26][7], label)
+        self.assertEqual(november[9][7], label)
+        self.assertEqual(november[23][7], label)
+        self.assertFalse((self.root / "user/schedule/2026/2026-12.md").is_file())
+        self.assertTrue((self.root / "user/schedule/2030/2030-07.md").is_file())
+        july = parse_month(
+            (self.root / "user/schedule/2030/2030-07.md").read_text(encoding="utf-8")
+        )
+        self.assertNotIn(label, july[1].values())
+        for day in august:
+            self.assertNotIn(label, august[day].values())
 
     def test_reindex_writes_completed_on_the_open_daily(self) -> None:
         write_unique(self.root, "send", "Send", "2026-09-16", do_at="08:00")
