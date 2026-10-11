@@ -17,7 +17,12 @@ from .watch import watch, watch_loop
 def build_parser() -> argparse.ArgumentParser:
     p = argparse.ArgumentParser(prog="aos", description="Agency Operating System")
     sub = p.add_subparsers(dest="cmd", required=True)
-    sub.add_parser("reindex", help="apply checks, rebuild tasks.md and the schedule")
+    ri = sub.add_parser("reindex", help="apply checks, rebuild tasks.md and the schedule")
+    ri.add_argument(
+        "--no-commit",
+        action="store_true",
+        help="rebuild without committing or pushing the vault",
+    )
     w = sub.add_parser("watch", help="watch tasks.md and reindex on checkbox")
     w.add_argument(
         "--loop",
@@ -26,6 +31,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     dc = sub.add_parser("daily-close", help="close day D (default: yesterday)")
     dc.add_argument("date", nargs="?", help="YYYY-MM-DD to close")
+    dc.add_argument(
+        "--no-commit",
+        action="store_true",
+        help="close the day without committing or pushing the vault",
+    )
     ml = sub.add_parser(
         "migrate-layout",
         help="move dailies and the schedule onto YYYY-MM paths",
@@ -70,7 +80,7 @@ def main(argv: list[str] | None = None) -> int:
     root = get_root()
     cmd = args.cmd
     if cmd == "reindex":
-        path = reindex(root)
+        path = reindex(root, commit=not args.no_commit)
         print(path)
         return 0
     if cmd == "watch":
@@ -88,7 +98,7 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     if cmd == "daily-close":
         d = date.fromisoformat(args.date) if args.date else None
-        path = daily_close(root, d)
+        path = daily_close(root, d, commit=not args.no_commit)
         print(path)
         return 0
     if cmd == "migrate":

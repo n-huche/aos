@@ -13,7 +13,6 @@ from .config import (
     SERIES_TYPES,
     UNIQUE_TYPES,
 )
-from .gitutil import commit_user, push_or_warn
 from .links import folder_from_href, rewrite_task_links
 from .taskio import TaskFile, load_by_slug, move_task
 from .yamlfm import as_date_list
@@ -232,8 +231,5 @@ def apply_collected(
     from .index import reindex
 
     apply_report(root, report, today)
-    reindex(root, today, apply_checks=False, note_completed=True, commit=False)
-    if commit and any(report.values()):
-        commit_user(root, "aos: reindex")
-        push_or_warn(root)
+    reindex(root, today, apply_checks=False, note_completed=True, commit=commit)
     return report

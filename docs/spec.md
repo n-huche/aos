@@ -216,7 +216,7 @@ A folder may exist with only a note. Links `[text](relative)` — never wiki lin
 
 Two gits, one disk. This law (`scripts/`, `docs/`) is the public repo; `origin` = `https://github.com/n-huche/aos.git`. Life (`user/`) is a **nested** git at `user/.git` — a private repo, not a submodule, not `AOS_ROOT`. The public clone gitignores `/user/` and does not ship real projects/tasks. On disk the root still needs `user/`: clone your private user repository into `user/`, or mkdir the empty tree from this § 3.
 
-`commit_user` / `push_if_origin`: if `user/.git` exists, add/commit/push **there**. Otherwise (test fixtures) the parent runs `git add user`. Reindex (when it applied a check) and daily-close push if **that** git has an `origin` and commits `origin` does not have (a push that failed earlier goes out with the next one). Git never prompts (`GIT_TERMINAL_PROMPT=0`). A failed push is printed and does not fail reindex or daily-close; `aos watch` retries unpushed commits every 10 minutes. AOS git writes take `aos-git.lock` in that git dir, so watch and cron do not collide; while another process holds `index.lock`, add/commit wait and retry for about 10 seconds. Parent `.gitignore`: `.obsidian/`, `__pycache__/`, `.DS_Store`, `logs/`, `/user/`. Do not change `git config`.
+`sync_vault`: one helper for every AOS add, commit, pull, and push. `reindex`, `daily-close`, `watch`, and catch-up call it. None of them run git themselves. If `user/.git` exists, the helper uses that repo. Otherwise (test fixtures) the parent runs `git add user`. Inside an exclusive `flock` on `.git/aos-sync.lock` (about 30 seconds to acquire it): if the vault has no file changes, do not commit; if it does, `git add` and `git commit` with the identity already configured in that repo. Do not set or change `user.name` or `user.email`. The message names the command: `aos reindex`, `aos daily-close YYYY-MM-DD`. Then `git pull --rebase` and `git push`, up to 3 times with a short backoff. A push that fails at the end leaves the local commit, prints the error on stderr, and does not fail the command; the next sync pushes it. A rebase conflict runs `git rebase --abort` and warns, and does not force. `--no-commit` on `reindex` and `daily-close` skips the helper. Git never prompts (`GIT_TERMINAL_PROMPT=0`). While another process holds `index.lock`, add and commit wait and retry for about 10 seconds. `aos watch` calls the same helper again every 10 minutes so a commit left behind still goes out. Parent `.gitignore`: `.obsidian/`, `__pycache__/`, `.DS_Store`, `logs/`, `/user/`. Do not change `git config`.
 
 ---
 
@@ -495,7 +495,7 @@ One pass, rules in this order. One line is one check. A repeated line for the sa
 4. An `[x]` `pending/` line whose task `type` is recurring-* → start the series (§ 6.2), in any section.
 5. An `[x]` `pending/` unique (any section) → § 6.3.
 
-Then the rest of `reindex`: placement, the open schedule, today's open daily when a check was applied, and `tasks.md`. Commit `aos: reindex` and push if `origin` exists, including when the only action was reverting rule 1. A rebuild that found no `[x]` does not commit. `daily-close` rebuilds without reading `[x]`.
+Then the rest of `reindex`: placement, the open schedule, today's open daily when a check was applied, and `tasks.md`. Sync the vault: commit `aos reindex` when files changed, then pull --rebase and push (§ 3). That includes a pass whose only action was reverting rule 1, and a pass that changed files without an `[x]`. No file changes means no commit. A commit left by a failed push still goes out. `--no-commit` skips the sync. `daily-close` rebuilds without reading `[x]`.
 
 Inside `reindex`, after the checkbox pass, placement is reconciled: a unique or unstarted recurring with `do_on` is `pending`; without `do_on` it is `paused`. Maintenance and an already-`ongoing` recurring are not paused for lack of a date. Project and phase status are derived (§ 2.2, § 2.3). `daily-close` reconciles before it scores the day.
 
@@ -529,7 +529,7 @@ Early check is OK; **do not** change `do_on`.
 2. Move `pending/` → `completed/`
 3. The next schedule rebuild drops it from open columns (§ 5.5). Closed columns stay.
 4. Rewrite links § 6.4
-5. The same `reindex` commits `aos: reindex` and pushes if origin.
+5. The same `reindex` commits `aos reindex` and pushes if origin.
 
 ### 6.4 Rewrite links
 
@@ -552,7 +552,7 @@ Timezone `America/Sao_Paulo`. D = the day that **ended**. The next reindex clock
 9. Create D+1's daily if it is missing: the hour table only, every cell `null`, no metrics yet.
 10. Update `user/daily/YYYY/YYYY-MM/YYYY-MM.md` from closed days only.
 11. Reindex with today = D+1. This rebuild does not read `[x]`.
-12. Commit `aos: daily-close D`. Push if origin.
+12. Commit `aos daily-close D` and push if origin (§ 3). `--no-commit` skips that.
 
 Cron **does not** complete uniques. **Does not** start a recurring series. It does derive project and phase status, same as reindex. Until **event** and canceling maintenance: AI command only. The schedule is not deleted.
 
@@ -643,10 +643,10 @@ The implementation writes this (it may be the body of `AGENTS.md`), pointing at 
 Python 3, **stdlib only**. `scripts/aos`:
 
 ```text
-aos reindex
+aos reindex              # --no-commit skips the vault sync
 aos watch
 aos watch --loop         # restart if the inner loop dies
-aos daily-close          # D = yesterday in the timezone, override by arg
+aos daily-close          # D = yesterday in the timezone, override by arg; --no-commit skips the vault sync
 aos migrate               # optional today YYYY-MM-DD; --dry-run writes nothing
 aos migrate-layout       # optional today YYYY-MM-DD; default America/Sao_Paulo
 aos validate             # type vs folder, unique slug, XOR until,
