@@ -49,6 +49,8 @@ def init_aos(root: Path) -> None:
     (root / "user/tasks/tasks.md").write_text("# Tasks\n", encoding="utf-8")
     (root / "user/preferences.md").write_text("# Preferences\n", encoding="utf-8")
     _git(root, "init")
+    _git(root, "config", "user.name", "AOS")
+    _git(root, "config", "user.email", "aos@localhost")
     _git(root, "add", "-A")
     subprocess.run(
         [
@@ -293,8 +295,6 @@ class AOSTest(unittest.TestCase):
         e = os.environ.copy()
         e["AOS_ROOT"] = str(self.root)
         e["AOS_TODAY"] = today
-        e["AOS_GIT_NAME"] = "AOS"
-        e["AOS_GIT_EMAIL"] = "aos@localhost"
         return e
 
     def aos(self, *args: str, today: str = TODAY) -> subprocess.CompletedProcess[str]:
@@ -670,8 +670,16 @@ do
         self.assertEqual(data.get("completed_on").isoformat(), TODAY)
         self.assertEqual(data.get("do_on").isoformat(), "2026-09-18")
         log = _git(self.root, "log", "-1", "--pretty=%s")
-        self.assertEqual(log.stdout.strip(), "aos: reindex")
+        self.assertEqual(log.stdout.strip(), "aos reindex")
         self.assertNotIn("send-email", self.tasks_md())
+
+    def test_no_commit_skips_vault_sync(self) -> None:
+        head = _git(self.root, "rev-parse", "HEAD").stdout.strip()
+        write_unique(self.root, "send", "Send", "2026-09-16")
+        self.aos("reindex", "--no-commit")
+        self.aos("daily-close", "--no-commit", "2026-09-15")
+        self.assertEqual(_git(self.root, "rev-parse", "HEAD").stdout.strip(), head)
+        self.assertNotEqual(_git(self.root, "status", "--porcelain").stdout.strip(), "")
 
     def test_x_recurring_today_fills_done_on(self) -> None:
         write_recurring(
@@ -691,7 +699,7 @@ do
         done = data.get("done_on") or []
         self.assertEqual([d.isoformat() for d in done], [TODAY])
         log = _git(self.root, "log", "-1", "--pretty=%s")
-        self.assertEqual(log.stdout.strip(), "aos: reindex")
+        self.assertEqual(log.stdout.strip(), "aos reindex")
         text = self.tasks_md()
         self.assertNotIn("## Today", text)
         self.assertEqual(headings(text), ["1 day"])
@@ -726,7 +734,7 @@ do
         self.assertTrue((self.root / "user/schedule/2026/09/15.md").is_file())
         self.assertTrue((self.root / "user/schedule/2026/09/16.md").is_file())
         log = _git(self.root, "log", "-1", "--pretty=%s")
-        self.assertEqual(log.stdout.strip(), "aos: daily-close 2026-09-15")
+        self.assertEqual(log.stdout.strip(), "aos daily-close 2026-09-15")
 
     def test_past_schedule_removed(self) -> None:
         """Closed columns stay. daily-close does not delete the month grid."""
@@ -1085,6 +1093,8 @@ c
 
         user = self.root / "user"
         _git(user, "init")
+        _git(user, "config", "user.name", "AOS")
+        _git(user, "config", "user.email", "aos@localhost")
         _git(user, "add", "-A")
         subprocess.run(
             [
@@ -1113,7 +1123,7 @@ c
         )
         self.assertEqual(_git(self.root, "status", "--porcelain").stdout.strip(), "")
         log = _git(user, "log", "-1", "--pretty=%s")
-        self.assertEqual(log.stdout.strip(), "aos: daily-close 2026-09-15")
+        self.assertEqual(log.stdout.strip(), "aos daily-close 2026-09-15")
         self.assertEqual(_git(user, "status", "--porcelain").stdout.strip(), "")
         self.assertTrue((user / "daily/2026/2026-09/2026-09-15.md").is_file())
 
@@ -2279,14 +2289,8 @@ class GitUtilTest(unittest.TestCase):
         _git(self.root, "branch", "-M", "main")
         _git(self.root, "remote", "add", "origin", str(self.remote))
         _git(self.root, "push", "-u", "origin", "main")
-        self._env = mock.patch.dict(
-            os.environ,
-            {"AOS_GIT_NAME": "AOS", "AOS_GIT_EMAIL": "aos@localhost"},
-        )
-        self._env.start()
 
     def tearDown(self) -> None:
-        self._env.stop()
         self._td.cleanup()
 
     def remote_head(self) -> str:
@@ -2308,20 +2312,124 @@ class GitUtilTest(unittest.TestCase):
         log = _git(self.root, "log", "-1", "--pretty=%s")
         self.assertEqual(log.stdout.strip(), "aos: test lock")
 
-    def test_push_retries_commit_left_by_failed_push(self) -> None:
-        from aos_lib import gitutil
+    def test_sync_commits_and_pushes_with_vault_identity(self) -> None:
+        from aos_lib.gitutil import sync_vault
+
+        _git(self.root, "config", "user.name", "Vault Keeper")
+        _git(self.root, "config", "user.email", "keeper@vault.example")
+        seed_daily(self.root, "2026-09-15", "# day\n")
+        self.assertTrue(sync_vault(self.root, "aos reindex"))
+        head = _git(self.root, "rev-parse", "HEAD").stdout.strip()
+        self.assertEqual(self.remote_head(), head)
+        log = _git(self.root, "log", "-1", "--format=%an%n%ae%n%s")
+        self.assertEqual(
+            log.stdout.splitlines(),
+            ["Vault Keeper", "keeper@vault.example", "aos reindex"],
+        )
+        self.assertEqual(_git(self.root, "config", "user.name").stdout.strip(), "Vault Keeper")
+        self.assertEqual(
+            _git(self.root, "config", "user.email").stdout.strip(),
+            "keeper@vault.example",
+        )
+
+    def test_sync_skips_commit_when_clean(self) -> None:
+        from aos_lib.gitutil import sync_vault
+
+        head = _git(self.root, "rev-parse", "HEAD").stdout.strip()
+        self.assertFalse(sync_vault(self.root, "aos reindex"))
+        self.assertEqual(_git(self.root, "rev-parse", "HEAD").stdout.strip(), head)
+        self.assertEqual(self.remote_head(), head)
+
+    def test_failed_push_stays_local_until_the_next_sync(self) -> None:
+        import io
+        from contextlib import redirect_stderr
+
+        from aos_lib.gitutil import sync_vault
 
         seed_daily(self.root, "2026-09-15", "# day\n")
-        self.assertTrue(gitutil.commit_user(self.root, "aos: offline commit"))
+        url = _git(self.root, "remote", "get-url", "origin").stdout.strip()
         before = self.remote_head()
-        self.assertFalse(gitutil.commit_user(self.root, "aos: nothing new"))
-        self.assertTrue(gitutil.push_if_origin(self.root))
-        self.assertNotEqual(self.remote_head(), before)
-        self.assertEqual(
-            self.remote_head(),
-            _git(self.root, "rev-parse", "HEAD").stdout.strip(),
+        _git(self.root, "remote", "set-url", "--push", "origin", str(self.root / "missing.git"))
+        buf = io.StringIO()
+        with redirect_stderr(buf):
+            self.assertTrue(sync_vault(self.root, "aos reindex"))
+        self.assertIn("git push failed", buf.getvalue())
+        local = _git(self.root, "rev-parse", "HEAD").stdout.strip()
+        self.assertNotEqual(local, before)
+        self.assertEqual(self.remote_head(), before)
+        _git(self.root, "remote", "set-url", "--push", "origin", url)
+        self.assertFalse(sync_vault(self.root, "aos reindex"))
+        self.assertEqual(self.remote_head(), local)
+
+    def test_concurrent_sync_does_not_lock_ref(self) -> None:
+        import io
+        from contextlib import redirect_stderr
+
+        from aos_lib.gitutil import sync_vault
+
+        errors: list[BaseException] = []
+
+        def one(name: str) -> None:
+            try:
+                path = self.root / "user" / f"{name}.md"
+                path.write_text(f"# {name}\n", encoding="utf-8")
+                sync_vault(self.root, f"aos {name}")
+            except BaseException as exc:  # noqa: BLE001 — recorded for the assertion
+                errors.append(exc)
+
+        buf = io.StringIO()
+        with redirect_stderr(buf):
+            threads = [
+                threading.Thread(target=one, args=(name,)) for name in ("alpha", "beta")
+            ]
+            for thread in threads:
+                thread.start()
+            for thread in threads:
+                thread.join()
+        self.assertEqual(errors, [])
+        self.assertNotIn("cannot lock ref", buf.getvalue())
+        for name in ("alpha", "beta"):
+            shown = _git(self.remote, "cat-file", "-e", f"main:user/{name}.md", check=False)
+            self.assertEqual(shown.returncode, 0, shown.stderr)
+
+    def test_rebase_conflict_aborts_without_force(self) -> None:
+        import io
+        from contextlib import redirect_stderr
+
+        from aos_lib.gitutil import sync_vault
+
+        other = self.root.parent / "other"
+        _git(self.root.parent, "clone", str(self.remote), str(other))
+        _git(other, "config", "user.name", "Other")
+        _git(other, "config", "user.email", "other@localhost")
+        (other / "user" / "preferences.md").write_text(
+            "# Preferences\n\nremote\n", encoding="utf-8"
         )
-        self.assertFalse(gitutil.push_if_origin(self.root))
+        _git(other, "add", "-A")
+        _git(other, "commit", "-m", "remote edit")
+        _git(other, "push")
+        (self.root / "user" / "preferences.md").write_text(
+            "# Preferences\n\nlocal\n", encoding="utf-8"
+        )
+        buf = io.StringIO()
+        with redirect_stderr(buf):
+            self.assertTrue(sync_vault(self.root, "aos reindex"))
+        text = buf.getvalue()
+        self.assertIn("rebase conflict", text)
+        self.assertIn("aborted without force", text)
+        self.assertNotIn("--force", text)
+        self.assertFalse((self.root / ".git" / "rebase-merge").exists())
+        self.assertFalse((self.root / ".git" / "rebase-apply").exists())
+        local = _git(self.root, "rev-parse", "HEAD").stdout.strip()
+        self.assertNotEqual(self.remote_head(), local)
+        self.assertEqual(
+            _git(self.remote, "log", "-1", "--pretty=%s").stdout.strip(),
+            "remote edit",
+        )
+        self.assertEqual(
+            _git(self.root, "log", "-1", "--pretty=%s").stdout.strip(),
+            "aos reindex",
+        )
 
     def test_failed_push_does_not_fail_daily_close(self) -> None:
         from aos_lib.daily import daily_close
@@ -2330,7 +2438,7 @@ class GitUtilTest(unittest.TestCase):
         path = daily_close(self.root, date(2026, 9, 15), today=date(2026, 9, 16))
         self.assertTrue(path.is_file())
         log = _git(self.root, "log", "-1", "--pretty=%s")
-        self.assertEqual(log.stdout.strip(), "aos: daily-close 2026-09-15")
+        self.assertEqual(log.stdout.strip(), "aos daily-close 2026-09-15")
 
     def test_git_never_prompts(self) -> None:
         from aos_lib import gitutil

@@ -58,4 +58,4 @@ Markdown is the source of truth. After creating or editing tasks/projects, run `
 
 ## After writing
 
-Run `aos reindex`.
+Run `aos reindex`. That command, and `aos daily-close`, commit and push `user/` with the identity already configured in the vault. They do not change `git config`.

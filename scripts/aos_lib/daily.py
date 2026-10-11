@@ -12,7 +12,7 @@ from .config import (
     WEEKDAYS,
     daily_dir,
 )
-from .gitutil import commit_user, push_or_warn
+from .gitutil import sync_vault
 from .index import reindex
 from .sync import finish_recurring_until
 from .taskio import atomic_write, iter_task_files
@@ -595,8 +595,7 @@ def daily_close(
         commit=False,
     )
     if commit:
-        commit_user(root, f"aos: daily-close {d.isoformat()}")
-        push_or_warn(root)
+        sync_vault(root, f"aos daily-close {d.isoformat()}")
     return path
 
 

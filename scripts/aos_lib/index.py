@@ -457,16 +457,17 @@ def reindex(
     *,
     apply_checks: bool = True,
     note_completed: bool | None = None,
-    commit: bool | None = None,
+    commit: bool = True,
 ) -> Path:
     """Rebuild the index and the open schedule.
 
     By default, read `[x]` in tasks.md first and apply it: complete a unique,
     start a recurring, advance `do_on`, or drop a forbidden check. Then
     reconcile folders, rebuild the schedule, and rewrite tasks.md. When a
-    check was applied, write `## Completed tasks` on today's open daily and
-    commit. `daily-close` passes apply_checks=False so a midnight rebuild
-    does not consume a checkbox.
+    check was applied, write `## Completed tasks` on today's open daily.
+    Then commit and push the vault when files changed. `commit=False`
+    skips that. `daily-close` passes apply_checks=False so a midnight
+    rebuild does not consume a checkbox.
     """
     from .config import today as today_fn
     from .reconcile import reconcile_all
@@ -482,8 +483,6 @@ def reindex(
     applied = any(report.values())
     if note_completed is None:
         note_completed = applied
-    if commit is None:
-        commit = applied
     reconcile_all(root)
     regenerate_schedule(root, today)
     if note_completed:
@@ -494,9 +493,8 @@ def reindex(
     text = assemble_index(items)
     path = tasks_dir(root) / "tasks.md"
     atomic_write(path, text)
-    if commit and applied:
-        from .gitutil import commit_user, push_or_warn
+    if commit:
+        from .gitutil import sync_vault
 
-        commit_user(root, "aos: reindex")
-        push_or_warn(root)
+        sync_vault(root, "aos reindex")
     return path
