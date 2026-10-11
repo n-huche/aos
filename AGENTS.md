@@ -29,7 +29,7 @@ Markdown is the source of truth. After creating or editing tasks/projects, run `
 - Maintenance has no `do_on`. Ask `do_at` when creating it. If they still do not choose, omit it. It stays active.
 - Unique with `do_on`: the day is the YAML date. Scripts build `user/schedule/YYYY/YYYY-MM.md` from clocks, one table per Sunday–Saturday week. Do not write the grid by hand. Complete → scripts drop it from open columns. Closed columns stay.
 - Recurring: `do_on` moves when they check it, from the scheduled day, not from today. A missed day does not move it. The series starts on the first check. On the grid, cadence days run from `do_on` through `until`, or through the current month when `until` is absent.
-- The same action twice in one day is two clocks in `do_at`, or two task files when they are two actions. There is no `times`.
+- The same action twice in one day is two clocks in `do_at`, or two task files when they are two actions. There is no `times`. The index shows that task once, at the first clock in the list. The month grid keeps every clock.
 - H1 is the thing (`# Café da manhã`). Slug is that title in English. `infinitive` is the index phrase (`Tomar café da manhã`), required, no exceptions.
 - Schedule vs task YAML conflict → the task wins.
 - Plan on whichever day they want. No tasks on Sunday only if they ask (preferences).

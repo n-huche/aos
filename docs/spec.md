@@ -270,7 +270,7 @@ cadence:
 
 `status: pending` while unstarted and dated (folder `pending/`). `status: ongoing` while live (folder `ongoing/`). `status: paused` with no `do_on`.
 
-`do_on` on a live series is the next occurrence. One `[x]` records today in `done_on` and moves `do_on` to the next cadence day after the scheduled one. There is no intra-day quota. Two clocks are two lines and two grid rows for that same occurrence. `done_on` holds at most that open day. On daily-close of D, D is removed. A later date stays. The history of the day lives in `daily/`.
+`do_on` on a live series is the next occurrence. One `[x]` records today in `done_on` and moves `do_on` to the next cadence day after the scheduled one. There is no intra-day quota. Several clocks are one index line, at the first `do_at` in the order written, and one grid cell per clock for that same occurrence. `done_on` holds at most that open day. On daily-close of D, D is removed. A later date stays. The history of the day lives in `daily/`.
 
 ### 4.2.1 Maintenance
 
@@ -412,7 +412,7 @@ Item:
 - [ ] [Postar vídeo para namorada](ongoing/video-for-girlfriend.md)
 ```
 
-Relative to `user/tasks/`. One line per clock. A task with two clocks is two lines that day. All `- [ ]`.
+Relative to `user/tasks/`. One line per task per day, at the first `do_at` in the order written, not the earliest clock. Later clocks stay on the month grid and do not add a line. All `- [ ]`.
 
 ### 5.3.1 Order inside a bucket
 
@@ -459,7 +459,7 @@ The phrase `Sem horário` is fixed, as are the four block names. Scripts do not 
 
 `user/schedule/YYYY/YYYY-MM.md` (October 2026 is `user/schedule/2026/2026-10.md`). One row per hour `00:00`–`23:00`. The days of the month are split into one table per week. A week runs Sunday through Saturday and is clipped to the month. October 2026 is five tables: `1 - thu` through `3 - sat`, `4 - sun` through `10 - sat`, `11 - sun` through `17 - sat`, `18 - sun` through `24 - sat`, and `25 - sun` through `31 - sat`. A month can have four, five, or six tables. Scripts write this file. The AI does not. There is no `routine-base.md` and no `routine.md`. There is no per-day file under `schedule/`.
 
-A cell is a window. Empty is the literal `null`. A project task shows the project H1. Anything else shows `infinitive`. Several tasks in the same day and hour are comma-separated. A clock with minutes falls in the full hour (`07:30` → `07:00`). A task with no `do_at` is off the grid. Paused, completed, canceled, and obsolete tasks are off the open grid. A date that used to live only on `schedule/YYYY/MM/DD.md` is kept on the task under `## When` by `aos migrate-layout` (§ 10). That command does not put the date on this grid and does not set `do_on`.
+A cell is a window. Empty is the literal `null`. A project task shows the project H1. Anything else shows `infinitive`. Several tasks in the same day and hour are comma-separated. A clock with minutes falls in the full hour (`07:30` → `07:00`). Every clock in `do_at` fills its hour. The index does not: one line, at the first clock in the list as written. A task with no `do_at` is off the grid. Paused, completed, canceled, and obsolete tasks are off the open grid. A date that used to live only on `schedule/YYYY/MM/DD.md` is kept on the task under `## When` by `aos migrate-layout` (§ 10). That command does not put the date on this grid and does not set `do_on`.
 
 What lands on a day:
 
@@ -487,7 +487,7 @@ Watch: inotify or poll ≤2 s on `user/tasks/tasks.md`. On a change, it runs `re
 
 `reindex` reads `tasks.md` before it rewrites the file. Walk top to bottom. A line `## …` sets the current section. `###` does not. Each `- [x]` or `- [X]` inherits that section.
 
-One pass, rules in this order. Two lines of the same slug (two clocks) are one check.
+One pass, rules in this order. One line is one check. A repeated line for the same task is still one check.
 
 1. An `[x]` whose href is `ongoing/` **maintenance**, or a live recurring that has **no** `do_on`, and the section **≠** `Today` → **forbidden**: the line goes back to `[ ]`. Do not touch `done_on`.
 2. An `[x]` `ongoing/` maintenance or dateless live recurring in **Today** → § 6.2.
@@ -625,7 +625,7 @@ The implementation writes this (it may be the body of `AGENTS.md`), pointing at 
 - Maintenance has no `do_on`. Ask `do_at` when creating it. If they still do not choose, omit it. It stays `ongoing`.
 - Unique with `do_on`: the day is the YAML date. The month grid picks it up when it has a clock. Do not write a schedule file by hand. Complete → scripts drop it from open columns.
 - Recurring on the grid: each cadence day from `do_on` through `until` (or through the current month when `until` is absent), at `do_at`. Pending and ongoing both project. Not a hand-written list. Maintenance fills those months and does not open one.
-- The same action twice in one day is two clocks in `do_at` on one task, or two task files when they are actually two actions. There is no `times`.
+- The same action twice in one day is two clocks in `do_at` on one task, or two task files when they are actually two actions. There is no `times`. The index shows that task once, at the first clock in the list. The month grid keeps every clock.
 - Several concrete forms, or a vague how → `user/research/`, not a task.
 - Do not declare a Goal or Tests true.
 - Useless task: they say so + a reason → `notes.md` + `obsolete/` + links.

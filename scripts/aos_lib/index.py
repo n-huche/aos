@@ -417,7 +417,9 @@ def collect_index(root: Path, today: date) -> dict[str, list[list[str]]]:
             clocks = clocks_of(task.data)
         except ValueError:
             clocks = []
-        appearances = clocks or [None]
+        # The index shows the task once, at the first clock as written.
+        # The month grid keeps every clock.
+        appearances = clocks[:1] or [None]
         for when in _occurrences(task, today):
             if when is None:
                 heading = unique_bucket(None, today)
