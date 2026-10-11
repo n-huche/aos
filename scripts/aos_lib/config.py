@@ -11,23 +11,28 @@ TZ_NAME = "America/Sao_Paulo"
 TASK_FOLDERS = (
     "pending",
     "ongoing",
+    "paused",
     "completed",
     "obsolete",
     "canceled",
 )
-PROJECT_STATUSES = ("pending", "ongoing", "completed", "canceled")
+PROJECT_STATUSES = ("pending", "ongoing", "paused", "completed", "canceled")
 
 UNIQUE_TYPES = frozenset({"unique-independent", "unique-project"})
 RECURRING_TYPES = frozenset({"recurring-independent", "recurring-project"})
 SERIES_TYPES = RECURRING_TYPES | frozenset({"maintenance"})
 ALL_TYPES = UNIQUE_TYPES | SERIES_TYPES
 
-UNIQUE_STATUSES = frozenset({"pending", "completed", "obsolete", "canceled"})
-RECURRING_STATUSES = frozenset(
-    {"pending", "ongoing", "completed", "obsolete", "canceled"}
+UNIQUE_STATUSES = frozenset(
+    {"pending", "paused", "completed", "obsolete", "canceled"}
 )
-MAINTENANCE_STATUSES = frozenset({"ongoing", "canceled"})
-PHASE_STATUSES = frozenset({"pending", "ongoing", "completed", "obsolete"})
+RECURRING_STATUSES = frozenset(
+    {"pending", "ongoing", "paused", "completed", "obsolete", "canceled"}
+)
+MAINTENANCE_STATUSES = frozenset({"ongoing", "paused", "canceled"})
+PHASE_STATUSES = frozenset(
+    {"pending", "ongoing", "paused", "completed", "obsolete"}
+)
 
 WEEKDAYS = ("mon", "tue", "wed", "thu", "fri", "sat", "sun")
 WEEKDAY_INDEX = {name: i for i, name in enumerate(WEEKDAYS)}
@@ -58,6 +63,7 @@ BUCKET_ORDER = (
 STATUS_FOLDER = {
     "pending": "pending",
     "ongoing": "ongoing",
+    "paused": "paused",
     "completed": "completed",
     "obsolete": "obsolete",
     "canceled": "canceled",
@@ -71,8 +77,14 @@ CLASS_RANK = {
     "unique-project": 4,
 }
 
-HEADING_AFTER = "Depois de"
-HEADING_UNPLACED = "Sem posição"
+HEADING_UNTIMED = "Sem horário"
+BAND_MORNING = "Morning"
+BAND_AFTERNOON = "Afternoon"
+BAND_EVENING = "Evening"
+BAND_OVERNIGHT = "Overnight"
+# Half-open fences: Overnight [00:00, 06:00), Morning [06:00, 12:00),
+# Afternoon [12:00, 18:00), Evening [18:00, 24:00).
+BAND_ORDER = (BAND_MORNING, BAND_AFTERNOON, BAND_EVENING, BAND_OVERNIGHT)
 
 
 def get_root() -> Path:
