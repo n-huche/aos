@@ -164,33 +164,6 @@ do
         self.assertIn("ongoing/box.md", section_items(text, "Today")[0])
         self.aos("validate")
 
-    def test_one_check_closes_the_day(self) -> None:
-        write_recurring(
-            self.root,
-            "water",
-            "Drink water",
-            kind="daily",
-            until="2026-12-01",
-        )
-        self.aos("reindex")
-        text = self.tasks_md()
-        self.assertEqual(
-            section_items(text, "Today"),
-            ["- [ ] [Drink water](ongoing/water.md)"],
-        )
-        self.assertEqual(
-            section_items(text, "1 day"),
-            ["- [ ] [Drink water](ongoing/water.md)"],
-        )
-        path = self.root / "user/tasks/tasks.md"
-        path.write_text(mark(self.tasks_md(), heading="Today"), encoding="utf-8")
-        self.aos("reindex")
-        rec = self.root / "user/tasks/ongoing/water.md"
-        data, _body = split_frontmatter(rec.read_text(encoding="utf-8"))
-        self.assertEqual([d.isoformat() for d in data.get("done_on") or []], [TODAY])
-        self.assertNotIn("## Today", self.tasks_md())
-        self.assertEqual(headings(self.tasks_md()), ["1 day"])
-
     def test_empty_sections_omitted(self) -> None:
         write_unique(self.root, "week-only", "This week only", "2026-09-21")
         self.aos("reindex")

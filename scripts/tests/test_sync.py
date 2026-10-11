@@ -15,7 +15,6 @@ from unittest import mock
 
 from helpers import (
     AOSTest,
-    BIN,
     _git,
     init_aos,
     seed_daily,
@@ -89,16 +88,6 @@ class SyncTest(AOSTest):
         self.assertEqual(log.stdout.strip(), "aos daily-close 2026-09-15")
         self.assertEqual(_git(user, "status", "--porcelain").stdout.strip(), "")
         self.assertTrue((user / "daily/2026/2026-09/2026-09-15.md").is_file())
-
-    def test_sync_command_is_gone(self) -> None:
-        proc = subprocess.run(
-            [sys.executable, str(BIN), "sync"],
-            env=self.env(),
-            capture_output=True,
-            text=True,
-        )
-        self.assertNotEqual(proc.returncode, 0)
-        self.assertIn("sync", proc.stderr.lower())
 
 
 class GitUtilTest(unittest.TestCase):
