@@ -1814,6 +1814,248 @@ Also daily/2026/09/15.md.
         self.assertNotEqual(again.returncode, 0)
         self.assertEqual(first, _tree_bytes(self.root))
 
+    def test_migrate_vault_rewrites_history_and_is_idempotent(self) -> None:
+        pending = self.root / "user/tasks/pending/send.md"
+        pending.write_text(
+            """---
+type: unique-project
+infinitive: Send the letter
+status: pending
+due: 2026-10-12
+do_after: breakfast
+completed_on: null
+project: job
+phase: j-01
+---
+
+# Send the letter
+
+## What
+
+do it
+
+## How
+
+step by step
+
+## Goal
+
+the state
+""",
+            encoding="utf-8",
+        )
+        (self.root / "user/tasks/ongoing/breakfast.md").write_text(
+            """---
+type: maintenance
+infinitive: Breakfast
+status: ongoing
+do_in: "07:00"
+done_on: []
+cadence:
+  kind: daily
+---
+
+# Breakfast
+
+## What
+
+eat
+
+## How
+
+eat
+
+## When
+
+every morning
+""",
+            encoding="utf-8",
+        )
+        (self.root / "user/tasks/completed/old.md").write_text(
+            """---
+type: unique-independent
+infinitive: Finish the old one
+status: completed
+due: 2026-10-06
+do_after: breakfast
+completed_on: 2026-10-06
+---
+
+# Finish the old one
+
+## What
+
+done
+
+## How
+
+done
+
+## Goal
+
+done
+""",
+            encoding="utf-8",
+        )
+        (self.root / "user/tasks/ongoing/live.md").write_text(
+            """---
+type: recurring-independent
+infinitive: Practice
+status: ongoing
+due: null
+do_after: breakfast
+until_event: the goal
+project: job
+done_on: []
+cadence:
+  kind: daily
+---
+
+# Practice
+
+## What
+
+practice
+
+## How
+
+practice
+
+## When
+
+after breakfast
+""",
+            encoding="utf-8",
+        )
+        hub_dir = self.root / "user/projects/pending/job"
+        (hub_dir / "phases").mkdir(parents=True)
+        (hub_dir / "job.md").write_text(
+            """---
+status: pending
+due: null
+prefix: J
+---
+
+# Job
+
+## Goal
+
+the goal
+
+## Plan
+
+1. do
+
+## Phases
+
+- [J-01](phases/j-01.md)
+""",
+            encoding="utf-8",
+        )
+        (hub_dir / "phases/j-01.md").write_text(
+            """---
+status: pending
+due: null
+project: job
+---
+
+# J-01
+
+## Goal
+
+the goal
+
+## Plan
+
+1. do
+
+## Tasks
+
+- [Send](../../../../tasks/pending/send.md)
+""",
+            encoding="utf-8",
+        )
+        day = self.root / "user/schedule/2026/10/12.md"
+        day.parent.mkdir(parents=True)
+        day.write_text(
+            "# 2026-10-12\n\n- [Send](../../../tasks/pending/send.md)\n",
+            encoding="utf-8",
+        )
+        (self.root / "user/daily/2026/10/10.md").parent.mkdir(parents=True)
+        (self.root / "user/daily/2026/10/10.md").write_text(
+            """# 2026-10-10
+
+**Result:** failure
+
+## Completed tasks
+
+## Failed tasks
+
+- [Send](../../../tasks/pending/send.md)
+""",
+            encoding="utf-8",
+        )
+
+        preview = self.aos("migrate", "--dry-run", "2026-10-11")
+        self.assertIn("dry-run:", preview.stdout)
+        self.assertIn("due: 2026-10-12", pending.read_text(encoding="utf-8"))
+        self.assertTrue(pending.is_file())
+
+        self.aos("migrate", "2026-10-11")
+
+        paused = (self.root / "user/tasks/paused/send.md").read_text(encoding="utf-8")
+        self.assertIn("status: paused", paused)
+        self.assertNotIn("due:", paused)
+        self.assertNotIn("do_on:", paused)
+        self.assertNotIn("do_after:", paused)
+        self.assertNotIn("do_at:", paused)
+        self.assertFalse(pending.exists())
+        self.assertFalse((self.root / "user/tasks/pending").exists())
+
+        breakfast = (self.root / "user/tasks/ongoing/breakfast.md").read_text(encoding="utf-8")
+        self.assertIn('do_at: ["07:00"]', breakfast)
+        self.assertNotIn("do_in:", breakfast)
+        self.assertIn("status: ongoing", breakfast)
+
+        done = (self.root / "user/tasks/completed/old.md").read_text(encoding="utf-8")
+        self.assertIn("do_on: 2026-10-06", done)
+        self.assertNotIn("due:", done)
+        self.assertNotIn("do_after:", done)
+
+        live = (self.root / "user/tasks/ongoing/live.md").read_text(encoding="utf-8")
+        self.assertIn("do_on: null", live)
+        self.assertNotIn("do_after:", live)
+        self.assertNotIn("\ndue:", "\n" + live)
+
+        hub = (self.root / "user/projects/ongoing/job/job.md").read_text(encoding="utf-8")
+        self.assertIn("status: ongoing", hub)
+        self.assertIn("do_on: null", hub)
+        self.assertFalse((self.root / "user/projects/pending").exists())
+        phase = (self.root / "user/projects/ongoing/job/phases/j-01.md").read_text(encoding="utf-8")
+        self.assertIn("status: paused", phase)
+        self.assertIn("tasks/paused/send.md", phase)
+        self.assertNotIn("tasks/pending/send.md", phase)
+
+        self.assertFalse(day.exists())
+        self.assertIn("2026-10-12", paused)
+        grid = self.root / "user/schedule/2026/2026-10.md"
+        self.assertTrue(grid.is_file())
+        from aos_lib.schedule import parse_month
+
+        self.assertEqual(parse_month(grid.read_text(encoding="utf-8"))[11][7], "Breakfast")
+        today = self.root / "user/daily/2026/2026-10/2026-10-11.md"
+        self.assertTrue(today.is_file())
+        self.assertNotIn("| routine | tasks |", today.read_text(encoding="utf-8"))
+        month = (self.root / "user/daily/2026/2026-10/2026-10.md").read_text(encoding="utf-8")
+        self.assertIn("| null | 0% |", month)
+        daily = (self.root / "user/daily/2026/2026-10/2026-10-10.md").read_text(encoding="utf-8")
+        self.assertIn("**Result:** failure", daily)
+        self.assertIn("tasks/paused/send.md", daily)
+        self.aos("validate")
+        first = _tree_bytes(self.root)
+        self.aos("migrate", "2026-10-11")
+        self.assertEqual(first, _tree_bytes(self.root))
+
 
 def _tree_bytes(root: Path) -> dict[str, bytes]:
     found: dict[str, bytes] = {}

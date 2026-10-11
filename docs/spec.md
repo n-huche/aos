@@ -648,6 +648,7 @@ aos watch
 aos watch --loop         # restart if the inner loop dies
 aos sync
 aos daily-close          # D = yesterday in the timezone, override by arg
+aos migrate               # optional today YYYY-MM-DD; --dry-run writes nothing
 aos migrate-layout       # optional today YYYY-MM-DD; default America/Sao_Paulo
 aos validate             # type vs folder, unique slug, XOR until,
                          # valid cadence, status vs folder, links, layout
@@ -657,6 +658,14 @@ aos up --watch-only      # watch only; no crontab or catch-up
 ```
 
 `reindex` does not start a recurring series. It does not apply `until` (only `daily-close` and the last day's `x`). It does reconcile paused/pending and derived project status, and it rebuilds open schedule columns.
+
+`aos migrate` brings this vault onto `do_on`, `do_at`, `paused`, and the YYYY-MM paths. It is not an importer of another person's tree. Today is the argument, or the `America/Sao_Paulo` date when the argument is omitted. `--dry-run` prints the path diff and writes nothing. A second run does not change file bytes.
+
+1. A pending unique or recurring task loses `due`, `do_on`, `do_in`, `do_after`, and `do_at`, becomes `paused`, and moves to `tasks/paused/`. Links that named `pending/{slug}.md` follow it, including links in `schedule/`.
+2. Any other task renames `due` to `do_on` and keeps the value, including `null`. A `do_in` or `do_after` that is a clock (`HH:MM`) becomes `do_at`. A `do_after` that names another task is removed. Maintenance stays active.
+3. Project and phase files rename `due` to `do_on` and keep the value as history. Status is derived from the tasks (§ 6). A completed or canceled project hub stays in that folder. Phases use the same derivation; the canceled outcome is `obsolete` on a phase.
+4. Reindex and rebuild the month grid.
+5. `aos migrate-layout` then runs.
 
 `aos migrate-layout` rewrites this vault's schedule and daily paths. It is not an importer of another person's tree. Today is the argument, or the `America/Sao_Paulo` date when the argument is omitted. A second run does not change file bytes. `validate` reports a leftover old path. The command:
 
@@ -681,7 +690,7 @@ Files in `docs/templates/`. Body matches sections 4.x + the listed headings. No 
 
 1. Tree § 3; `user/` without real life; `preferences.md` empty/minimal is OK.
 2. `docs/spec.md` = this law; `AGENTS.md`; templates; `docs/cron.md`; `README.md`.
-3. The commands work (`reindex`, `watch`, `sync`, `daily-close`, `migrate-layout`, `validate`, `up`).
+3. The commands work (`reindex`, `watch`, `sync`, `daily-close`, `migrate`, `migrate-layout`, `validate`, `up`).
 4. Tests in `scripts/tests/` (not in `user/`): unique buckets; a unique with no `do_on` is paused and off the index; daily, weekdays, interval, until date — empty sections omitted; Overdue holds a past unique and a live recurring whose `do_on` is past; `x` on a dateless ongoing line outside Today reverted; `x` on an overdue recurring advances one `do_on` and the line stays while the date is still past; `x` unique moves + `completed_on` + commit and does not change `do_on`; early complete frees the open window and is not a failure on `do_on`; `x` ongoing Today fills `done_on` and leaves Today when the series has no `do_on`; first `x` on pending recurring starts it and advances `do_on`; `daily-close` until without x → completed + the day in Failed tasks; closed schedule columns stay, open columns follow the clocks; catch-up closes missed days with no credit and applies `[x]` on the return day; with `user/.git`, daily-close commits in the nested user git and the parent stays clean; recurring with no `do_on` while still pending is paused and does not fail; maintenance lives in `ongoing/`; `done_on` drops the closed day; `times` and `do_in` are rejected; a project follows its tasks into `paused`; null hours stay out of the routine percentage; commit waits out a foreign `index.lock`; a commit left by a failed push goes out on the next push; a failed push does not fail daily-close.
 5. `origin` on GitHub; public tree without real-life projects/tasks (`/user/` in gitignore).
 

@@ -8,6 +8,7 @@ from .config import get_root
 from .daily import daily_close
 from .index import reindex
 from .layout import migrate_layout
+from .vaultmigrate import migrate_vault
 from .sync import sync
 from .up import run_up
 from .validate import validate
@@ -32,6 +33,20 @@ def build_parser() -> argparse.ArgumentParser:
         help="move dailies and the schedule onto YYYY-MM paths",
     )
     ml.add_argument(
+        "date",
+        nargs="?",
+        help="today as YYYY-MM-DD (default: America/Sao_Paulo)",
+    )
+    mig = sub.add_parser(
+        "migrate",
+        help="migrate due/do_in/do_after onto do_on, paused, and the YYYY-MM layout",
+    )
+    mig.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="print the path diff and write nothing",
+    )
+    mig.add_argument(
         "date",
         nargs="?",
         help="today as YYYY-MM-DD (default: America/Sao_Paulo)",
@@ -83,6 +98,17 @@ def main(argv: list[str] | None = None) -> int:
         d = date.fromisoformat(args.date) if args.date else None
         path = daily_close(root, d)
         print(path)
+        return 0
+    if cmd == "migrate":
+        d = date.fromisoformat(args.date) if args.date else None
+        notes = migrate_vault(root, d, dry_run=args.dry_run)
+        if notes:
+            for line in notes:
+                print(line)
+        else:
+            print("ok")
+        if any(line.startswith("kept:") for line in notes):
+            return 1
         return 0
     if cmd == "migrate-layout":
         d = date.fromisoformat(args.date) if args.date else None
