@@ -263,6 +263,31 @@ def next_occurrence(data: dict[str, Any], start: date) -> date | None:
     return None
 
 
+def stacked_dates(data: dict[str, Any], today: date) -> list[date]:
+    """One date per owed occurrence from do_on until today.
+
+    do_on today or later is that single date. Earlier, every cadence day from
+    do_on through the last one before today is included. The step is the same
+    one [x] uses: the next cadence day after the scheduled day, not after today.
+    """
+    when = do_on_date(data)
+    if when is None:
+        return []
+    if when >= today:
+        return [when]
+    dates: list[date] = []
+    cursor = when
+    for _ in range(4000):
+        if cursor >= today:
+            break
+        dates.append(cursor)
+        nxt = next_cadence_date(data, cursor + timedelta(days=1))
+        if nxt is None or nxt <= cursor:
+            break
+        cursor = nxt
+    return dates or [when]
+
+
 def index_dates(data: dict[str, Any], today: date) -> list[date]:
     """At most two dates: today (if due now) and the next date > today."""
     out: list[date] = []

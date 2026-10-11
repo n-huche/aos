@@ -268,6 +268,20 @@ def seed_daily(root: Path, iso: str, text: str) -> Path:
     return path
 
 
+def mark_first(text: str, heading: str) -> str:
+    cur = None
+    marked = False
+    out: list[str] = []
+    for ln in text.splitlines():
+        if ln.startswith("## "):
+            cur = ln[3:].strip()
+        if cur == heading and not marked and ln.startswith("- [ ]"):
+            ln = ln.replace("- [ ]", "- [x]", 1)
+            marked = True
+        out.append(ln)
+    return "\n".join(out) + "\n"
+
+
 def mark_section(text: str, heading: str) -> str:
     cur = None
     out: list[str] = []
@@ -1417,16 +1431,92 @@ z
             due="2026-09-14",
         )
         self.aos("reindex")
-        self.assertIn("ongoing/water.md", section_items(self.tasks_md(), "Overdue")[0])
+        overdue = section_items(self.tasks_md(), "Overdue")
+        self.assertEqual(overdue.count("- [ ] [Drink water](ongoing/water.md)"), 2)
         path = self.root / "user/tasks/tasks.md"
-        path.write_text(mark_section(self.tasks_md(), "Overdue"), encoding="utf-8")
+        path.write_text(mark_first(self.tasks_md(), "Overdue"), encoding="utf-8")
         self.aos("reindex")
         data, _body = split_frontmatter(
             (self.root / "user/tasks/ongoing/water.md").read_text(encoding="utf-8")
         )
         self.assertEqual(data.get("do_on").isoformat(), "2026-09-15")
         self.assertEqual([d.isoformat() for d in data.get("done_on") or []], [TODAY])
-        self.assertIn("ongoing/water.md", section_items(self.tasks_md(), "Overdue")[0])
+        self.assertEqual(
+            section_items(self.tasks_md(), "Overdue").count(
+                "- [ ] [Drink water](ongoing/water.md)"
+            ),
+            1,
+        )
+        self.assertNotIn("- [x]", self.tasks_md())
+
+    def test_overdue_weekdays_stack_and_each_check_advances_once(self) -> None:
+        write_recurring(
+            self.root,
+            "live-coding",
+            "Live coding",
+            kind="weekdays",
+            days=["tue", "thu", "sat"],
+            until="2026-12-01",
+            due="2026-10-08",
+            do_at="19:00",
+        )
+        self.aos("reindex", today="2026-10-11")
+        line = "- [ ] [Live coding](ongoing/live-coding.md)"
+        self.assertEqual(section_items(self.tasks_md(), "Overdue").count(line), 2)
+        path = self.root / "user/tasks/tasks.md"
+        path.write_text(mark_first(self.tasks_md(), "Overdue"), encoding="utf-8")
+        self.aos("reindex", today="2026-10-11")
+        data, _body = split_frontmatter(
+            (self.root / "user/tasks/ongoing/live-coding.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(data.get("do_on").isoformat(), "2026-10-10")
+        self.assertEqual(section_items(self.tasks_md(), "Overdue").count(line), 1)
+        path.write_text(mark_first(self.tasks_md(), "Overdue"), encoding="utf-8")
+        self.aos("reindex", today="2026-10-11")
+        data, _body = split_frontmatter(
+            (self.root / "user/tasks/ongoing/live-coding.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(data.get("do_on").isoformat(), "2026-10-13")
+        self.assertEqual(section_items(self.tasks_md(), "Overdue"), [])
+        self.assertIn(line, section_items(self.tasks_md(), "2-3 days"))
+
+    def test_concurrent_reindex_applies_one_check_once(self) -> None:
+        from aos_lib.index import reindex
+
+        write_recurring(
+            self.root,
+            "live-coding",
+            "Live coding",
+            kind="weekdays",
+            days=["tue", "thu", "sat"],
+            until="2026-12-01",
+            due="2026-10-10",
+            do_at="19:00",
+        )
+        self.aos("reindex", today="2026-10-11")
+        path = self.root / "user/tasks/tasks.md"
+        path.write_text(mark_first(self.tasks_md(), "Overdue"), encoding="utf-8")
+        today = date(2026, 10, 11)
+        barrier = threading.Barrier(2)
+        errors: list[BaseException] = []
+
+        def once() -> None:
+            try:
+                barrier.wait(timeout=5)
+                reindex(self.root, today, commit=False)
+            except BaseException as exc:  # noqa: BLE001 — recorded for the assertion
+                errors.append(exc)
+
+        threads = [threading.Thread(target=once) for _ in range(2)]
+        for thread in threads:
+            thread.start()
+        for thread in threads:
+            thread.join()
+        self.assertEqual(errors, [])
+        data, _body = split_frontmatter(
+            (self.root / "user/tasks/ongoing/live-coding.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(data.get("do_on").isoformat(), "2026-10-13")
         self.assertNotIn("- [x]", self.tasks_md())
 
     def test_index_uses_the_first_written_clock(self) -> None:
