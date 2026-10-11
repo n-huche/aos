@@ -23,30 +23,41 @@ HOUR_ROW_RE = re.compile(r"^\|\s*(\d{2}:00)\s*\|\s*(.*?)\s*\|$")
 METRICS_MARK = "| routine | tasks |"
 
 
+_DAY_STEM = re.compile(r"^(\d{4})-(\d{2})-(\d{2})$")
+
+
 def ymd_date_from_path(path: Path, root: Path) -> date | None:
+    """Date of a day file `YYYY/YYYY-MM/YYYY-MM-DD.md`. The month rollup is not one."""
     try:
         rel = path.relative_to(root)
     except ValueError:
         return None
     parts = rel.parts
-    if len(parts) != 3:
+    if len(parts) != 3 or not parts[2].endswith(".md"):
         return None
-    y, m, name = parts
-    if not name.endswith(".md"):
+    year_dir, month_dir, name = parts
+    match = _DAY_STEM.match(name[:-3])
+    if not match:
         return None
-    day = name[:-3]
     try:
-        return date(int(y), int(m), int(day))
+        when = date(int(match.group(1)), int(match.group(2)), int(match.group(3)))
     except ValueError:
         return None
+    if year_dir != f"{when.year:04d}":
+        return None
+    if month_dir != f"{when.year:04d}-{when.month:02d}":
+        return None
+    return when
 
 
 def daily_path(root: Path, d: date) -> Path:
-    return daily_dir(root) / f"{d.year:04d}" / f"{d.month:02d}" / f"{d.day:02d}.md"
+    month = f"{d.year:04d}-{d.month:02d}"
+    return daily_dir(root) / f"{d.year:04d}" / month / f"{d.isoformat()}.md"
 
 
 def month_rollup_path(root: Path, d: date) -> Path:
-    return daily_dir(root) / f"{d.year:04d}" / f"{d.month:02d}.md"
+    month = f"{d.year:04d}-{d.month:02d}"
+    return daily_dir(root) / f"{d.year:04d}" / month / f"{month}.md"
 
 
 def extract_notes(text: str) -> str | None:

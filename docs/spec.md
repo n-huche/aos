@@ -198,8 +198,8 @@ aos/                        # repo root (wherever it lives)
       obsolete/
       canceled/
     daily/
-      YYYY/MM/DD.md         # hour table; metrics when the day is closed
-      YYYY/MM.md            # month rollup of closed days
+      YYYY/YYYY-MM/YYYY-MM-DD.md  # hour table; metrics when the day is closed
+      YYYY/YYYY-MM/YYYY-MM.md     # month rollup of closed days
     research/
     schedule/
       YYYY/YYYY-MM.md       # one row per hour, one column per day; closed days frozen
@@ -550,7 +550,7 @@ Timezone `America/Sao_Paulo`. D = the day that **ended**. The next reindex clock
 7. Rebuild the schedule while D is still open, so a completion frees that window. Then write the daily. D is frozen from then on.
 8. Remove D from `done_on`. A later date stays.
 9. Create D+1's daily if it is missing: the hour table only, every cell `null`, no metrics yet.
-10. Update `user/daily/YYYY/MM.md` from closed days only.
+10. Update `user/daily/YYYY/YYYY-MM/YYYY-MM.md` from closed days only.
 11. Reindex with today = D+1.
 12. Commit `aos: daily-close D`. Push if origin.
 
@@ -570,7 +570,7 @@ If the process was dead while the calendar moved, `aos up` does **catch-up** bef
 
 ## 8. Daily
 
-`user/daily/YYYY/MM/DD.md`
+`user/daily/YYYY/YYYY-MM/YYYY-MM-DD.md`
 
 ```markdown
 # YYYY-MM-DD
@@ -605,7 +605,7 @@ The hour table is 24 rows, `00:00`–`23:00`. A cell the user did not fill is `n
 
 **tasks** = tasks done that day / tasks planned that day. Planned: unique with `do_on==D` or still pending with `do_on<D`; recurring with `do_on==D`, or `do_on<D` still open, or checked on D; maintenance whose cadence includes D. Paused excluded. Denominator 0 → that percentage is `null` and the day is left out of the month average.
 
-`user/daily/YYYY/MM.md`, rewritten every close, averages **closed** days only: each day, each weekday, the month; hours with the most deviations; deviation counts by category; tasks most deviated. A day that is all `null` and a day at 100% average to 100%.
+`user/daily/YYYY/YYYY-MM/YYYY-MM.md`, rewritten every close, averages **closed** days only: each day, each weekday, the month; hours with the most deviations; deviation counts by category; tasks most deviated. A day that is all `null` and a day at 100% average to 100%.
 
 ---
 

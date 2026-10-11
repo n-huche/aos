@@ -236,8 +236,9 @@ def section_items(text: str, heading: str) -> list[str]:
 
 
 def seed_daily(root: Path, iso: str, text: str) -> Path:
-    y, m, day = iso.split("-")
-    path = root / "user/daily" / y / m / f"{day}.md"
+    when = date.fromisoformat(iso)
+    month = f"{when.year:04d}-{when.month:02d}"
+    path = root / "user/daily" / f"{when.year:04d}" / month / f"{when.isoformat()}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text, encoding="utf-8")
     return path
@@ -375,7 +376,7 @@ class AOSTest(unittest.TestCase):
         self.assertTrue((self.root / "user/tasks/paused/habit.md").is_file())
         self.assertFalse((self.root / "user/tasks/ongoing/habit.md").exists())
         self.aos("daily-close", "2026-09-16", today="2026-09-17")
-        daily = (self.root / "user/daily/2026/09/16.md").read_text(encoding="utf-8")
+        daily = (self.root / "user/daily/2026/2026-09/2026-09-16.md").read_text(encoding="utf-8")
         self.assertIn("| routine | tasks |", daily)
         self.assertIn("| null | null |", daily)
         self.assertNotIn("## Failed tasks", daily)
@@ -533,7 +534,7 @@ do
             done_on=["2026-09-16"],
         )
         self.aos("daily-close", "2026-09-16", today="2026-09-17")
-        daily = (self.root / "user/daily/2026/09/16.md").read_text(encoding="utf-8")
+        daily = (self.root / "user/daily/2026/2026-09/2026-09-16.md").read_text(encoding="utf-8")
         self.assertIn("| null | 100% |", daily)
         self.assertNotIn("**Result:**", daily)
         self.assertNotIn("## Failed tasks", daily)
@@ -695,7 +696,7 @@ do
         self.assertTrue(completed.is_file())
         data, _body = split_frontmatter(completed.read_text(encoding="utf-8"))
         self.assertEqual(str(data.get("status")), "completed")
-        daily = (self.root / "user/daily/2026/09/15.md").read_text(encoding="utf-8")
+        daily = (self.root / "user/daily/2026/2026-09/2026-09-15.md").read_text(encoding="utf-8")
         self.assertIn("| null | 0% |", daily)
         self.assertNotIn("**Result:**", daily)
         self.assertIn("## Failed tasks", daily)
@@ -909,7 +910,7 @@ c
             again = self.aos("up", "--watch-only")
             self.assertIn("watch-running", again.stdout)
             self.assertIn(str(pid), again.stdout)
-            self.assertFalse((self.root / "user/daily/2026/09/15.md").exists())
+            self.assertFalse((self.root / "user/daily/2026/2026-09/2026-09-15.md").exists())
         finally:
             try:
                 os.killpg(pid, signal.SIGTERM)
@@ -968,7 +969,7 @@ c
             [d.isoformat() for d in (data_r.get("done_on") or [])],
             ["2026-09-16"],
         )
-        daily = (self.root / "user/daily/2026/09/15.md").read_text(encoding="utf-8")
+        daily = (self.root / "user/daily/2026/2026-09/2026-09-15.md").read_text(encoding="utf-8")
         self.assertIn("| null | 0% |", daily)
         self.assertNotIn("**Result:**", daily)
         self.assertIn("## Failed tasks", daily)
@@ -1000,7 +1001,7 @@ c
         self.assertTrue(done.is_file())
         data, _body = split_frontmatter(done.read_text(encoding="utf-8"))
         self.assertEqual(data.get("completed_on").isoformat(), "2026-09-16")
-        daily = (self.root / "user/daily/2026/09/15.md").read_text(encoding="utf-8")
+        daily = (self.root / "user/daily/2026/2026-09/2026-09-15.md").read_text(encoding="utf-8")
         self.assertNotIn("today-task.md", daily)
 
     def test_catch_up_two_missed_days(self) -> None:
@@ -1028,10 +1029,10 @@ c
         self.assertTrue(done.is_file())
         data, _body = split_frontmatter(done.read_text(encoding="utf-8"))
         self.assertEqual(data.get("completed_on").isoformat(), "2026-09-16")
-        d14 = (self.root / "user/daily/2026/09/14.md").read_text(encoding="utf-8")
+        d14 = (self.root / "user/daily/2026/2026-09/2026-09-14.md").read_text(encoding="utf-8")
         self.assertIn("## Failed tasks", d14)
         self.assertIn("letter.md", d14)
-        d15 = (self.root / "user/daily/2026/09/15.md").read_text(encoding="utf-8")
+        d15 = (self.root / "user/daily/2026/2026-09/2026-09-15.md").read_text(encoding="utf-8")
         self.assertIn("## Failed tasks", d15)
         self.assertIn("letter.md", d15)
         self.assertTrue((sched / "2026/09/14.md").is_file())
@@ -1092,7 +1093,7 @@ c
         log = _git(user, "log", "-1", "--pretty=%s")
         self.assertEqual(log.stdout.strip(), "aos: daily-close 2026-09-15")
         self.assertEqual(_git(user, "status", "--porcelain").stdout.strip(), "")
-        self.assertTrue((user / "daily/2026/09/15.md").is_file())
+        self.assertTrue((user / "daily/2026/2026-09/2026-09-15.md").is_file())
 
     def test_same_project_ignores_type_order(self) -> None:
         write_project(self.root, "job", status="pending", prefix="J")
@@ -1434,14 +1435,14 @@ z
         )
         self.assertEqual(cells[18][8], "null")
         self.aos("daily-close", "2026-09-18", today="2026-09-19")
-        daily = (self.root / "user/daily/2026/09/18.md").read_text(encoding="utf-8")
+        daily = (self.root / "user/daily/2026/2026-09/2026-09-18.md").read_text(encoding="utf-8")
         self.assertNotIn("## Failed tasks", daily)
         self.assertNotIn("send.md", daily)
 
     def test_routine_ignores_null_hours(self) -> None:
         write_unique(self.root, "send", "Send", "2026-09-16", do_at="07:00")
         self.aos("reindex")
-        day = self.root / "user/daily/2026/09/16.md"
+        day = self.root / "user/daily/2026/2026-09/2026-09-16.md"
         day.parent.mkdir(parents=True, exist_ok=True)
         lines = ["# 2026-09-16", "", "| hour | did |", "| --- | --- |"]
         for hour in range(24):
@@ -1455,10 +1456,10 @@ z
         text = day.read_text(encoding="utf-8")
         self.assertIn("| 0% | 0% |", text)
         self.assertIn("| 07:00 | tiktok |", text)
-        month = (self.root / "user/daily/2026/09.md").read_text(encoding="utf-8")
+        month = (self.root / "user/daily/2026/2026-09/2026-09.md").read_text(encoding="utf-8")
         self.assertIn("| tiktok | 1 |", month)
         self.assertIn("| Send | 1 |", month)
-        tomorrow = self.root / "user/daily/2026/09/17.md"
+        tomorrow = self.root / "user/daily/2026/2026-09/2026-09-17.md"
         self.assertTrue(tomorrow.is_file())
         self.assertNotIn("| routine | tasks |", tomorrow.read_text(encoding="utf-8"))
 
