@@ -238,6 +238,25 @@ def section_items(text: str, heading: str) -> list[str]:
     return items
 
 
+def _band_items(text: str, heading: str, band: str) -> list[str]:
+    cur = None
+    current_band = None
+    items: list[str] = []
+    for ln in text.splitlines():
+        if ln.startswith("## "):
+            cur = ln[3:].strip()
+            current_band = None
+            continue
+        if cur != heading:
+            continue
+        if ln.startswith("### "):
+            current_band = ln[4:].strip()
+            continue
+        if current_band == band and ln.startswith("- "):
+            items.append(ln)
+    return items
+
+
 def seed_daily(root: Path, iso: str, text: str) -> Path:
     when = date.fromisoformat(iso)
     month = f"{when.year:04d}-{when.month:02d}"
@@ -1400,18 +1419,18 @@ z
         self.assertIn("ongoing/water.md", section_items(self.tasks_md(), "Overdue")[0])
         self.assertNotIn("- [x]", self.tasks_md())
 
-    def test_two_clocks_are_two_lines(self) -> None:
+    def test_index_uses_the_first_written_clock(self) -> None:
         path = write_unique(self.root, "split", "Split", "2026-09-16")
         text = path.read_text(encoding="utf-8").replace(
             "infinitive: Split",
-            'do_at: ["07:30", "18:00"]\ninfinitive: Split',
+            'do_at: ["18:00", "07:30"]\ninfinitive: Split',
         )
         path.write_text(text, encoding="utf-8")
         self.aos("reindex")
         items = section_items(self.tasks_md(), "Today")
-        self.assertEqual(len(items), 2)
-        self.assertIn("### Morning", self.tasks_md())
-        self.assertIn("### Evening", self.tasks_md())
+        self.assertEqual(items, ["- [ ] [Split](pending/split.md)"])
+        self.assertEqual(_band_items(self.tasks_md(), "Today", "Evening"), items)
+        self.assertEqual(_band_items(self.tasks_md(), "Today", "Morning"), [])
         from aos_lib.schedule import parse_month
 
         cells = parse_month(
@@ -1419,6 +1438,52 @@ z
         )
         self.assertEqual(cells[16][7], "Split")
         self.assertEqual(cells[16][18], "Split")
+
+    def test_sleep_is_one_evening_line_and_every_grid_hour(self) -> None:
+        path = self.root / "user/tasks/ongoing/sleep.md"
+        path.write_text(
+            """---
+type: maintenance
+status: ongoing
+infinitive: Dormir
+do_at: ["22:00", "23:00", "00:00", "01:00", "02:00", "03:00", "04:00", "05:00"]
+done_on: []
+cadence:
+  kind: daily
+---
+
+# Dormir
+
+## What
+
+Dormir.
+
+## How
+
+Deitar.
+""",
+            encoding="utf-8",
+        )
+        write_unique(self.root, "open", "Open the month", "2026-09-16", do_at="09:00")
+        self.aos("reindex")
+        text = self.tasks_md()
+        line = "- [ ] [Dormir](ongoing/sleep.md)"
+        self.assertEqual(section_items(text, "Today").count(line), 1)
+        self.assertEqual(section_items(text, "1 day").count(line), 1)
+        self.assertEqual(_band_items(text, "Today", "Evening"), [line])
+        self.assertEqual(_band_items(text, "1 day", "Evening"), [line])
+        self.assertEqual(_band_items(text, "Today", "Overnight"), [])
+        self.assertEqual(_band_items(text, "1 day", "Overnight"), [])
+        from aos_lib.schedule import parse_month
+
+        cells = parse_month(
+            (self.root / "user/schedule/2026/2026-09.md").read_text(encoding="utf-8")
+        )
+        for day in (16, 17):
+            for hour in (22, 23, 0, 1, 2, 3, 4, 5):
+                self.assertEqual(cells[day][hour], "Dormir")
+        self.assertEqual(cells[16][9], "Open the month")
+        self.assertNotEqual(cells[17][9], "Dormir")
 
     def test_early_unique_frees_the_window(self) -> None:
         write_unique(self.root, "send", "Send", "2026-09-18", do_at="08:00")
