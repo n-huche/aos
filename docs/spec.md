@@ -663,6 +663,8 @@ aos up --watch-only      # watch only; no crontab or catch-up
 
 `validate` reports a leftover old daily or schedule path (`YYYY/MM/...`).
 
+Tests live in `scripts/tests/`. From `scripts/`: `python3 -m unittest discover -s tests`.
+
 ---
 
 ## 11. Templates

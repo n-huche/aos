@@ -44,7 +44,7 @@ scripts/aos up --watch-only
 ## Tests
 
 ```text
-cd scripts && python3 -m unittest tests.test_aos tests.test_cadence
+cd scripts && python3 -m unittest discover -s tests
 ```
 
 ## What this git does not store
