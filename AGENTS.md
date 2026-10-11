@@ -24,12 +24,12 @@ Markdown is the source of truth. After creating or editing tasks/projects, run `
 
 ## Dates
 
-- No due: ask at the end, after writing. Recurring `due` (the deadline to start): same. `due` null gets no `do_in` and no `do_after`, and the agent does not ask for them.
-- When a `due` is set, ask `do_in` (`HH:MM`) or `do_after` (slug). If they still do not choose, omit both.
-- Maintenance has no `due`. Ask `do_in` or `do_after` when creating it. If they still do not choose, omit both.
-- Unique with due: YAML `due` + **one** day in `user/schedule/YYYY/MM/DD.md` (the due, if `due > today`). Do not spread the task across other days. Complete → scripts drop it from `schedule/`.
-- Recurring `due`: ask at the end; if they will not give one, `due: null` (file in `pending/`, Undefined). Schedule lists a future `due` and/or a future `until` — not every occurrence. The series starts when they check it the first time, not on the due date.
-- The same action twice in one day is two task files, each with its own `do_in` or `do_after`. There is no `times`.
+- No `do_on`: ask at the end, after writing. Recurring `do_on` (the next occurrence, including the first): same. If they will not give one, omit `do_on`. The file is `paused`. Do not ask for a clock. It is not in the index and it does not fail.
+- When a `do_on` is set, ask `do_at` (one or more `HH:MM`). If they still do not choose, omit it. The task goes under `Sem horário` and stays off the month grid.
+- Maintenance has no `do_on`. Ask `do_at` when creating it. If they still do not choose, omit it. It stays active.
+- Unique with `do_on`: the day is the YAML date. Scripts build `user/schedule/YYYY/MM.md` from clocks. Do not write the grid by hand. Complete → scripts drop it from open columns. Closed columns stay.
+- Recurring: `do_on` moves when they check it, from the scheduled day, not from today. A missed day does not move it. The series starts on the first check.
+- The same action twice in one day is two clocks in `do_at`, or two task files when they are two actions. There is no `times`.
 - H1 is the thing (`# Café da manhã`). Slug is that title in English. `infinitive` is the index phrase (`Tomar café da manhã`), required, no exceptions.
 - Schedule vs task YAML conflict → the task wins.
 - Plan on whichever day they want. No tasks on Sunday only if they ask (preferences).
@@ -53,8 +53,8 @@ Markdown is the source of truth. After creating or editing tasks/projects, run `
 - Do not invent people, addresses, personal dates, habits.
 - Do not check `x` in the user's place.
 - Do not complete a unique via cron (and the AI does not simulate cron).
-- Do not move a project on its own without being asked.
-- Who changes project status is the user/AI, never cron.
+- Do not cancel a project, and do not declare its Goal true, unless they asked. Other project and phase statuses follow the tasks: `aos sync`, `reindex`, and `daily-close` move the folder.
+- A project they marked `completed` or `canceled` stays that way.
 
 ## After writing
 
