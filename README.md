@@ -33,9 +33,6 @@ scripts/aos reindex
 scripts/aos watch
 scripts/aos watch --loop
 scripts/aos daily-close          # optional YYYY-MM-DD
-scripts/aos migrate --dry-run    # optional today YYYY-MM-DD
-scripts/aos migrate              # optional today YYYY-MM-DD
-scripts/aos migrate-layout       # optional today YYYY-MM-DD
 scripts/aos validate
 scripts/aos up
 scripts/aos up --quiet
@@ -47,7 +44,7 @@ scripts/aos up --watch-only
 ## Tests
 
 ```text
-cd scripts && python3 -m unittest tests.test_aos tests.test_cadence
+cd scripts && python3 -m unittest discover -s tests
 ```
 
 ## What this git does not store

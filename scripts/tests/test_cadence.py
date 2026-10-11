@@ -7,6 +7,7 @@ from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(SCRIPTS))
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from aos_lib.cadence import (
     add_interval,
@@ -139,5 +140,107 @@ class CadenceTest(unittest.TestCase):
         self.assertEqual(index_dates(data, date(2026, 9, 1)), [date(2026, 11, 30)])
 
 
-if __name__ == "__main__":
-    unittest.main()
+
+from helpers import (  # noqa: E402
+    AOSTest,
+    headings,
+    section_items,
+    write_recurring,
+)
+
+
+class CadenceIndexTest(AOSTest):
+    def test_daily_cadence(self) -> None:
+        write_recurring(
+            self.root,
+            "water",
+            "Drink water",
+            kind="daily",
+            until="2026-12-01",
+        )
+        self.aos("reindex")
+        text = self.tasks_md()
+        self.assertEqual(headings(text), ["Today", "1 day"])
+        self.assertEqual(len(section_items(text, "Today")), 1)
+        self.assertEqual(len(section_items(text, "1 day")), 1)
+        self.assertIn("ongoing/water.md", section_items(text, "Today")[0])
+        self.assertIn("ongoing/water.md", section_items(text, "1 day")[0])
+        self.assertNotIn("## Overdue", text)
+
+    def test_weekdays_wed_and_thu(self) -> None:
+        write_recurring(
+            self.root,
+            "training",
+            "Training",
+            kind="weekdays",
+            days=["wed", "thu"],
+            until="2026-12-01",
+        )
+        self.aos("reindex", today="2026-09-16")
+        text = self.tasks_md()
+        self.assertEqual(headings(text), ["Today", "1 day"])
+        self.aos("reindex", today="2026-09-17")
+        text = self.tasks_md()
+        self.assertEqual(headings(text), ["Today", "4-7 days"])
+        self.assertIn("ongoing/training.md", section_items(text, "4-7 days")[0])
+
+    def test_pending_due_is_not_the_cadence(self) -> None:
+        write_recurring(
+            self.root,
+            "training",
+            "Training",
+            kind="weekdays",
+            days=["tue", "fri"],
+            until="2026-12-01",
+            folder="pending",
+            status="pending",
+            due="2026-09-16",
+        )
+        self.aos("reindex", today="2026-09-16")
+        text = self.tasks_md()
+        self.assertIn("pending/training.md", section_items(text, "Today")[0])
+        self.assertNotIn("## 2-3 days", text)
+
+    def test_interval(self) -> None:
+        write_recurring(
+            self.root,
+            "review-now",
+            "Review today",
+            kind="interval",
+            every=2,
+            unit="months",
+            anchor="2026-09-16",
+            until="2027-12-01",
+        )
+        write_recurring(
+            self.root,
+            "review-y",
+            "Review yesterday",
+            kind="interval",
+            every=2,
+            unit="months",
+            anchor="2026-09-15",
+            until="2027-12-01",
+        )
+        self.aos("reindex")
+        text = self.tasks_md()
+        self.assertIn("ongoing/review-now.md", section_items(text, "Today")[0])
+        later = section_items(text, "+30 days")
+        hrefs = " ".join(later)
+        self.assertIn("ongoing/review-now.md", hrefs)
+        self.assertIn("ongoing/review-y.md", hrefs)
+        self.assertNotIn("review-y", " ".join(section_items(text, "Today")))
+
+    def test_until_date(self) -> None:
+        write_recurring(
+            self.root,
+            "short",
+            "Short",
+            kind="weekdays",
+            days=["wed", "thu"],
+            until="2026-09-16",
+        )
+        self.aos("reindex")
+        text = self.tasks_md()
+        self.assertEqual(headings(text), ["Today"])
+        self.assertNotIn("## 1 day", text)
