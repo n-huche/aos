@@ -1,6 +1,5 @@
 ---
-status: pending
-due: null
+status: pending              # pending | ongoing | paused | completed | canceled
 prefix: MP                  # short label; enters phase filename and H1
 ---
 

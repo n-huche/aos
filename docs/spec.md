@@ -7,7 +7,7 @@
 **Timezone:** `America/Sao_Paulo` (Rio de Janeiro)  
 **Language:** this repository (law, scripts, templates, tests) is English. Folder names, file names, frontmatter keys, and section headings (`##`) are English, kebab-case, ASCII. Prose inside the nested `user/` tree follows `user/preferences.md`. If that file does not set a language, use the language of the current conversation.
 
-**v1 does not include:** streaks, progress bars, mandatory leading/lagging metrics, Dataview, a web app, a `goals/` folder, a `paused/` folder, or real life content (zero real projects/tasks in this public tree).
+**v1 does not include:** streaks, progress bars, Dataview, a web app, a `goals/` folder, or real life content (zero real projects/tasks in this public tree).
 
 ---
 
@@ -64,13 +64,29 @@ The Goal must be observable, or the file has `## Tests`. Both vague is illegal.
 
 ### 2.2 Project
 
-Folder 1:1 with status: `pending` · `ongoing` · `completed` · `canceled`.
+Folder 1:1 with status: `pending` · `ongoing` · `paused` · `completed` · `canceled`.
 
-There is no `paused`. Pause = `due: null` on the hub. The folder stays `pending` or `ongoing`.
+Status is derived from the project's tasks, except two sticky cases the user sets by hand:
 
-**Completed** = the user declares the hub Goal true (or its Tests, if present). Completed phases are operational, not authority.
+- `canceled` stays canceled (manual cancel).
+- `completed` stays completed (the user has declared the Goal, or its Tests, true). It is not demoted.
 
-Project `due`: a date or `null`. No `projects.md`. Who changes project status is the user/AI, **never** cron. Move the whole `{slug}/` folder (hub, `phases/`, `notes.md`). Links *inside* the project do not change. Links *from outside* (`tasks.md` does not point at projects; a phase points at tasks — see § 6.3).
+Otherwise, from the tasks that name this project (`canceled` and `obsolete` tasks do not count):
+
+| tasks | project |
+|---|---|
+| none, or every task canceled or obsolete | `canceled` |
+| any `ongoing` | `ongoing` |
+| every live task `paused` | `paused` |
+| `pending` and `paused`, none `completed` | `pending` |
+| every live task `pending` | `pending` |
+| `pending` and at least one `completed` | `ongoing` |
+| `paused` and `completed`, none `pending` | `ongoing` |
+| no `pending` and no `paused` | `completed` |
+
+`aos sync` applies this and moves the whole `{slug}/` folder. `reindex` and `daily-close` apply the same rule first, so a date edit shows up without a separate checkbox pass. Links *inside* the project do not change. Links from outside that contain `projects/{status}/{slug}` are rewritten. No `projects.md`.
+
+An old hub may still carry `do_on`. That value is history. It is not a deadline. New hubs omit the key. The key `due` is not a field.
 
 ### 2.3 Phase
 
@@ -80,7 +96,9 @@ Complete ⇔ the phase Goal is true (Tests if present), **even with pending task
 
 Tasks done + Goal false ⇒ the phase is **not** complete. Plan done ≠ complete.
 
-Status: `pending` · `ongoing` · `completed` · `obsolete`.
+Status: `pending` · `ongoing` · `paused` · `completed` · `obsolete`.
+
+A phase uses the same task table as the hub, scoped to tasks whose `phase` is that file. The outcome `canceled` is written `obsolete` (a phase has no canceled status). `completed` and `obsolete` stay as the user left them. An old phase may still carry `do_on` as history, not as a deadline. New phases omit it. The key `due` is not a field.
 
 Deps = a graph in frontmatter `depends_on` (slugs). No body section. Further descent = new phases on the same graph; the still-abstract phase depends on them. Parallel if there is no edge. The phase path only changes if the project folder changes.
 
@@ -102,21 +120,25 @@ If Tests exist, the user declares the Tests; otherwise the Goal. **Only the user
 
 | Folder | Who |
 |---|---|
-| `pending/` | unfinished uniques; recurring-* that has not started |
+| `pending/` | uniques and recurring-* that have a `do_on` and have not started |
 | `ongoing/` | live recurring-* and live maintenance |
+| `paused/` | unique or recurring with no `do_on`; maintenance the user paused |
 | `completed/` | finished uniques; recurring whose cycle **ended** |
 | `obsolete/` | unique or recurring that was not needed |
 | `canceled/` | aborted by the user, including a maintenance the user stopped |
 
-No `ongoing` status for uniques. No `completed` or `obsolete` for maintenance. No due-date buckets on disk. There is no `times` field.
+No `ongoing` status for uniques. No `completed` or `obsolete` for maintenance. No date buckets on disk. There is no `times` field. `do_at` is a list of clocks on the one task, not a second file.
 
-- Unique: `due` a date or `null`. Status: `pending` · `completed` · `obsolete` · `canceled`.
-- Recurring: `due` is the deadline to **start**, or `null`. `until` **XOR** `until_event`. Status: `pending` · `ongoing` · `completed` · `obsolete` · `canceled`.
-- `due` null → the series has not begun: file stays in `pending/`, `status: pending`, Undefined, **no** daily occurrence. The user may start whenever they want. Cron does **not** move the file on `due`.
-- The first `[x]` starts the series, in any section: `status: ongoing`, move `pending/` → `ongoing/`, and that day is `done_on`. Later `[x]` count only in **Today**.
-- After it is `ongoing`, `due` is only a record. Occurrences follow the cadence. The first check counts even off a cadence day. The next ones follow the cadence. `cadence.anchor` is not rewritten.
-- Passed `due` still `pending`: **Overdue**. The daily fails each day until the first check.
-- `maintenance`: cadence; no `due`, no `until`. Status: `ongoing` · `canceled` only. Folder `ongoing/` while live. It does not complete and does not become obsolete.
+- Unique: `do_on` a date, or absent. Status: `pending` · `paused` · `completed` · `obsolete` · `canceled`. With `do_on` the file is `pending`. Without `do_on` it is `paused`. Pausing a dated unique is removing `do_on`.
+- Recurring: `do_on` is the day of the **next** occurrence, including the first one. `until` **XOR** `until_event`. Status: `pending` · `ongoing` · `paused` · `completed` · `obsolete` · `canceled`.
+- Not started and no `do_on` → `paused/`. It is not in the index and it does not fail. The user writes a new `do_on` to make it `pending` again.
+- The first `[x]` starts the series, in any section: `status: ongoing`, move to `ongoing/`, record today in `done_on`, and advance `do_on` to the next cadence day **after the scheduled `do_on`** (not after today).
+- After it is `ongoing`, `do_on` stays the next occurrence. It moves only on `[x]`, from that scheduled day. A missed day does not move it. The task stays overdue and the daily fails each day until the check. `cadence.anchor` is not rewritten.
+- If the next cadence day would pass `until`, the series completes instead of advancing. `until_event` is not a date. Close does not invent the end.
+- An ongoing series that still has no `do_on` (it was already live) keeps the cadence clock: at most today and the next cadence day. It does not pause for lack of a date.
+- Passed `do_on` still open: **Overdue**. The daily fails each day it stays open. Checking the Overdue line is allowed and advances exactly one occurrence. The line comes back, still unchecked, while `do_on` is still before today, so the gap can be closed the same day. `done_on` records the check day, not the missed day.
+- Doing it before `do_on` counts as done, writes no failure on `do_on`, and frees that window.
+- `maintenance`: cadence; no `do_on`, no `until`. Status: `ongoing` · `paused` · `canceled`. It does not pause for lack of a date. Pause is explicit. It does not complete and does not become obsolete.
 
 Task slugs are **global**.
 
@@ -162,6 +184,7 @@ aos/                        # repo root (wherever it lives)
     projects/
       pending/{slug}/{slug}.md
       ongoing/{slug}/...
+      paused/{slug}/...
       completed/{slug}/...
       canceled/{slug}/...
         phases/{prefix}-{nn}-{name}.md
@@ -170,14 +193,17 @@ aos/                        # repo root (wherever it lives)
       tasks.md
       pending/
       ongoing/
+      paused/
       completed/
       obsolete/
       canceled/
     daily/
-      YYYY/MM/DD.md
+      YYYY/YYYY-MM/YYYY-MM-DD.md  # hour table; metrics when the day is closed
+      YYYY/YYYY-MM/YYYY-MM.md     # month rollup of closed days
     research/
     schedule/
-      YYYY/MM/DD.md         # unique: the due; pending recurring: the due; recurring: until; only if > today
+      YYYY/YYYY-MM.md       # one row per hour, one column per day; closed days frozen
+    vocabulary.md           # hour labels the user maintains; scripts do not require it
 ```
 
 Hub `user/projects/{status}/{slug}/{slug}.md`  
@@ -203,8 +229,9 @@ Canonical for scripts. YAML `null` and an omitted key are the same for optional 
 ```yaml
 ---
 type: unique-independent     # or unique-project
-status: pending              # pending | completed | obsolete | canceled
-due: 2026-09-18              # YYYY-MM-DD or null
+status: pending              # pending | paused | completed | obsolete | canceled
+do_on: 2026-09-18            # YYYY-MM-DD; omit when paused
+do_at: ["09:00"]             # clocks; omit when there is no hour
 completed_on: null           # filled on check; YYYY-MM-DD
 infinitive: Do the thing     # index label; required
 project: my-project          # unique-project only
@@ -212,15 +239,18 @@ phase: mp-01-my-phase        # unique-project only; filename stem
 ---
 ```
 
-Body: H1 is the thing, not the act (`# Café da manhã`). The slug is that title in English (`breakfast`). `infinitive` is the index phrase (`Tomar café da manhã`). `## What` · `## How` · `## When` if due · `## Where` / `## With who` if they apply · independent: `## Goal`.
+Body: H1 is the thing, not the act (`# Café da manhã`). The slug is that title in English (`breakfast`). `infinitive` is the index phrase (`Tomar café da manhã`). `## What` · `## How` · `## When` if `do_on` · `## Where` / `## With who` if they apply · independent: `## Goal`.
+
+`do_at` is one or more `HH:MM` values (24h, `America/Sao_Paulo`), a YAML list or one comma-separated string. No duplicates. `do_in`, `do_after`, and `due` are not fields.
 
 ### 4.2 Recurring
 
 ```yaml
 ---
 type: recurring-independent  # or recurring-project
-status: pending              # pending | ongoing | completed | obsolete | canceled
-due: 2026-10-01              # deadline to start; YYYY-MM-DD or null
+status: pending              # pending | ongoing | paused | completed | obsolete | canceled
+do_on: 2026-10-01            # next occurrence; omit when paused or when a live series has no date yet
+do_at: ["09:00"]             # clocks; omit when there is no hour
 until: 2026-12-01            # XOR until_event
 until_event: null
 infinitive: Do the thing
@@ -238,16 +268,17 @@ cadence:
 ---
 ```
 
-`status: pending` while unstarted (folder `pending/`). `status: ongoing` while live (folder `ongoing/`).
+`status: pending` while unstarted and dated (folder `pending/`). `status: ongoing` while live (folder `ongoing/`). `status: paused` with no `do_on`.
 
-One `[x]` on a live series in **Today** records that day in `done_on` and the line leaves Today. There is no intra-day quota. `done_on` holds at most that open day. On daily-close of D, D is removed. A later date stays. The history of the day lives in `daily/`.
+`do_on` on a live series is the next occurrence. One `[x]` records today in `done_on` and moves `do_on` to the next cadence day after the scheduled one. There is no intra-day quota. Two clocks are two lines and two grid rows for that same occurrence. `done_on` holds at most that open day. On daily-close of D, D is removed. A later date stays. The history of the day lives in `daily/`.
 
 ### 4.2.1 Maintenance
 
 ```yaml
 ---
 type: maintenance
-status: ongoing              # ongoing | canceled
+status: ongoing              # ongoing | paused | canceled
+do_at: ["06:00"]             # clocks; omit when there is no hour
 infinitive: Do the thing
 done_on: []
 cadence:
@@ -261,7 +292,7 @@ cadence:
 ---
 ```
 
-No `due`, no `until`. Folder `ongoing/` while live, `canceled/` when the user stops it. Same `done_on` rule as recurring.
+No `do_on`, no `until`. Folder `ongoing/` while live, `paused/` when the user pauses it, `canceled/` when the user stops it. Same `done_on` rule as a dateless live series: the check counts in **Today**, and today leaves the index once it is in `done_on`.
 
 `interval` + `months`: add calendar months; if the day does not exist in the target month, use the **last day** of that month (31 Jan + 1 month → 28/29 Feb).
 
@@ -269,11 +300,12 @@ No `due`, no `until`. Folder `ongoing/` while live, `canceled/` when the user st
 
 ```yaml
 ---
-status: pending
-due: null
+status: pending              # pending | ongoing | paused | completed | canceled
 prefix: MP
 ---
 ```
+
+`do_on` on an old hub is history. Omit it on a new hub.
 
 `prefix` = short label for the project. It enters the phase filename and the phase H1.
 
@@ -289,12 +321,13 @@ Body: `## Goal` · `## Tests` (only if Goal is not observable) · `## Plan` (num
 
 ```yaml
 ---
-status: pending
-due: null
+status: pending              # pending | ongoing | paused | completed | obsolete
 project: my-project
 depends_on: [mp-01-other-phase]
 ---
 ```
+
+`do_on` on an old phase is history. Omit it on a new phase.
 
 Body: `## Goal` · `## Tests` (only if Goal is not observable) · `## Plan` (numbered list) · `## Tasks`. How is the task's field. Deps are YAML only.
 
@@ -326,16 +359,18 @@ The label of each line is `infinitive`, never the H1. A missing `infinitive` is 
 
 ### 5.1 Placement
 
-Unique: `due` null → Undefined. `due < today` → Overdue. Else bucket of `delta = due - today`.
+Paused tasks are absent.
 
-Unstarted recurring (`pending/`, `due` null) → Undefined. Unstarted with a future `due` → bucket of `delta = due - today`. Unstarted with `due < today` → Overdue. Href `pending/{slug}.md`. The first `[x]` starts the series (§ 6.1).
+Unique and unstarted recurring: one line, on `do_on`. `do_on < today` → Overdue. Else the bucket of `delta = do_on - today`. No `do_on` → paused, not indexed.
 
-Live recurring and maintenance (`ongoing/`): at most two lines:
+Live recurring **with** `do_on`: one line, on that date, including when today is already in `done_on`. That is what lets an overdue series be checked again the same day.
+
+Live recurring **without** `do_on`, and maintenance: at most two lines:
 
 1. **Today** if the cadence falls today and today is not in `done_on`
 2. one bucket for the **next cadence date > today**
 
-No Maintenance / Recurring sections. Overdue holds uniques past due and recurring still `pending` past due.
+No Maintenance / Recurring sections. Overdue is its own bucket. It is not merged into Today. Each open day is still a failure.
 
 ### 5.2 Cadence
 
@@ -348,14 +383,14 @@ No Maintenance / Recurring sections. Overdue holds uniques past due and recurrin
 
 | condition | heading |
 |---|---|
-| unique `due < today` | `## Overdue` |
+| `do_on < today`, or a cadence date before today | `## Overdue` |
 | occurs today | `## Today` |
 | delta == 1 | `## 1 day` |
 | delta ∈ {2, 3} | `## 2-3 days` |
 | delta ∈ {4, 5, 6, 7} | `## 4-7 days` |
 | delta ∈ [8, 30] | `## 8-30 days` |
 | delta ≥ 31 | `## +30 days` |
-| unique or unstarted recurring `due` null | `## Undefined` |
+| no date (should already be paused) | `## Undefined` |
 
 Rolling windows. No ISO week / civil month as a bucket.
 
@@ -377,7 +412,7 @@ Item:
 - [ ] [Postar vídeo para namorada](ongoing/video-for-girlfriend.md)
 ```
 
-Relative to `user/tasks/`. Unique: 1 line. Recurring (live or unstarted) and maintenance: up to 2 live lines, or 1 unstarted line; all `- [ ]`.
+Relative to `user/tasks/`. One line per clock. A task with two clocks is two lines that day. All `- [ ]`.
 
 ### 5.3.1 Order inside a bucket
 
@@ -385,11 +420,18 @@ The order is a suggestion. The checkbox does not depend on position.
 
 In a bucket that spans more than one day, the occurrence day comes first. A `###` heading already used in that section is not opened again: later days append their lines under the first one.
 
-`do_in` is `HH:MM` (24h, `America/Sao_Paulo`). `do_after` is a task slug. A task has one of them, or neither. Both is an error. A cycle, or a slug that does not exist, is an index error.
+Each dated day splits into four half-open blocks of six hours. A heading is written only when that block has a line:
 
-A `do_in` task is a fence. Tasks with `do_after` pointing at it sit after it and before the next later `do_in` that day. The block stays together: the task, its children, and their children. Two tasks with the same `do_in` are two fences, ordered by the five bands below. Each has its own heading if it has children. Those children come before the next later time.
+| heading | clocks |
+|---|---|
+| `### Morning` | [06:00, 12:00) |
+| `### Afternoon` | [12:00, 18:00) |
+| `### Evening` | [18:00, 24:00) |
+| `### Overnight` | [00:00, 06:00) |
 
-Inside one parent, the bands are:
+`00:00` is Overnight. `06:00` is Morning. `12:00` is Afternoon. `18:00` is Evening. A broken clock sorts inside its block by the real minute (`07:30` is Morning, after `07:00`).
+
+Inside one block, sort by clock, then:
 
 1. maintenance
 2. recurring independent
@@ -397,17 +439,13 @@ Inside one parent, the bands are:
 4. recurring project
 5. unique project
 
-Tasks of the same project stay in `## Phases` order and then `## Tasks` order, across types. The five bands apply only between different projects, and between tasks that have no project. A project takes the band of its earliest type in that list. Inside a band, tasks without a project sort by `infinitive`. Between projects in the same band, sort by the project H1.
-
-A `do_in` line stays `- [ ]`. If that section has a child, the next heading is `### Depois de {infinitive}`. A child that itself has children uses `####`. Deeper than that stays a list under the nearest `do_in`, with no further heading. The clock is not written in the heading. The heading is omitted when no child remains in the section. If the parent is already absent from the section, the heading still shows while a child remains.
+Tasks of the same project stay in `## Phases` order and then `## Tasks` order, across types. Those five bands apply between different projects and between tasks with no project. A project takes the band of its earliest type in that list. Inside a band, tasks without a project sort by `infinitive`. Between projects in the same band, sort by the project H1.
 
 `###` does not change the bucket. Sync reads only a line that starts with `## `.
 
-Tasks with neither key go at the end of the section, under `### Sem posição`, in the five bands. Undefined has no `###` headings: only the five bands, and the same project grouping.
+Tasks with no `do_at` go at the end of that day, under `### Sem horário`, in the same type order, and they stay off the month grid. Undefined has no `###` headings.
 
-`due` null (unique, or recurring still `pending`) forbids `do_in` and `do_after`. The agent asks for one of them only when a `due` is set. Maintenance has no `due`; the agent asks at creation. If the user still does not choose, the task is unplaced.
-
-The phrases `Depois de` and `Sem posição` are fixed. Scripts do not read `preferences.md`.
+The phrase `Sem horário` is fixed, as are the four block names. Scripts do not read `preferences.md`. The user keeps hour labels in `user/vocabulary.md`. A diary word that is not on that list is still a real report. Validate does not fail it.
 
 ### 5.4 Examples
 
@@ -419,9 +457,20 @@ The phrases `Depois de` and `Sem posição` are fixed. Scripts do not read `pref
 
 ### 5.5 Schedule
 
-`user/schedule/YYYY/MM/DD.md` only if `DD > today`. Body = links. Cron deletes dates ≤ the day it closed.
+`user/schedule/YYYY/YYYY-MM.md` (October 2026 is `user/schedule/2026/2026-10.md`). One row per hour `00:00`–`23:00`. One column per day of that month, headed `1 - thu`, `2 - fri`, and so on. The file is created when some task has a date in that month. It is derived from `do_on`, `do_at`, and cadence. There is no `routine-base.md` and no `routine.md`. There is no per-day file under `schedule/`.
 
-Unique: **the due only** (one file, the deadline day). When the unique completes, scripts **drop it from `schedule/`** (the line). If that day has no links left, delete the file. Pending recurring: a future `due` if it exists, and a future `until` if it exists — not every cadence occurrence. Maintenance: not on the schedule.
+A cell is a window. Empty is the literal `null`. A project task shows the project H1. Anything else shows `infinitive`. Several tasks in the same day and hour are comma-separated. A clock with minutes falls in the full hour (`07:30` → `07:00`). A task with no `do_at` is off the grid. Paused, completed, canceled, and obsolete tasks are off the open grid. A date that used to live only on `schedule/YYYY/MM/DD.md` is kept on the task under `## When` by `aos migrate-layout` (§ 10). That command does not put the date on this grid and does not set `do_on`.
+
+What lands on a day:
+
+- unique: `do_on`, if it has a clock
+- unstarted recurring: that `do_on` only, not every cadence day
+- live recurring with a clock: each cadence day from `do_on` (or from the start of the open month, if it has no `do_on`) through `until`
+- maintenance with a clock: each cadence day in the months the grid builds
+
+Months built: any month that holds a unique or unstarted `do_on`, a live `do_on`, an `until`, or the current month when a live series or a maintenance has a clock. Not every future year.
+
+Closed days are frozen. A column whose date already has a closed daily is never rewritten. The first time a month file is created, every column is written once, including days already closed. After that, only open columns move. Completing a task frees its window on open days. Cron does not delete the file.
 
 `user/preferences.md`: prose; **scripts do not read it**.
 
@@ -437,43 +486,54 @@ Watch: inotify or poll ≤2 s on `user/tasks/tasks.md`.
 
 Walk the file top to bottom. A line `## …` sets the current section. `###` does not. Each `- [x]` or `- [X]` inherits that section.
 
-One pass, rules in this order:
+One pass, rules in this order. Two lines of the same slug (two clocks) are one check.
 
-1. An `[x]` line whose href is in `ongoing/` **and** section **≠** `Today` → **forbidden**: the line goes back to `[ ]`. Do not touch `done_on`.
-2. An `[x]` `ongoing/` line in section **Today** → § 6.2.
-3. An `[x]` `pending/` line whose task `type` is recurring-* → start the series (§ 6.2), in any section including Overdue and Undefined.
-4. An `[x]` `pending/` unique (any section) → § 6.3.
+1. An `[x]` whose href is `ongoing/` **maintenance**, or a live recurring that has **no** `do_on`, and the section **≠** `Today` → **forbidden**: the line goes back to `[ ]`. Do not touch `done_on`.
+2. An `[x]` `ongoing/` maintenance or dateless live recurring in **Today** → § 6.2.
+3. An `[x]` `ongoing/` recurring that **has** `do_on`, in any section → § 6.2. Overdue is allowed, and so is a later bucket (early). Each check advances one scheduled occurrence.
+4. An `[x]` `pending/` line whose task `type` is recurring-* → start the series (§ 6.2), in any section.
+5. An `[x]` `pending/` unique (any section) → § 6.3.
 
-Then `reindex` (rebuilds the MD). If the only action was reverting rule 1, still write `tasks.md` unchecked.
+Then `reindex` (rebuilds the MD and the open schedule). If the only action was reverting rule 1, still write `tasks.md` unchecked.
+
+Before the checkbox pass, and again inside `reindex`, placement is reconciled: a unique or unstarted recurring with `do_on` is `pending`; without `do_on` it is `paused`. Maintenance and an already-`ongoing` recurring are not paused for lack of a date. Project and phase status are derived (§ 2.2, § 2.3).
 
 ### 6.2 Series check
 
-Live series (recurring or maintenance) in **Today**:
+Maintenance, and a live recurring with no `do_on`, in **Today**:
 
 1. Record today in `done_on` (drop earlier dates; keep a later date).
 2. Recurring with `until == today`: `status: completed`, move `ongoing/` → `completed/`, rewrite links (§ 6.4).
 3. Otherwise the file stays in `ongoing/`. Reindex drops the Today line.
 4. Commit `aos: sync tasks`. Push if `origin` exists.
 
+Live recurring **with** `do_on` (Today, Overdue, or a later bucket):
+
+1. Record today in `done_on`.
+2. Next = the first cadence day **after** the scheduled `do_on`, ignoring `done_on`.
+3. If that next day would pass `until`, or `do_on` is already the `until` day: `status: completed`, move to `completed/`.
+4. Otherwise set `do_on` to that next day. The file stays `ongoing/`.
+5. While the new `do_on` is still before today, reindex puts the line back in Overdue, unchecked.
+
 First `[x]` on a `pending` recurring, any section:
 
-1. `status: ongoing`, move `pending/` → `ongoing/`, record today in `done_on`.
-2. If `until == today`, complete it as above.
-3. Reindex. That day counts even when it is not a cadence day.
+1. Record today in `done_on` and advance `do_on` the same way.
+2. If the series finished on `until`, move to `completed/`. Otherwise `status: ongoing`, move `pending/` → `ongoing/`.
+3. Reindex. The check counts even when today is not a cadence day. The date that moves is the scheduled one.
 
 ### 6.3 Unique (any section)
 
-Early check is OK; **do not** change `due`.
+Early check is OK; **do not** change `do_on`.
 
 1. `status: completed`, `completed_on: <today>`
 2. Move `pending/` → `completed/`
-3. Drop the unique from `schedule/` (§ 5.5)
+3. The next schedule rebuild drops it from open columns (§ 5.5). Closed columns stay.
 4. Rewrite links § 6.4
 5. Reindex, commit, push if origin
 
 ### 6.4 Rewrite links
 
-Search the `user/` tree for strings `pending/{slug}.md`, `ongoing/{slug}.md`, etc., and point them at the new folder. Includes the phase `## Tasks`. Not `schedule/`: that is dropped on unique complete (§ 6.3), not rewritten.
+Search the `user/` tree for strings `pending/{slug}.md`, `ongoing/{slug}.md`, `paused/{slug}.md`, etc., and point them at the new folder. Includes the phase `## Tasks`. Not `schedule/`: the grid has names, not links, and open cells are rebuilt (§ 5.5).
 
 ---
 
@@ -481,27 +541,28 @@ Search the `user/` tree for strings `pending/{slug}.md`, `ongoing/{slug}.md`, et
 
 Timezone `America/Sao_Paulo`. D = the day that **ended**. The next reindex clock = D+1.
 
-1. Unique still in `pending/` with `due==D` or `due<D` → failure on daily D.
-2. Recurring still `pending` with `due==D` or `due<D` → failure. It stays `pending`. No cadence occurrence until the first check.
-3. Live recurring whose cadence includes D and D is not in `done_on`, `until != D` → failure; the series continues. The same for maintenance.
-4. Recurring `until == D` (the series is `ongoing`):
-   - D in `done_on`: move `ongoing/` → `completed/`. Daily: done.
-   - D not in `done_on`: move to `completed/` anyway. Daily: **not done**.
-5. Write `user/daily/YYYY/MM/DD.md` (idempotent if the set is the same).
-6. Remove D from `done_on`. A later date stays.
-7. Delete `schedule` dates ≤ D. Non-date markdown under `schedule/` is left alone.
-8. Reindex with today = D+1.
-9. Commit `aos: daily-close D`. Push if origin.
+1. Reconcile placement (§ 6.1), including project and phase status.
+2. Unique still `pending` with `do_on==D` or `do_on<D` → failure on daily D. A unique already completed is not a failure on `do_on`.
+3. Recurring still `pending` with `do_on==D` or `do_on<D` → failure. It stays `pending`.
+4. Live recurring **with** `do_on`: failure when `do_on<=D` and D is not in `done_on`. If D is in `done_on`, that occurrence is done even when `do_on` has already moved on. A dateless live recurring, and maintenance, fail when the cadence includes D and D is not in `done_on`.
+5. Paused tasks do not fail and are not planned.
+6. Recurring `until == D` (the series is `ongoing`): move to `completed/`. Daily: done if D is in `done_on` or `do_on` is already after D; otherwise not done.
+7. Rebuild the schedule while D is still open, so a completion frees that window. Then write the daily. D is frozen from then on.
+8. Remove D from `done_on`. A later date stays.
+9. Create D+1's daily if it is missing: the hour table only, every cell `null`, no metrics yet.
+10. Update `user/daily/YYYY/YYYY-MM/YYYY-MM.md` from closed days only.
+11. Reindex with today = D+1.
+12. Commit `aos: daily-close D`. Push if origin.
 
-Cron **does not** complete uniques. **Does not** move projects. **Does not** start a recurring series. Until **event** and canceling maintenance: AI command only.
+Cron **does not** complete uniques. **Does not** start a recurring series. It does derive project and phase status, same as sync. Until **event** and canceling maintenance: AI command only. The schedule is not deleted.
 
 `daily-close` can also be run by hand. Document the crontab in `docs/cron.md`. Watch is a separate process: `aos up` starts it if it is dead; keeping it alive after that is the host, not AOS.
 
 If the process was dead while the calendar moved, `aos up` does **catch-up** before starting watch:
 
 1. Snapshot leftover `[x]` in `tasks.md` (close rewrites the index).
-2. `daily-close` each day without a daily after the last one, through yesterday (no daily at all: yesterday only). Those days get no credit for the `[x]`. Schedule ≤ last D goes away.
-3. Apply the snapshotted `[x]` with date = **today** (the day of return): unique `completed_on`; a live series `done_on` only if it was in Today; a pending recurring starts.
+2. `daily-close` each day without a **closed** daily after the last one, through yesterday (no closed daily at all: yesterday only). A placeholder hour table is not closed. Those days get no credit for the `[x]`. Closed schedule columns stay.
+3. Apply the snapshotted `[x]` with date = **today** (the day of return): unique `completed_on`; a live series records today; a pending recurring starts. An overdue recurring with `do_on` advances from the scheduled day, not from the missed one.
 4. Reindex = today. The clock that counts is the AOS that is up.
 
 
@@ -509,12 +570,19 @@ If the process was dead while the calendar moved, `aos up` does **catch-up** bef
 
 ## 8. Daily
 
-`user/daily/YYYY/MM/DD.md`
+`user/daily/YYYY/YYYY-MM/YYYY-MM-DD.md`
 
 ```markdown
 # YYYY-MM-DD
 
-**Result:** success | satisfactory | failure
+| hour | did |
+| --- | --- |
+| 00:00 | null |
+| 01:00 | null |
+
+| routine | tasks |
+| --- | --- |
+| 75% | 60% |
 
 ## Completed tasks
 
@@ -527,15 +595,17 @@ If the process was dead while the calendar moved, `aos up` does **catch-up** bef
 ## Notes, optional
 ```
 
-Omit failed if empty. Live series: link `../../../tasks/ongoing/slug.md`. Recurring closed on `until`: `completed/`.
+The hour table is 24 rows, `00:00`–`23:00`. A cell the user did not fill is `null`. Close keeps the hour column and the notes, and writes the metrics. Omit failed if empty. Live series: link `../../../tasks/ongoing/slug.md`. Recurring closed on `until`: `completed/`.
 
-**Done on D:** unique with `completed_on == D`; live recurring/maintenance with D in `done_on`.
+**Done on D:** unique with `completed_on == D` (including one done early); live recurring or maintenance with D in `done_on`.
 
-**Failure on D:** unique `due==D` or `due<D` still pending; recurring still `pending` with `due<=D`; live recurring/maintenance with an occurrence on D and D not in `done_on` (including `until==D` without the day). Unstarted recurring with `due` null does not fail.
+**Failure on D:** unique `do_on<=D` still pending; recurring still `pending` with `do_on<=D`; live recurring with `do_on<=D` and D not in `done_on`; dateless live recurring or maintenance whose cadence includes D and D is not in `done_on` (including `until==D` without the day). Paused tasks do not fail. An early unique is not a failure on `do_on`.
 
-- `failure` if ≥1 failure
-- `satisfactory` if zero failures
-- `success` if satisfactory **and** ≥1 unique with `completed_on==D` and `due` date ≠ D
+**routine** = hours where the report equals one comma-separated token of the plan cell, divided by hours where **both** the plan and the report are non-null. A `null` plan or a `null` report is not in the count and is not a deviation. A deviation is a planned hour whose report matches none of the tokens. The category is the report text. Each planned name in that cell counts toward "tasks most deviated".
+
+**tasks** = tasks done that day / tasks planned that day. Planned: unique with `do_on==D` or still pending with `do_on<D`; recurring with `do_on==D`, or `do_on<D` still open, or checked on D; maintenance whose cadence includes D. Paused excluded. Denominator 0 → that percentage is `null` and the day is left out of the month average.
+
+`user/daily/YYYY/YYYY-MM/YYYY-MM.md`, rewritten every close, averages **closed** days only: each day, each weekday, the month; hours with the most deviations; deviation counts by category; tasks most deviated. A day that is all `null` and a day at 100% average to 100%. A placeholder (the hour table, no metrics) is not a closed day and is not in the average. `tasks` with nothing planned is `null` and is left out of the average. `routine` on a day from before the hour report is `null`.
 
 ---
 
@@ -550,16 +620,17 @@ The implementation writes this (it may be the body of `AGENTS.md`), pointing at 
 - Edit an existing phase/task: conversation → agreement → then change.
 - Independent: they give the simple goal; build the task; honor `user/preferences.md` if present.
 - Talk and write `user/` prose in the language `user/preferences.md` sets. If it does not set one, use the language of the current conversation.
-- No due: ask **at the end**, after writing. Recurring `due`: same — ask at the end; if they will not give one, leave `due: null` (pending / Undefined, no `do_in` / `do_after`). When `due` is set, ask `do_in` or `do_after`.
-- Unique with due: YAML + `schedule/` **only on the due** (if `due > today`). Do not ask for a start date. Complete → scripts drop it from `schedule/`.
-- Start date only: ask for the due; if they will not give one, **suggest** and schedule on the due.
-- Recurring on the schedule: a future `due` and/or a future `until`, not every occurrence.
-- The same action twice in one day is two files. There is no `times`.
+- No `do_on`: ask **at the end**, after writing. Recurring `do_on` (the first occurrence, and later the next one): same. If they will not give one, omit `do_on` — the file is `paused`, not indexed, and it does not fail. Do not ask for a clock either.
+- When `do_on` is set, ask `do_at` (one or more `HH:MM`). If they still do not choose, omit it. The task sits under `Sem horário` and off the grid.
+- Maintenance has no `do_on`. Ask `do_at` when creating it. If they still do not choose, omit it. It stays `ongoing`.
+- Unique with `do_on`: the day is the YAML date. The month grid picks it up when it has a clock. Do not write a schedule file by hand. Complete → scripts drop it from open columns.
+- Recurring on the grid: the scheduled `do_on`, and once it is `ongoing`, the cadence days in the open months. Not a hand-written list.
+- The same action twice in one day is two clocks in `do_at` on one task, or two task files when they are actually two actions. There is no `times`.
 - Several concrete forms, or a vague how → `user/research/`, not a task.
 - Do not declare a Goal or Tests true.
 - Useless task: they say so + a reason → `notes.md` + `obsolete/` + links.
 - `{project}/notes.md` is atemporal (§ 2.8). Rewrite so current truth stands alone. Do not append a dated log.
-- Until event / end maintenance / cancel: only on command. Cancel project = move `projects/{status}/{slug}/` → `projects/canceled/{slug}/`.
+- Until event / end maintenance / cancel: only on command. Cancel project = move `projects/{status}/{slug}/` → `projects/canceled/{slug}/`. A canceled or completed project stays that way. Other project and phase statuses follow their tasks.
 - Do not invent people, addresses, personal dates, habits.
 - Do not check `x` in the user's place.
 - Plan on whichever day they want.
@@ -577,14 +648,33 @@ aos watch
 aos watch --loop         # restart if the inner loop dies
 aos sync
 aos daily-close          # D = yesterday in the timezone, override by arg
+aos migrate               # optional today YYYY-MM-DD; --dry-run writes nothing
+aos migrate-layout       # optional today YYYY-MM-DD; default America/Sao_Paulo
 aos validate             # type vs folder, unique slug, XOR until,
-                         # valid cadence, status vs folder, links
+                         # valid cadence, status vs folder, links, layout
 aos up                   # calendar crontab + catch-up + watch if dead
 aos up --quiet           # no stdout on success
 aos up --watch-only      # watch only; no crontab or catch-up
 ```
 
-`reindex` does not start a recurring series. It does not apply `until` (only `daily-close` and the last day's `x`).
+`reindex` does not start a recurring series. It does not apply `until` (only `daily-close` and the last day's `x`). It does reconcile paused/pending and derived project status, and it rebuilds open schedule columns.
+
+`aos migrate` brings this vault onto `do_on`, `do_at`, `paused`, and the YYYY-MM paths. It is not an importer of another person's tree. Today is the argument, or the `America/Sao_Paulo` date when the argument is omitted. `--dry-run` prints the path diff and writes nothing. A second run does not change file bytes.
+
+1. A pending unique or recurring task loses `due`, `do_on`, `do_in`, `do_after`, and `do_at`, becomes `paused`, and moves to `tasks/paused/`. Links that named `pending/{slug}.md` follow it, including links in `schedule/`.
+2. Any other task renames `due` to `do_on` and keeps the value, including `null`. A `do_in` or `do_after` that is a clock (`HH:MM`) becomes `do_at`. A `do_after` that names another task is removed. Maintenance stays active.
+3. Project and phase files rename `due` to `do_on` and keep the value as history. Status is derived from the tasks (§ 6). A completed or canceled project hub stays in that folder. Phases use the same derivation; the canceled outcome is `obsolete` on a phase.
+4. Reindex and rebuild the month grid.
+5. `aos migrate-layout` then runs.
+
+`aos migrate-layout` rewrites this vault's schedule and daily paths. It is not an importer of another person's tree. Today is the argument, or the `America/Sao_Paulo` date when the argument is omitted. A second run does not change file bytes. `validate` reports a leftover old path. The command:
+
+1. Moves `user/daily/YYYY/MM/DD.md` to `user/daily/YYYY/YYYY-MM/YYYY-MM-DD.md`. A file that already has the hour table moves unchanged. A legacy daily becomes that table with every hour `null`, `routine` `null`, and `tasks` counted from the completed and failed lists (both empty → `null`). `**Result:**` stays in the notes. An existing day file at the new path is not overwritten. If the new file is already the hour table and the old one is too, the old one is removed. If they disagree and the old one is legacy, both stay.
+2. Renames `user/schedule/YYYY/MM.md` to `user/schedule/YYYY/YYYY-MM.md`. The grid is not rebuilt. If both files exist and differ, both stay.
+3. For each `user/schedule/YYYY/MM/DD.md` whose every line is a link to an existing task, appends that ISO date under the task's `## When` when the body does not already name the day (`YYYY-MM-DD`, `D/M/YYYY`, or `DD/MM/YYYY`). It does not set `do_on` and it does not invent a clock: a paused task cannot carry `do_on`, and a task with no `do_at` stays off the grid. Then it deletes the day file and the empty month directory. A day file with any other line stays.
+4. Rewrites links that still name an old path, including a relative link whose target is one of those files. A link to a schedule day file points at the month grid.
+5. Creates today's daily when it is missing: the hour table only, no metrics.
+6. Writes the month file for every month that has a closed daily, and for today's month. Days before the hour report keep `routine` `null`.
 
 ---
 
@@ -592,7 +682,7 @@ aos up --watch-only      # watch only; no crontab or catch-up
 
 Files in `docs/templates/`. Body matches sections 4.x + the listed headings. No engine.
 
-`project.md` · `phase.md` · `task-unique.md` · `task-recurring.md` · `task-maintenance.md` · `research.md` · `daily.md` · `schedule-day.md` · `preferences.md`
+`project.md` · `phase.md` · `task-unique.md` · `task-recurring.md` · `task-maintenance.md` · `research.md` · `daily.md` · `schedule-month.md` · `vocabulary.md` · `preferences.md`
 
 ---
 
@@ -600,8 +690,8 @@ Files in `docs/templates/`. Body matches sections 4.x + the listed headings. No 
 
 1. Tree § 3; `user/` without real life; `preferences.md` empty/minimal is OK.
 2. `docs/spec.md` = this law; `AGENTS.md`; templates; `docs/cron.md`; `README.md`.
-3. The commands work (`reindex`, `watch`, `sync`, `daily-close`, `validate`, `up`).
-4. Tests in `scripts/tests/` (not in `user/`): unique, daily, weekdays, interval, until date — empty sections omitted; Overdue includes a pending recurring past due; `x` on an ongoing line outside Today reverted; `x` unique moves + `completed_on` + commit; `x` ongoing Today fills `done_on` and leaves Today; first `x` on pending recurring starts it; `daily-close` until without x → completed + daily failure; past schedule gone; catch-up closes missed days with no credit and applies `[x]` on the return day; with `user/.git`, daily-close commits in the nested user git and the parent stays clean; recurring `due` null stays pending; maintenance lives in `ongoing/`; `done_on` drops the closed day; `times` is rejected; commit waits out a foreign `index.lock`; a commit left by a failed push goes out on the next push; a failed push does not fail daily-close.
+3. The commands work (`reindex`, `watch`, `sync`, `daily-close`, `migrate`, `migrate-layout`, `validate`, `up`).
+4. Tests in `scripts/tests/` (not in `user/`): unique buckets; a unique with no `do_on` is paused and off the index; daily, weekdays, interval, until date — empty sections omitted; Overdue holds a past unique and a live recurring whose `do_on` is past; `x` on a dateless ongoing line outside Today reverted; `x` on an overdue recurring advances one `do_on` and the line stays while the date is still past; `x` unique moves + `completed_on` + commit and does not change `do_on`; early complete frees the open window and is not a failure on `do_on`; `x` ongoing Today fills `done_on` and leaves Today when the series has no `do_on`; first `x` on pending recurring starts it and advances `do_on`; `daily-close` until without x → completed + the day in Failed tasks; closed schedule columns stay, open columns follow the clocks; catch-up closes missed days with no credit and applies `[x]` on the return day; with `user/.git`, daily-close commits in the nested user git and the parent stays clean; recurring with no `do_on` while still pending is paused and does not fail; maintenance lives in `ongoing/`; `done_on` drops the closed day; `times` and `do_in` are rejected; a project follows its tasks into `paused`; null hours stay out of the routine percentage; commit waits out a foreign `index.lock`; a commit left by a failed push goes out on the next push; a failed push does not fail daily-close.
 5. `origin` on GitHub; public tree without real-life projects/tasks (`/user/` in gitignore).
 
 ---
@@ -611,7 +701,7 @@ Files in `docs/templates/`. Body matches sections 4.x + the listed headings. No 
 - Reality > checklist.
 - Phase = state + Goal (Tests if the Goal is not observable).
 - A deadline is a calculation, not a folder.
-- Unique: `x` moves the file. Live series: `x` in Today records the day. Pending recurring: `x` in any section starts the series.
-- Cron: index + daily + past schedule; completes recurring only on a date `until`. It does not start a series.
+- Unique: `x` moves the file. Maintenance and a dateless live series: `x` in Today records the day. A live recurring with `do_on`: `x` advances that date, including from Overdue. Pending recurring: `x` in any section starts the series.
+- Cron: index + daily + frozen schedule; completes recurring only on a date `until`. It does not start a series. It does not delete the month grid.
 - `aos up` installs the calendar crontab (`daily-close`), catch-up of missed days, and starts watch if it is dead. It does not start the `cron` daemon and does not reinstall every minute. Process persistence is the host.
 - The AI does not replace the goal or the `x`.

@@ -3,8 +3,8 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .cadence import cadence_of, due_date, until_date, weekday_names
-from .index import after_slug, clock_of
+from .cadence import cadence_of, do_on_date, until_date, weekday_names
+from .index import clocks_of
 from .config import (
     ALL_TYPES,
     CADENCE_KINDS,
@@ -18,7 +18,9 @@ from .config import (
     UNIQUE_STATUSES,
     UNIQUE_TYPES,
     WEEKDAYS,
+    daily_dir,
     projects_dir,
+    schedule_dir,
     user_dir,
 )
 from .taskio import iter_task_files
@@ -32,6 +34,7 @@ def validate(root: Path) -> list[str]:
     errors.extend(_validate_tasks(root))
     errors.extend(_validate_projects(root))
     errors.extend(_validate_links(root))
+    errors.extend(_validate_layout(root))
     return errors
 
 
@@ -42,52 +45,13 @@ def _validate_common(task) -> list[str]:
         errors.append(f"{task.path}: missing infinitive")
     if task.data.get("times") is not None:
         errors.append(f"{task.path}: times is not a field")
-    has_in = task.data.get("do_in") not in (None, "", False)
-    has_after = task.data.get("do_after") not in (None, "", False)
-    if has_in and has_after:
-        errors.append(f"{task.path}: do_in and do_after are exclusive")
-    if has_in:
-        try:
-            clock_of(task.data)
-        except ValueError:
-            errors.append(f"{task.path}: invalid do_in")
-    return errors
-
-
-def _forbid_placement(task) -> list[str]:
-    if task.data.get("do_in") not in (None, "", False) or task.data.get("do_after") not in (
-        None,
-        "",
-        False,
-    ):
-        return [f"{task.path}: undefined due has no do_in or do_after"]
-    return []
-
-
-def _validate_after_graph(tasks) -> list[str]:
-    errors: list[str] = []
-    by_slug = {task.slug: task for task in tasks}
-    color: dict[str, int] = {}
-
-    def walk(slug: str) -> None:
-        state = color.get(slug, 0)
-        if state == 1:
-            errors.append(f"do_after cycle at {slug}")
-            return
-        if state == 2:
-            return
-        color[slug] = 1
-        task = by_slug.get(slug)
-        parent = after_slug(task.data) if task else None
-        if parent:
-            if parent not in by_slug:
-                errors.append(f"{task.path}: do_after missing slug {parent!r}")
-            else:
-                walk(parent)
-        color[slug] = 2
-
-    for slug in by_slug:
-        walk(slug)
+    for key in ("do_in", "do_after", "due"):
+        if key in task.data:
+            errors.append(f"{task.path}: {key} is not a field")
+    try:
+        clocks_of(task.data)
+    except ValueError:
+        errors.append(f"{task.path}: invalid do_at")
     return errors
 
 
@@ -123,8 +87,10 @@ def _validate_tasks(root: Path) -> list[str]:
             if t == "unique-project":
                 if not task.data.get("project") or not task.data.get("phase"):
                     errors.append(f"{task.path}: unique-project needs project and phase")
-            if due_date(task.data) is None:
-                errors.extend(_forbid_placement(task))
+            if st == "pending" and do_on_date(task.data) is None:
+                errors.append(f"{task.path}: pending unique needs do_on")
+            if st == "paused" and do_on_date(task.data) is not None:
+                errors.append(f"{task.path}: paused unique has no do_on")
             continue
         if t in RECURRING_TYPES:
             if st not in RECURRING_STATUSES:
@@ -135,23 +101,26 @@ def _validate_tasks(root: Path) -> list[str]:
                 errors.append(f"{task.path}: live recurring needs status ongoing")
             if task.data.get("start") is not None:
                 errors.append(f"{task.path}: recurring has no start")
-            if st == "pending" and due_date(task.data) is None:
-                errors.extend(_forbid_placement(task))
+            if st == "pending" and do_on_date(task.data) is None:
+                errors.append(f"{task.path}: pending recurring needs do_on")
+            if st == "paused" and do_on_date(task.data) is not None:
+                errors.append(f"{task.path}: paused recurring has no do_on")
             errors.extend(_validate_recurrence(task.path, task.data, t))
             continue
         if t == "maintenance":
             if st not in MAINTENANCE_STATUSES:
                 errors.append(f"{task.path}: invalid maintenance status {st!r}")
-            if task.folder not in {"ongoing", "canceled"}:
-                errors.append(f"{task.path}: maintenance lives in ongoing/ or canceled/")
-            if task.data.get("start") is not None or task.data.get("due") is not None:
-                errors.append(f"{task.path}: maintenance has no start or due")
+            if task.folder not in {"ongoing", "paused", "canceled"}:
+                errors.append(
+                    f"{task.path}: maintenance lives in ongoing/, paused/, or canceled/"
+                )
+            if task.data.get("start") is not None or task.data.get("do_on") is not None:
+                errors.append(f"{task.path}: maintenance has no start or do_on")
             if until_date(task.data) is not None or (
                 task.data.get("until_event") not in (None, "", False)
             ):
                 errors.append(f"{task.path}: maintenance has no until")
             errors.extend(_validate_recurrence(task.path, task.data, t))
-    errors.extend(_validate_after_graph(tasks))
     return errors
 
 
@@ -233,6 +202,8 @@ def _validate_projects(root: Path) -> list[str]:
                 errors.append(f"missing project hub {hub}")
                 continue
             data, _body = split_frontmatter(hub.read_text(encoding="utf-8"))
+            if "due" in data:
+                errors.append(f"{hub}: due is not a field")
             st = str(data.get("status") or "").strip()
             if st and st != status:
                 errors.append(f"{hub}: status {st!r} != folder {status}")
@@ -243,6 +214,8 @@ def _validate_projects(root: Path) -> list[str]:
                     pdata, pbody = split_frontmatter(
                         phase_path.read_text(encoding="utf-8")
                     )
+                    if "due" in pdata:
+                        errors.append(f"{phase_path}: due is not a field")
                     pst = str(pdata.get("status") or "").strip()
                     if pst and pst not in PHASE_STATUSES:
                         errors.append(f"{phase_path}: invalid phase status {pst!r}")
@@ -261,6 +234,38 @@ def _validate_projects(root: Path) -> list[str]:
                                 )
                     _ = pbody
     return errors
+
+
+_OLD_YEAR = re.compile(r"^\d{4}$")
+_OLD_MONTH = re.compile(r"^\d{2}$")
+
+
+def _validate_layout(root: Path) -> list[str]:
+    """Leftover day files and `YYYY/MM.md` paths from before the YYYY-MM layout."""
+    errors: list[str] = []
+    for base, kind in ((daily_dir(root), "daily"), (schedule_dir(root), "schedule")):
+        if not base.is_dir():
+            continue
+        for year_dir in sorted(path for path in base.iterdir() if path.is_dir()):
+            if not _OLD_YEAR.match(year_dir.name):
+                continue
+            for child in sorted(year_dir.iterdir()):
+                if child.is_dir() and _OLD_MONTH.match(child.name):
+                    errors.append(f"{_display(root, child)}: old {kind} month folder")
+                elif (
+                    child.is_file()
+                    and child.suffix == ".md"
+                    and _OLD_MONTH.match(child.stem)
+                ):
+                    errors.append(f"{_display(root, child)}: old {kind} path")
+    return errors
+
+
+def _display(root: Path, path: Path) -> str:
+    try:
+        return path.resolve().relative_to(root.resolve()).as_posix()
+    except ValueError:
+        return path.as_posix()
 
 
 def _validate_links(root: Path) -> list[str]:

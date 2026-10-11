@@ -22,11 +22,11 @@ AOS_ROOT={root}
 
 1. Installs the calendar crontab.
 2. Snapshots leftover `[x]` in `tasks.md`.
-3. Closes each day without a daily, up to yesterday (no daily at all: yesterday only). Those days do not get credit for the `[x]`.
+3. Closes each day without a closed daily, up to yesterday (no closed daily at all: yesterday only). A placeholder hour table is not closed. Those days do not get credit for the `[x]`. Closed schedule columns stay.
 4. Applies leftover `[x]` as **today**.
 5. Reindexes today and starts `watch` if it is dead.
 
-No daily under `user/`: close yesterday only, not the whole history.
+No closed daily under `user/`: close yesterday only, not the whole history. The month grid is kept.
 
 Commands (from the repo root):
 

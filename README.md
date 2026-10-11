@@ -34,6 +34,9 @@ scripts/aos watch
 scripts/aos watch --loop
 scripts/aos sync
 scripts/aos daily-close          # optional YYYY-MM-DD
+scripts/aos migrate --dry-run    # optional today YYYY-MM-DD
+scripts/aos migrate              # optional today YYYY-MM-DD
+scripts/aos migrate-layout       # optional today YYYY-MM-DD
 scripts/aos validate
 scripts/aos up
 scripts/aos up --quiet
