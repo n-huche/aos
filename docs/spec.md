@@ -136,7 +136,7 @@ No `ongoing` status for uniques. No `completed` or `obsolete` for maintenance. N
 - After it is `ongoing`, `do_on` stays the next occurrence. It moves only on `[x]`, from that scheduled day. A missed day does not move it. The task stays overdue and the daily fails each day until the check. `cadence.anchor` is not rewritten.
 - If the next cadence day would pass `until`, the series completes instead of advancing. `until_event` is not a date. Close does not invent the end.
 - An ongoing series that still has no `do_on` (it was already live) keeps the cadence clock: at most today and the next cadence day. It does not pause for lack of a date.
-- Passed `do_on` still open: **Overdue**. The daily fails each day it stays open. Checking the Overdue line is allowed and advances exactly one occurrence. The line comes back, still unchecked, while `do_on` is still before today, so the gap can be closed the same day. `done_on` records the check day, not the missed day.
+- Passed `do_on` still open: **Overdue**. The daily fails each day it stays open. The index stacks one line per cadence day from `do_on` through the last one before today. Each `[x]` clears exactly one occurrence and advances `do_on` one cadence step from that scheduled day, never from today. The remaining lines come back unchecked the same day, so the gap can be closed then. `done_on` records the check day, not the missed day.
 - Doing it before `do_on` counts as done, writes no failure on `do_on`, and frees that window.
 - `maintenance`: cadence; no `do_on`, no `until`. Status: `ongoing` · `paused` · `canceled`. It does not pause for lack of a date. Pause is explicit. It does not complete and does not become obsolete.
 
@@ -216,7 +216,7 @@ A folder may exist with only a note. Links `[text](relative)` — never wiki lin
 
 Two gits, one disk. This law (`scripts/`, `docs/`) is the public repo; `origin` = `https://github.com/n-huche/aos.git`. Life (`user/`) is a **nested** git at `user/.git` — a private repo, not a submodule, not `AOS_ROOT`. The public clone gitignores `/user/` and does not ship real projects/tasks. On disk the root still needs `user/`: clone your private user repository into `user/`, or mkdir the empty tree from this § 3.
 
-`sync_vault`: one helper for every AOS add, commit, pull, and push. `reindex`, `daily-close`, `watch`, and catch-up call it. None of them run git themselves. If `user/.git` exists, the helper uses that repo. Otherwise (test fixtures) the parent runs `git add user`. Inside an exclusive `flock` on `.git/aos-sync.lock` (about 30 seconds to acquire it): if the vault has no file changes, do not commit; if it does, `git add` and `git commit` with the identity already configured in that repo. Do not set or change `user.name` or `user.email`. The message names the command: `aos reindex`, `aos daily-close YYYY-MM-DD`. Then `git pull --rebase` and `git push`, up to 3 times with a short backoff. A push that fails at the end leaves the local commit, prints the error on stderr, and does not fail the command; the next sync pushes it. A rebase conflict runs `git rebase --abort` and warns, and does not force. `--no-commit` on `reindex` and `daily-close` skips the helper. Git never prompts (`GIT_TERMINAL_PROMPT=0`). While another process holds `index.lock`, add and commit wait and retry for about 10 seconds. `aos watch` calls the same helper again every 10 minutes so a commit left behind still goes out. Parent `.gitignore`: `.obsidian/`, `__pycache__/`, `.DS_Store`, `logs/`, `/user/`. Do not change `git config`.
+`sync_vault`: one helper for every AOS add, commit, pull, and push. `reindex`, `daily-close`, `watch`, and catch-up call it. None of them run git themselves. If `user/.git` exists, the helper uses that repo. Otherwise (test fixtures) the parent runs `git add user`. Inside an exclusive `flock` on `.git/aos-sync.lock` (about 30 seconds to acquire it): if the vault has no file changes, do not commit; if it does, `git add` and `git commit` with the identity already configured in that repo. Do not set or change `user.name` or `user.email`. The message names the command: `aos reindex`, `aos daily-close YYYY-MM-DD`. Then `git pull --rebase` and `git push`, up to 3 times with a short backoff. A push that fails at the end leaves the local commit, prints the error on stderr, and does not fail the command; the next sync pushes it. A rebase conflict runs `git rebase --abort` and warns, and does not force. `--no-commit` on `reindex` and `daily-close` skips the helper. Git never prompts (`GIT_TERMINAL_PROMPT=0`). While another process holds `index.lock`, add and commit wait and retry for about 10 seconds. `aos watch` calls the same helper again every 10 minutes so a commit left behind still goes out. The checkbox pass (`reindex` and `watch`) takes this same lock before it reads `tasks.md` and holds it through the rewrite. It re-reads the file under the lock, so a box already cleared is not applied again. `sync_vault` does not flock a second time when that pass already holds the lock. Parent `.gitignore`: `.obsidian/`, `__pycache__/`, `.DS_Store`, `logs/`, `/user/`. Do not change `git config`.
 
 ---
 
@@ -271,7 +271,7 @@ cadence:
 
 `status: pending` while unstarted and dated (folder `pending/`). `status: ongoing` while live (folder `ongoing/`). `status: paused` with no `do_on`.
 
-`do_on` on a live series is the next occurrence. One `[x]` records today in `done_on` and moves `do_on` to the next cadence day after the scheduled one. A check on that scheduled day also records `completed_at` (`YYYY-MM-DDTHH:MM`, `America/Sao_Paulo`). A recurring-project records it on every check. There is no intra-day quota. Several clocks are one index line, at the first `do_at` in the order written, and one grid cell per clock for that same occurrence. `done_on` holds at most that open day. On daily-close of D, D is removed. A later date stays. The history of the day lives in `daily/`.
+`do_on` on a live series is the next occurrence. While it is before today, the index stacks one line per cadence day from `do_on` through the last one before today. One `[x]` records today in `done_on` and moves `do_on` one cadence step after the scheduled day, never after today. A check on that scheduled day also records `completed_at` (`YYYY-MM-DDTHH:MM`, `America/Sao_Paulo`). A recurring-project records it on every check. There is no intra-day quota. Several clocks are one index line, at the first `do_at` in the order written, and one grid cell per clock for that same occurrence. `done_on` holds at most that open day. On daily-close of D, D is removed. A later date stays. The history of the day lives in `daily/`.
 
 ### 4.2.1 Maintenance
 
@@ -364,7 +364,7 @@ Paused tasks are absent.
 
 Unique and unstarted recurring: one line, on `do_on`. `do_on < today` → Overdue. Else the bucket of `delta = do_on - today`. No `do_on` → paused, not indexed.
 
-Live recurring **with** `do_on`: one line, on that date, including when today is already in `done_on`. That is what lets an overdue series be checked again the same day.
+Live recurring **with** `do_on`: if `do_on` is today or later, one line on that date, including when today is already in `done_on`. If `do_on` is before today, one line per cadence day from `do_on` through the last cadence day before today, all in Overdue. That stack is what lets the gap be checked one occurrence at a time on the same day.
 
 Live recurring **without** `do_on`, and maintenance: at most two lines:
 
@@ -492,7 +492,7 @@ Watch: inotify or poll ≤2 s on `user/tasks/tasks.md`. On a change, it runs `re
 
 `reindex` reads `tasks.md` before it rewrites the file. Walk top to bottom. A line `## …` sets the current section. `###` does not. Each `- [x]` or `- [X]` inherits that section.
 
-One pass, rules in this order. One line is one check. A repeated line for the same task is still one check.
+One pass, rules in this order. One line is one check. Several clocks are still one line, so they are one check. A late series stacks one line per missed cadence day, and each of those lines is its own check. The pass holds `.git/aos-sync.lock` from the read of `tasks.md` through the rewrite (§ 3). After the lock it reads the file again. A box that is no longer `[x]` is not applied.
 
 1. An `[x]` whose href is `ongoing/` **maintenance**, or a live recurring that has **no** `do_on`, and the section **≠** `Today` → **forbidden**: the line goes back to `[ ]`. Do not touch `done_on`.
 2. An `[x]` `ongoing/` maintenance or dateless live recurring in **Today** → § 6.2.
@@ -518,7 +518,7 @@ Live recurring **with** `do_on` (Today, Overdue, or a later bucket):
 2. Next = the first cadence day **after** the scheduled `do_on`, ignoring `done_on`.
 3. If that next day would pass `until`, or `do_on` is already the `until` day: `status: completed`, move to `completed/`.
 4. Otherwise set `do_on` to that next day. The file stays `ongoing/`.
-5. While the new `do_on` is still before today, reindex puts the line back in Overdue, unchecked.
+5. While cadence days from the new `do_on` are still before today, reindex stacks one unchecked Overdue line per remaining day.
 
 First `[x]` on a `pending` recurring, any section:
 

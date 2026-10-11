@@ -4,6 +4,7 @@ import fcntl
 import os
 import subprocess
 import sys
+import threading
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
@@ -17,6 +18,9 @@ SYNC_BACKOFF_S = 0.4
 INDEX_LOCK_TRIES = 6
 INDEX_LOCK_WAIT_S = 2.0
 PUSH_TIMEOUT_S = 120
+
+# flock is not recursive across file descriptors. This thread already holds it.
+_held_lock = threading.local()
 
 
 def _env() -> dict[str, str]:
@@ -61,8 +65,20 @@ def _git_dir(root: Path) -> Path:
 
 @contextmanager
 def git_lock(root: Path, timeout: float = SYNC_LOCK_TIMEOUT_S) -> Iterator[None]:
-    """Exclusive lock for every AOS add, commit, pull, and push in this repo."""
-    path = _git_dir(root) / SYNC_LOCK_NAME
+    """Exclusive lock for checkbox passes and every AOS add, commit, pull, and push.
+
+    The same thread does not flock again. sync_vault runs inside the checkbox
+    pass, and a second flock on this file would deadlock.
+    """
+    if getattr(_held_lock, "fd", None) is not None:
+        _held_lock.depth += 1
+        try:
+            yield
+        finally:
+            _held_lock.depth -= 1
+        return
+    git_dir = _git_dir(root)
+    path = git_dir / SYNC_LOCK_NAME if git_dir.is_dir() else root / ".aos-sync.lock"
     fd = os.open(path, os.O_CREAT | os.O_RDWR, 0o644)
     try:
         deadline = time.monotonic() + timeout
@@ -76,9 +92,13 @@ def git_lock(root: Path, timeout: float = SYNC_LOCK_TIMEOUT_S) -> Iterator[None]
                         f"could not lock {path.name} within {timeout:.0f}s"
                     )
                 time.sleep(0.05)
+        _held_lock.fd = fd
+        _held_lock.depth = 1
         try:
             yield
         finally:
+            _held_lock.fd = None
+            _held_lock.depth = 0
             fcntl.flock(fd, fcntl.LOCK_UN)
     finally:
         os.close(fd)

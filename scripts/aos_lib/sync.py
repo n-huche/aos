@@ -217,6 +217,9 @@ def collect_checked(root: Path) -> dict[str, list[str]]:
             if task.type in UNIQUE_TYPES:
                 report["unique"].append(slug)
     for key in report:
+        # Each stacked Overdue line is one occurrence. Do not collapse them.
+        if key == "recurring":
+            continue
         report[key] = _dedupe(report[key])
     return report
 
@@ -236,6 +239,8 @@ def apply_report(root: Path, report: dict[str, list[str]], today: date) -> None:
     for slug in report["recurring"]:
         task = load_by_slug(root, slug)
         if task is None:
+            continue
+        if task.status == "completed":
             continue
         mark_series_today(root, task, today)
 
