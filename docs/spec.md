@@ -202,7 +202,7 @@ aos/                        # repo root (wherever it lives)
       YYYY/MM.md            # month rollup of closed days
     research/
     schedule/
-      YYYY/MM.md            # one row per hour, one column per day; closed days frozen
+      YYYY/YYYY-MM.md       # one row per hour, one column per day; closed days frozen
     vocabulary.md           # hour labels the user maintains; scripts do not require it
 ```
 
@@ -457,7 +457,7 @@ The phrase `Sem horário` is fixed, as are the four block names. Scripts do not 
 
 ### 5.5 Schedule
 
-`user/schedule/YYYY/MM.md`. One row per hour `00:00`–`23:00`. One column per day of that month, headed `1 - thu`, `2 - fri`, and so on. The file is created when some task has a date in that month. It is derived from `do_on`, `do_at`, and cadence. There is no `routine-base.md` and no `routine.md`.
+`user/schedule/YYYY/YYYY-MM.md` (October 2026 is `user/schedule/2026/2026-10.md`). One row per hour `00:00`–`23:00`. One column per day of that month, headed `1 - thu`, `2 - fri`, and so on. The file is created when some task has a date in that month. It is derived from `do_on`, `do_at`, and cadence. There is no `routine-base.md` and no `routine.md`. There is no per-day file under `schedule/`.
 
 A cell is a window. Empty is the literal `null`. A project task shows the project H1. Anything else shows `infinitive`. Several tasks in the same day and hour are comma-separated. A clock with minutes falls in the full hour (`07:30` → `07:00`). A task with no `do_at` is off the grid. Paused, completed, canceled, and obsolete tasks are off the open grid.
 

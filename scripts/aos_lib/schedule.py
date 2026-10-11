@@ -20,7 +20,7 @@ _HEADER_DAY = re.compile(r"^(\d{1,2})\s*-\s*[a-z]{3}$")
 
 
 def month_path(root: Path, year: int, month: int) -> Path:
-    return schedule_dir(root) / f"{year:04d}" / f"{month:02d}.md"
+    return schedule_dir(root) / f"{year:04d}" / f"{year:04d}-{month:02d}.md"
 
 
 def _on_grid(task) -> bool:
@@ -172,16 +172,21 @@ def render_month(year: int, month: int, cells: dict[int, dict[int, str]]) -> str
     return "\n".join(lines)
 
 
+_MONTH_STEM = re.compile(r"^(\d{4})-(\d{2})$")
+
+
 def _existing_months(root: Path) -> set[tuple[int, int]]:
     found: set[tuple[int, int]] = set()
     base = schedule_dir(root)
     if not base.is_dir():
         return found
     for path in base.glob("*/*.md"):
-        try:
-            found.add((int(path.parent.name), int(path.stem)))
-        except ValueError:
+        match = _MONTH_STEM.match(path.stem)
+        if not match or match.group(1) != path.parent.name:
             continue
+        year, month = int(match.group(1)), int(match.group(2))
+        if 1 <= month <= 12:
+            found.add((year, month))
     return found
 
 

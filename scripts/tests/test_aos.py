@@ -709,7 +709,7 @@ do
         """Closed columns stay. daily-close does not delete the month grid."""
         write_unique(self.root, "send", "Send", "2026-09-16", do_at="07:30")
         self.aos("reindex", today="2026-09-16")
-        month = self.root / "user/schedule/2026/09.md"
+        month = self.root / "user/schedule/2026/2026-09.md"
         self.assertTrue(month.is_file())
         self.assertIn("Send", month.read_text(encoding="utf-8"))
         self.aos("daily-close", "2026-09-15", today="2026-09-16")
@@ -842,7 +842,7 @@ c
         self.aos("sync")
         from aos_lib.schedule import parse_month
 
-        month = self.root / "user/schedule/2026/09.md"
+        month = self.root / "user/schedule/2026/2026-09.md"
         cells = parse_month(month.read_text(encoding="utf-8"))
         self.assertNotIn("Send", cells[16][8])
         self.assertIn("Keep", cells[20][8])
@@ -1411,7 +1411,7 @@ z
         from aos_lib.schedule import parse_month
 
         cells = parse_month(
-            (self.root / "user/schedule/2026/09.md").read_text(encoding="utf-8")
+            (self.root / "user/schedule/2026/2026-09.md").read_text(encoding="utf-8")
         )
         self.assertEqual(cells[16][7], "Split")
         self.assertEqual(cells[16][18], "Split")
@@ -1430,7 +1430,7 @@ z
         from aos_lib.schedule import parse_month
 
         cells = parse_month(
-            (self.root / "user/schedule/2026/09.md").read_text(encoding="utf-8")
+            (self.root / "user/schedule/2026/2026-09.md").read_text(encoding="utf-8")
         )
         self.assertEqual(cells[18][8], "null")
         self.aos("daily-close", "2026-09-18", today="2026-09-19")
