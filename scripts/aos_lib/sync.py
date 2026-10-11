@@ -4,11 +4,19 @@ import re
 from datetime import date
 from pathlib import Path
 
-from .cadence import day_complete, until_date
-from .config import RECURRING_TYPES, SECTION_TODAY, SERIES_TYPES, UNIQUE_TYPES, today as today_fn
+from datetime import timedelta
+
+from .cadence import day_complete, do_on_date, next_cadence_date, until_date
+from .config import (
+    RECURRING_TYPES,
+    SECTION_TODAY,
+    SERIES_TYPES,
+    UNIQUE_TYPES,
+    today as today_fn,
+)
 from .gitutil import commit_user, push_or_warn
 from .index import reindex
-from .links import drop_from_schedule, folder_from_href, rewrite_task_links
+from .links import folder_from_href, rewrite_task_links
 from .taskio import TaskFile, load_by_slug, move_task
 from .yamlfm import as_date_list
 
@@ -53,36 +61,70 @@ def complete_unique(root: Path, task: TaskFile, day: date) -> None:
     task.save()
     if old != "completed":
         move_task(task, "completed", root)
-        drop_from_schedule(root, task.slug)
         rewrite_task_links(root, task.slug, old, "completed")
 
 
+def _move_status(root: Path, task: TaskFile, folder: str) -> None:
+    task.data["status"] = folder if folder != "ongoing" else "ongoing"
+    if folder == "completed":
+        task.data["status"] = "completed"
+    task.save()
+    old = task.folder
+    if old != folder:
+        move_task(task, folder, root)
+        rewrite_task_links(root, task.slug, old, folder)
+
+
+def _advance_do_on(task: TaskFile, day: date) -> bool:
+    """Record the check. Move do_on to the next cadence day after the scheduled one.
+
+    Returns True when the series is finished (the next day would pass until).
+    A series with no do_on keeps the cadence clock and finishes only on until == day.
+    """
+    _mark_done_on(task, day)
+    scheduled = do_on_date(task.data)
+    until = until_date(task.data)
+    if scheduled is None:
+        return bool(task.type in RECURRING_TYPES and until == day and day_complete(task.data, day))
+    if until is not None and scheduled >= until:
+        return True
+    nxt = next_cadence_date(task.data, scheduled + timedelta(days=1))
+    if nxt is None or (until is not None and nxt > until):
+        if until is not None:
+            return True
+        return False
+    task.data["do_on"] = nxt
+    return False
+
+
 def mark_series_today(root: Path, task: TaskFile, day: date) -> None:
+    if task.type in RECURRING_TYPES and do_on_date(task.data) is not None:
+        finished = _advance_do_on(task, day)
+        if finished:
+            _move_status(root, task, "completed")
+        else:
+            task.save()
+        return
     _mark_done_on(task, day)
     until = until_date(task.data)
     if task.type in RECURRING_TYPES and until == day and day_complete(task.data, day):
-        task.data["status"] = "completed"
-        task.save()
-        old = task.folder
-        if old != "completed":
-            move_task(task, "completed", root)
-            rewrite_task_links(root, task.slug, old, "completed")
+        _move_status(root, task, "completed")
     else:
         task.save()
 
 
 def start_recurring(root: Path, task: TaskFile, day: date) -> None:
-    """First check begins the series. Counts as done that day, in any section."""
-    _mark_done_on(task, day)
+    """First check begins the series, in any section, and advances do_on."""
+    finished = _advance_do_on(task, day)
+    if finished:
+        _move_status(root, task, "completed")
+        return
     task.data["status"] = "ongoing"
     task.save()
     old = task.folder
     if old != "ongoing":
         move_task(task, "ongoing", root)
         rewrite_task_links(root, task.slug, old, "ongoing")
-    until = until_date(task.data)
-    if until == day:
-        mark_series_today(root, task, day)
 
 
 def finish_recurring_until(root: Path, task: TaskFile) -> None:
@@ -92,6 +134,31 @@ def finish_recurring_until(root: Path, task: TaskFile) -> None:
     if old != "completed":
         move_task(task, "completed", root)
         rewrite_task_links(root, task.slug, old, "completed")
+
+
+def _dedupe(items: list[str]) -> list[str]:
+    seen: set[str] = set()
+    out: list[str] = []
+    for item in items:
+        if item in seen:
+            continue
+        seen.add(item)
+        out.append(item)
+    return out
+
+
+def _ongoing_check_allowed(task: TaskFile, section: str) -> bool:
+    """Maintenance and a dateless live series count only in Today.
+
+    A live recurring with do_on counts in any section: Today when the day
+    is here, Overdue while catching up, and a later bucket when he does it
+    early. Each check advances one scheduled occurrence.
+    """
+    if task.type not in SERIES_TYPES:
+        return False
+    if task.type in RECURRING_TYPES and do_on_date(task.data) is not None:
+        return True
+    return section == SECTION_TODAY
 
 
 def collect_checked(root: Path) -> dict[str, list[str]]:
@@ -113,16 +180,14 @@ def collect_checked(root: Path) -> dict[str, list[str]]:
         folder, slug = folder_from_href(href)
         if not folder or not slug:
             continue
-        if folder == "ongoing" and section != SECTION_TODAY:
-            report["reverted"].append(slug)
-            continue
         task = load_by_slug(root, slug)
         if task is None:
             continue
-        if folder == "ongoing" and section == SECTION_TODAY:
-            if task.type not in SERIES_TYPES:
-                continue
-            report["recurring"].append(slug)
+        if folder == "ongoing":
+            if _ongoing_check_allowed(task, section):
+                report["recurring"].append(slug)
+            else:
+                report["reverted"].append(slug)
             continue
         if folder == "pending":
             if task.type in RECURRING_TYPES:
@@ -130,6 +195,8 @@ def collect_checked(root: Path) -> dict[str, list[str]]:
                 continue
             if task.type in UNIQUE_TYPES:
                 report["unique"].append(slug)
+    for key in report:
+        report[key] = _dedupe(report[key])
     return report
 
 

@@ -1,9 +1,8 @@
 ---
 type: maintenance
-status: ongoing              # ongoing | canceled
+status: ongoing              # ongoing | paused | canceled
+do_at: ["06:00"]             # one or more HH:MM; omit when there is no hour
 infinitive: Do the thing
-# do_in: "06:00"             # XOR do_after
-# do_after: other-task
 done_on: []
 cadence:
   kind: daily                # daily | weekdays | interval | month-weekday

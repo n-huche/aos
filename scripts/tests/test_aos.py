@@ -36,9 +36,11 @@ def init_aos(root: Path) -> None:
         "user/projects/canceled",
         "user/tasks/pending",
         "user/tasks/ongoing",
+        "user/tasks/paused",
         "user/tasks/completed",
         "user/tasks/obsolete",
         "user/tasks/canceled",
+        "user/projects/paused",
         "user/daily",
         "user/research",
         "user/schedule",
@@ -75,16 +77,18 @@ def write_unique(
     folder: str = "pending",
     status: str = "pending",
     completed_on: str | None = None,
+    do_at: str | None = None,
 ) -> Path:
     due_s = "null" if due is None else due
     completed_s = "null" if completed_on is None else completed_on
+    clock = f'\ndo_at: ["{do_at}"]' if do_at else ""
     path = root / "user" / "tasks" / folder / f"{slug}.md"
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(
         f"""---
 type: unique-independent
 status: {status}
-due: {due_s}
+do_on: {due_s}{clock}
 completed_on: {completed_s}
 infinitive: {title}
 ---
@@ -136,9 +140,9 @@ def write_recurring(
         f"infinitive: {title}",
     ]
     if due is None:
-        lines.append("due: null")
+        lines.append("do_on: null")
     else:
-        lines.append(f"due: {due}")
+        lines.append(f"do_on: {due}")
     if until is not None:
         lines.append(f"until: {until}")
     if until_event is not None:
@@ -197,7 +201,6 @@ def write_project(
     path.write_text(
         f"""---
 status: {status}
-due: null
 prefix: {prefix}
 ---
 
@@ -306,7 +309,6 @@ class AOSTest(unittest.TestCase):
                 "4-7 days",
                 "8-30 days",
                 "+30 days",
-                "Undefined",
             ],
         )
         self.assertIn("pending/overdue-one.md", section_items(text, "Overdue")[0])
@@ -315,8 +317,11 @@ class AOSTest(unittest.TestCase):
         self.assertIn("pending/week-one.md", section_items(text, "4-7 days")[0])
         self.assertIn("pending/month-one.md", section_items(text, "8-30 days")[0])
         self.assertIn("pending/later-one.md", section_items(text, "+30 days")[0])
-        self.assertIn("pending/open-one.md", section_items(text, "Undefined")[0])
+        self.assertFalse((self.root / "user/tasks/pending/open-one.md").exists())
+        self.assertTrue((self.root / "user/tasks/paused/open-one.md").is_file())
+        self.assertNotIn("open-one", text)
         self.assertNotIn("## 2-3 days", text)
+        self.assertNotIn("## Undefined", text)
 
     def test_daily_cadence(self) -> None:
         write_recurring(
@@ -365,13 +370,16 @@ class AOSTest(unittest.TestCase):
         )
         self.aos("reindex")
         text = self.tasks_md()
-        self.assertEqual(headings(text), ["Undefined"])
-        self.assertIn("pending/habit.md", section_items(text, "Undefined")[0])
+        self.assertEqual(text.strip(), "# Tasks")
+        self.assertFalse((self.root / "user/tasks/pending/habit.md").exists())
+        self.assertTrue((self.root / "user/tasks/paused/habit.md").is_file())
         self.assertFalse((self.root / "user/tasks/ongoing/habit.md").exists())
         self.aos("daily-close", "2026-09-16", today="2026-09-17")
         daily = (self.root / "user/daily/2026/09/16.md").read_text(encoding="utf-8")
-        self.assertIn("**Result:** satisfactory", daily)
+        self.assertIn("| routine | tasks |", daily)
+        self.assertIn("| null | null |", daily)
         self.assertNotIn("## Failed tasks", daily)
+        self.assertNotIn("**Result:**", daily)
 
     def test_first_check_starts_recurring(self) -> None:
         write_recurring(
@@ -398,6 +406,7 @@ class AOSTest(unittest.TestCase):
         data, _body = split_frontmatter(path.read_text(encoding="utf-8"))
         self.assertEqual(str(data.get("status")), "ongoing")
         self.assertEqual([d.isoformat() for d in data.get("done_on") or []], [TODAY])
+        self.assertEqual(data.get("do_on").isoformat(), "2026-09-17")
         self.assertNotIn("## Today", self.tasks_md())
 
     def test_pending_due_is_not_the_cadence(self) -> None:
@@ -426,11 +435,11 @@ class AOSTest(unittest.TestCase):
             until="2026-12-01",
             folder="pending",
             status="pending",
-            due=None,
+            due="2026-11-01",
         )
         write_unique(self.root, "one", "One unique", "2026-09-16")
         self.aos("reindex")
-        text = mark_section(self.tasks_md(), "Undefined")
+        text = mark_section(self.tasks_md(), "+30 days")
         (self.root / "user/tasks/tasks.md").write_text(text, encoding="utf-8")
         self.aos("sync")
         self.assertFalse((self.root / "user/tasks/pending/habit.md").exists())
@@ -525,7 +534,9 @@ do
         )
         self.aos("daily-close", "2026-09-16", today="2026-09-17")
         daily = (self.root / "user/daily/2026/09/16.md").read_text(encoding="utf-8")
-        self.assertIn("**Result:** satisfactory", daily)
+        self.assertIn("| null | 100% |", daily)
+        self.assertNotIn("**Result:**", daily)
+        self.assertNotIn("## Failed tasks", daily)
         self.assertIn("ongoing/water.md", daily)
         data, _body = split_frontmatter(
             (self.root / "user/tasks/ongoing/water.md").read_text(encoding="utf-8")
@@ -634,7 +645,7 @@ do
         data, _body = split_frontmatter(new.read_text(encoding="utf-8"))
         self.assertEqual(str(data.get("status")), "completed")
         self.assertEqual(data.get("completed_on").isoformat(), TODAY)
-        self.assertEqual(data.get("due").isoformat(), "2026-09-18")
+        self.assertEqual(data.get("do_on").isoformat(), "2026-09-18")
         log = _git(self.root, "log", "-1", "--pretty=%s")
         self.assertEqual(log.stdout.strip(), "aos: sync tasks")
         self.assertNotIn("send-email", self.tasks_md())
@@ -685,22 +696,37 @@ do
         data, _body = split_frontmatter(completed.read_text(encoding="utf-8"))
         self.assertEqual(str(data.get("status")), "completed")
         daily = (self.root / "user/daily/2026/09/15.md").read_text(encoding="utf-8")
-        self.assertIn("**Result:** failure", daily)
+        self.assertIn("| null | 0% |", daily)
+        self.assertNotIn("**Result:**", daily)
         self.assertIn("## Failed tasks", daily)
         self.assertIn("completed/cycle.md", daily)
+        self.assertTrue((self.root / "user/schedule/2026/09/15.md").is_file())
+        self.assertTrue((self.root / "user/schedule/2026/09/16.md").is_file())
         log = _git(self.root, "log", "-1", "--pretty=%s")
         self.assertEqual(log.stdout.strip(), "aos: daily-close 2026-09-15")
 
     def test_past_schedule_removed(self) -> None:
-        sched = self.root / "user/schedule"
-        (sched / "2026/09").mkdir(parents=True, exist_ok=True)
-        (sched / "2026/09/14.md").write_text("# 14\n", encoding="utf-8")
-        (sched / "2026/09/15.md").write_text("# 15\n", encoding="utf-8")
-        (sched / "2026/09/16.md").write_text("# 16\n", encoding="utf-8")
-        self.aos("daily-close", "2026-09-15")
-        self.assertFalse((sched / "2026/09/14.md").exists())
-        self.assertFalse((sched / "2026/09/15.md").exists())
-        self.assertTrue((sched / "2026/09/16.md").exists())
+        """Closed columns stay. daily-close does not delete the month grid."""
+        write_unique(self.root, "send", "Send", "2026-09-16", do_at="07:30")
+        self.aos("reindex", today="2026-09-16")
+        month = self.root / "user/schedule/2026/09.md"
+        self.assertTrue(month.is_file())
+        self.assertIn("Send", month.read_text(encoding="utf-8"))
+        self.aos("daily-close", "2026-09-15", today="2026-09-16")
+        frozen = month.read_text(encoding="utf-8")
+        from aos_lib.schedule import parse_month
+
+        self.assertEqual(parse_month(frozen)[16][7], "Send")
+        send = self.root / "user/tasks/pending/send.md"
+        text = send.read_text(encoding="utf-8").replace(
+            'do_at: ["07:30"]', 'do_at: ["09:00"]'
+        )
+        send.write_text(text, encoding="utf-8")
+        self.aos("reindex", today="2026-09-16")
+        after = parse_month(month.read_text(encoding="utf-8"))
+        self.assertEqual(parse_month(frozen)[15], after[15])
+        self.assertEqual(after[16][7], "null")
+        self.assertEqual(after[16][9], "Send")
 
     def test_validate_ok_and_xor(self) -> None:
         write_unique(self.root, "ok-u", "Ok unique", "2026-09-20")
@@ -748,7 +774,6 @@ cadence:
         (proj / "demo.md").write_text(
             """---
 status: ongoing
-due: null
 prefix: DE
 ---
 
@@ -771,7 +796,6 @@ g
         (proj / "phases/de-01-one.md").write_text(
             """---
 status: ongoing
-due: null
 project: demo
 depends_on: []
 ---
@@ -792,45 +816,37 @@ c
 """,
             encoding="utf-8",
         )
-        write_unique(self.root, "send", "Send", "2026-09-16")
+        path_send = write_unique(self.root, "send", "Send", "2026-09-16")
+        text_send = path_send.read_text(encoding="utf-8").replace(
+            "infinitive: Send",
+            "infinitive: Send\nproject: demo\nphase: de-01-one",
+        )
+        path_send.write_text(text_send, encoding="utf-8")
         self.aos("reindex")
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
         self.aos("sync")
-        phase = (proj / "phases/de-01-one.md").read_text(encoding="utf-8")
+        phase_path = (
+            self.root / "user/projects/completed/demo/phases/de-01-one.md"
+        )
+        phase = phase_path.read_text(encoding="utf-8")
         self.assertIn("tasks/completed/send.md", phase)
         self.assertNotIn("tasks/pending/send.md", phase)
 
     def test_unique_complete_drops_schedule(self) -> None:
-        write_unique(self.root, "send", "Send", "2026-09-16")
-        write_unique(self.root, "keep", "Keep", "2026-09-20")
-        sched = self.root / "user/schedule/2026/09"
-        sched.mkdir(parents=True, exist_ok=True)
-        (sched / "16.md").write_text(
-            """# 2026-09-16
-
-- [Send](../../../tasks/pending/send.md)
-- [Keep](../../../tasks/pending/keep.md)
-""",
-            encoding="utf-8",
-        )
-        (sched / "20.md").write_text(
-            """# 2026-09-20
-
-- [Send](../../../tasks/pending/send.md)
-""",
-            encoding="utf-8",
-        )
+        write_unique(self.root, "send", "Send", "2026-09-16", do_at="08:00")
+        write_unique(self.root, "keep", "Keep", "2026-09-20", do_at="08:00")
         self.aos("reindex")
         path = self.root / "user/tasks/tasks.md"
         path.write_text(mark_section(self.tasks_md(), "Today"), encoding="utf-8")
         self.aos("sync")
-        day16 = (sched / "16.md").read_text(encoding="utf-8")
-        self.assertNotIn("send.md", day16)
-        self.assertIn("keep.md", day16)
-        self.assertFalse((sched / "20.md").is_file())
-        phase_ok = self.root / "user/tasks/completed/send.md"
-        self.assertTrue(phase_ok.is_file())
+        from aos_lib.schedule import parse_month
+
+        month = self.root / "user/schedule/2026/09.md"
+        cells = parse_month(month.read_text(encoding="utf-8"))
+        self.assertNotIn("Send", cells[16][8])
+        self.assertIn("Keep", cells[20][8])
+        self.assertTrue((self.root / "user/tasks/completed/send.md").is_file())
 
     def test_watch_syncs_unique_checkbox(self) -> None:
         write_unique(self.root, "seen", "Seen", "2026-09-16")
@@ -953,12 +969,13 @@ c
             ["2026-09-16"],
         )
         daily = (self.root / "user/daily/2026/09/15.md").read_text(encoding="utf-8")
-        self.assertIn("**Result:** failure", daily)
+        self.assertIn("| null | 0% |", daily)
+        self.assertNotIn("**Result:**", daily)
         self.assertIn("## Failed tasks", daily)
         self.assertIn("send-email.md", daily)
         self.assertIn("ongoing/water.md", daily)
-        self.assertFalse((sched / "2026/09/15.md").exists())
-        self.assertTrue((sched / "2026/09/16.md").exists())
+        self.assertTrue((sched / "2026/09/15.md").is_file())
+        self.assertTrue((sched / "2026/09/16.md").is_file())
         text = self.tasks_md()
         self.assertNotIn("send-email", text)
         self.assertNotIn("## Today", text)
@@ -1017,9 +1034,9 @@ c
         d15 = (self.root / "user/daily/2026/09/15.md").read_text(encoding="utf-8")
         self.assertIn("## Failed tasks", d15)
         self.assertIn("letter.md", d15)
-        self.assertFalse((sched / "2026/09/14.md").exists())
-        self.assertFalse((sched / "2026/09/15.md").exists())
-        self.assertTrue((sched / "2026/09/16.md").exists())
+        self.assertTrue((sched / "2026/09/14.md").is_file())
+        self.assertTrue((sched / "2026/09/15.md").is_file())
+        self.assertTrue((sched / "2026/09/16.md").is_file())
 
     def test_nested_user_git_daily_close_does_not_commit_parent(self) -> None:
         (self.root / ".gitignore").write_text("/user/\n", encoding="utf-8")
@@ -1105,7 +1122,7 @@ project: job
 """,
             encoding="utf-8",
         )
-        write_unique(self.root, "other", "Other thing", None)
+        write_unique(self.root, "other", "Other thing", "2026-09-16")
         write_recurring(
             self.root,
             "habit",
@@ -1114,7 +1131,7 @@ project: job
             until_event="done",
             folder="pending",
             status="pending",
-            due=None,
+            due="2026-09-16",
             type_="recurring-project",
             project="job",
             phase="j-01-learn",
@@ -1124,7 +1141,7 @@ project: job
             """---
 type: unique-project
 status: pending
-due: null
+do_on: 2026-09-16
 completed_on: null
 infinitive: First step
 project: job
@@ -1148,7 +1165,7 @@ c
             encoding="utf-8",
         )
         self.aos("reindex")
-        items = section_items(self.tasks_md(), "Undefined")
+        items = section_items(self.tasks_md(), "Today")
         self.assertEqual(
             items,
             [
@@ -1193,37 +1210,39 @@ w
                 encoding="utf-8",
             )
 
-        write("wake", "Acordar", extra='do_in: "06:00"', cadence="  kind: daily", done="2026-09-24")
-        write("walk", "Caminhar", extra="do_after: wake", cadence="  kind: daily", done="2026-09-24")
+        write("wake", "Acordar", extra='do_at: ["06:00"]', cadence="  kind: daily", done="2026-09-24")
+        write("walk", "Caminhar", extra="", cadence="  kind: daily", done="2026-09-24")
         write(
             "breakfast",
             "Tomar café da manhã",
-            extra='do_in: "06:30"',
+            extra='do_at: ["06:30"]',
             cadence="  kind: daily",
             done="2026-09-24",
         )
         write(
             "video",
             "Postar vídeo",
-            extra="do_after: breakfast",
+            extra="",
             cadence="  kind: weekdays\n  days: [thu]",
             done="2026-09-24",
         )
         write(
             "lunch",
             "Almoçar",
-            extra='do_in: "12:00"',
+            extra='do_at: ["12:00"]',
             cadence="  kind: weekdays\n  days: [fri]",
             done="",
         )
         self.aos("reindex", today="2026-09-24")
         text = self.tasks_md()
         self.assertNotIn("\n\n\n", text)
-        self.assertIn("## 4-7 days\n\n### Depois de Tomar café da manhã\n\n- [ ] [Postar vídeo]", text)
+        self.assertIn("## 4-7 days\n\n### Sem horário\n\n- [ ] [Postar vídeo]", text)
         self.assertIn(
-            "- [ ] [Acordar](ongoing/wake.md)\n\n### Depois de Acordar\n\n- [ ] [Caminhar](ongoing/walk.md)\n",
+            "### Morning\n\n- [ ] [Acordar](ongoing/wake.md)\n- [ ] [Tomar café da manhã](ongoing/breakfast.md)",
             text,
         )
+        self.assertIn("### Afternoon\n\n- [ ] [Almoçar](ongoing/lunch.md)", text)
+        self.assertIn("### Sem horário\n\n- [ ] [Caminhar](ongoing/walk.md)", text)
 
     def test_same_section_joins_after_heading(self) -> None:
         ongoing = self.root / "user/tasks/ongoing"
@@ -1233,7 +1252,7 @@ w
 type: maintenance
 infinitive: Tomar café da manhã
 status: ongoing
-do_in: "06:30"
+do_at: ["06:30"]
 done_on: [2026-09-24]
 cadence:
   kind: daily
@@ -1256,9 +1275,8 @@ y
 type: recurring-independent
 infinitive: Fazer trabalhos da faculdade
 status: ongoing
-due: null
+do_on: null
 until_event: Eu me formar
-do_after: breakfast
 done_on: []
 cadence:
   kind: month-weekday
@@ -1287,8 +1305,7 @@ z
 type: unique-independent
 infinitive: Renovar documentos
 status: pending
-due: 2026-10-24
-do_after: breakfast
+do_on: 2026-10-24
 completed_on: null
 ---
 
@@ -1311,10 +1328,10 @@ z
         self.aos("reindex", today="2026-09-24")
         text = self.tasks_md()
         section = text.split("## 8-30 days", 1)[1].split("\n## ", 1)[0]
-        self.assertEqual(section.count("### Depois de Tomar café da manhã"), 1)
+        self.assertEqual(section.count("### Sem horário"), 1)
         self.assertNotIn(")\n\n- [ ]", section)
         self.assertIn(
-            "### Depois de Tomar café da manhã\n\n"
+            "### Sem horário\n\n"
             "- [ ] [Fazer trabalhos da faculdade](ongoing/college.md)\n"
             "- [ ] [Renovar documentos](pending/renew-documents.md)\n",
             text,
@@ -1325,40 +1342,188 @@ z
             [
                 [
                     "- [ ] [Acordar](ongoing/wake.md)",
-                    "",
-                    "### Depois de Acordar",
-                    "",
+                    "### Morning",
                     "- [ ] [Caminhar](ongoing/walk.md)",
                     "- [ ] [Tomar café da manhã](ongoing/breakfast.md)",
+                    "### Afternoon",
                     "- [ ] [Almoçar](ongoing/lunch.md)",
-                    "",
-                    "### Depois de Almoçar",
-                    "",
-                    "- [ ] [Jantar](ongoing/dinner.md)",
                 ],
                 [
-                    "### Depois de Tomar café da manhã",
-                    "",
+                    "### Morning",
                     "- [ ] [Estudar equals](pending/equals.md)",
                     "- [ ] [Estudar Stream](pending/stream.md)",
-                    "",
-                    "### Depois de Almoçar",
-                    "",
+                    "### Afternoon",
                     "- [ ] [Postar vídeo](ongoing/video.md)",
                 ],
             ]
         )
         text = "\n".join(merged)
         self.assertNotIn(")\n\n- [ ]", text)
-        self.assertIn("### Depois de Acordar\n\n- [ ] [Caminhar]", text)
+        self.assertIn("### Morning\n\n- [ ] [Caminhar]", text)
         self.assertIn(
-            "- [ ] [Tomar café da manhã](ongoing/breakfast.md)\n- [ ] [Almoçar](ongoing/lunch.md)",
+            "- [ ] [Caminhar](ongoing/walk.md)\n- [ ] [Tomar café da manhã](ongoing/breakfast.md)",
             text,
         )
         self.assertIn(
             "- [ ] [Estudar equals](pending/equals.md)\n- [ ] [Estudar Stream](pending/stream.md)",
             text,
         )
+        self.assertIn(
+            "- [ ] [Almoçar](ongoing/lunch.md)",
+            text,
+        )
+        self.assertNotIn("- [ ] [Almoçar](ongoing/lunch.md)\n### ", text)
+
+    def test_overdue_recurring_advances_one_step(self) -> None:
+        write_recurring(
+            self.root,
+            "water",
+            "Drink water",
+            kind="daily",
+            until="2026-12-01",
+            due="2026-09-14",
+        )
+        self.aos("reindex")
+        self.assertIn("ongoing/water.md", section_items(self.tasks_md(), "Overdue")[0])
+        path = self.root / "user/tasks/tasks.md"
+        path.write_text(mark_section(self.tasks_md(), "Overdue"), encoding="utf-8")
+        self.aos("sync")
+        data, _body = split_frontmatter(
+            (self.root / "user/tasks/ongoing/water.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(data.get("do_on").isoformat(), "2026-09-15")
+        self.assertEqual([d.isoformat() for d in data.get("done_on") or []], [TODAY])
+        self.assertIn("ongoing/water.md", section_items(self.tasks_md(), "Overdue")[0])
+        self.assertNotIn("- [x]", self.tasks_md())
+
+    def test_two_clocks_are_two_lines(self) -> None:
+        path = write_unique(self.root, "split", "Split", "2026-09-16")
+        text = path.read_text(encoding="utf-8").replace(
+            "infinitive: Split",
+            'do_at: ["07:30", "18:00"]\ninfinitive: Split',
+        )
+        path.write_text(text, encoding="utf-8")
+        self.aos("reindex")
+        items = section_items(self.tasks_md(), "Today")
+        self.assertEqual(len(items), 2)
+        self.assertIn("### Morning", self.tasks_md())
+        self.assertIn("### Evening", self.tasks_md())
+        from aos_lib.schedule import parse_month
+
+        cells = parse_month(
+            (self.root / "user/schedule/2026/09.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(cells[16][7], "Split")
+        self.assertEqual(cells[16][18], "Split")
+
+    def test_early_unique_frees_the_window(self) -> None:
+        write_unique(self.root, "send", "Send", "2026-09-18", do_at="08:00")
+        self.aos("reindex", today="2026-09-16")
+        path = self.root / "user/tasks/tasks.md"
+        path.write_text(mark_section(self.tasks_md(), "2-3 days"), encoding="utf-8")
+        self.aos("sync", today="2026-09-16")
+        data, _body = split_frontmatter(
+            (self.root / "user/tasks/completed/send.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(data.get("do_on").isoformat(), "2026-09-18")
+        self.assertEqual(data.get("completed_on").isoformat(), "2026-09-16")
+        from aos_lib.schedule import parse_month
+
+        cells = parse_month(
+            (self.root / "user/schedule/2026/09.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(cells[18][8], "null")
+        self.aos("daily-close", "2026-09-18", today="2026-09-19")
+        daily = (self.root / "user/daily/2026/09/18.md").read_text(encoding="utf-8")
+        self.assertNotIn("## Failed tasks", daily)
+        self.assertNotIn("send.md", daily)
+
+    def test_routine_ignores_null_hours(self) -> None:
+        write_unique(self.root, "send", "Send", "2026-09-16", do_at="07:00")
+        self.aos("reindex")
+        day = self.root / "user/daily/2026/09/16.md"
+        day.parent.mkdir(parents=True, exist_ok=True)
+        lines = ["# 2026-09-16", "", "| hour | did |", "| --- | --- |"]
+        for hour in range(24):
+            did = "null"
+            if hour == 7:
+                did = "tiktok"
+            lines.append(f"| {hour:02d}:00 | {did} |")
+        lines.append("")
+        day.write_text("\n".join(lines), encoding="utf-8")
+        self.aos("daily-close", "2026-09-16", today="2026-09-17")
+        text = day.read_text(encoding="utf-8")
+        self.assertIn("| 0% | 0% |", text)
+        self.assertIn("| 07:00 | tiktok |", text)
+        month = (self.root / "user/daily/2026/09.md").read_text(encoding="utf-8")
+        self.assertIn("| tiktok | 1 |", month)
+        self.assertIn("| Send | 1 |", month)
+        tomorrow = self.root / "user/daily/2026/09/17.md"
+        self.assertTrue(tomorrow.is_file())
+        self.assertNotIn("| routine | tasks |", tomorrow.read_text(encoding="utf-8"))
+
+    def test_project_follows_its_tasks(self) -> None:
+        write_project(self.root, "job", status="pending", prefix="J")
+        path = write_unique(self.root, "first", "First", "2026-09-16")
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                "infinitive: First",
+                "infinitive: First\nproject: job\nphase: j-01",
+            ),
+            encoding="utf-8",
+        )
+        (self.root / "user/projects/pending/job/phases").mkdir()
+        (self.root / "user/projects/pending/job/phases/j-01.md").write_text(
+            """---
+status: pending
+project: job
+depends_on: []
+---
+
+# J-01
+
+## Plan
+
+1. go
+
+## Tasks
+
+- [First](../../../tasks/pending/first.md)
+""",
+            encoding="utf-8",
+        )
+        self.aos("reindex")
+        self.assertTrue((self.root / "user/projects/pending/job/job.md").is_file())
+        task = self.root / "user/tasks/pending/first.md"
+        task.write_text(
+            task.read_text(encoding="utf-8").replace("do_on: 2026-09-16", "do_on: null"),
+            encoding="utf-8",
+        )
+        self.aos("reindex")
+        self.assertTrue((self.root / "user/tasks/paused/first.md").is_file())
+        self.assertTrue((self.root / "user/projects/paused/job/job.md").is_file())
+        phase = (
+            self.root / "user/projects/paused/job/phases/j-01.md"
+        ).read_text(encoding="utf-8")
+        self.assertIn("status: paused", phase)
+
+    def test_do_in_is_rejected(self) -> None:
+        path = write_unique(self.root, "old", "Old", "2026-09-20")
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                "infinitive: Old",
+                'do_in: "09:00"\ninfinitive: Old',
+            ),
+            encoding="utf-8",
+        )
+        proc = subprocess.run(
+            [sys.executable, str(BIN), "validate"],
+            env=self.env(),
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(proc.returncode, 0)
+        self.assertIn("do_in is not a field", proc.stderr)
 
 
 class GitUtilTest(unittest.TestCase):

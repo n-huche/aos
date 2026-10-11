@@ -5,20 +5,23 @@ from collections import defaultdict
 from datetime import date
 from pathlib import Path
 
-from .cadence import due_date, index_dates
+from .cadence import do_on_date, index_dates
 from .config import (
+    BAND_AFTERNOON,
+    BAND_EVENING,
+    BAND_MORNING,
+    BAND_ORDER,
+    BAND_OVERNIGHT,
     BUCKET_ORDER,
     CLASS_RANK,
-    HEADING_AFTER,
-    HEADING_UNPLACED,
+    HEADING_UNTIMED,
     PROJECT_STATUSES,
     RECURRING_TYPES,
-    SECTION_UNDEFINED,
     UNIQUE_TYPES,
     projects_dir,
     tasks_dir,
 )
-from .taskio import TaskFile, atomic_write, iter_task_files, load_by_slug
+from .taskio import TaskFile, atomic_write, iter_task_files
 from .yamlfm import split_frontmatter
 
 LINK_RE = re.compile(r"\[[^\]]*\]\(([^)]+)\)")
@@ -34,6 +37,7 @@ def bucket_for(delta_or_none: int | None, *, overdue: bool, undefined: bool) -> 
         SECTION_OVERDUE,
         SECTION_PLUS_30,
         SECTION_TODAY,
+        SECTION_UNDEFINED,
     )
 
     if undefined:
@@ -64,6 +68,8 @@ def unique_bucket(due: date | None, today: date) -> str:
 
 
 def recurring_bucket(when: date, today: date) -> str:
+    if when < today:
+        return bucket_for(None, overdue=True, undefined=False)
     return bucket_for((when - today).days, overdue=False, undefined=False)
 
 
@@ -74,21 +80,42 @@ def infinitive_of(task: TaskFile) -> str:
     raise ValueError(f"{task.path}: missing infinitive")
 
 
-def clock_of(data: dict) -> tuple[int, int] | None:
-    raw = data.get("do_in")
-    if raw in (None, "", False):
-        return None
-    m = CLOCK_RE.match(str(raw).strip())
-    if not m:
-        raise ValueError(f"invalid do_in {raw!r}")
-    return int(m.group(1)), int(m.group(2))
+def clocks_of(data: dict) -> list[tuple[int, int]]:
+    """do_at as a list of HH:MM. A comma-separated string is the same list."""
+    raw = data.get("do_at")
+    if raw in (None, "", False, []):
+        return []
+    if isinstance(raw, str):
+        parts = [part.strip() for part in raw.split(",") if part.strip()]
+    elif isinstance(raw, list):
+        parts = []
+        for item in raw:
+            if item in (None, "", False):
+                continue
+            parts.append(str(item).strip())
+    else:
+        raise ValueError(f"invalid do_at {raw!r}")
+    found: list[tuple[int, int]] = []
+    for part in parts:
+        match = CLOCK_RE.match(part)
+        if not match:
+            raise ValueError(f"invalid do_at {part!r}")
+        clock = (int(match.group(1)), int(match.group(2)))
+        if clock in found:
+            raise ValueError(f"duplicate do_at {part}")
+        found.append(clock)
+    return found
 
 
-def after_slug(data: dict) -> str | None:
-    raw = data.get("do_after")
-    if raw in (None, "", False):
-        return None
-    return str(raw).strip()
+def band_of(clock: tuple[int, int]) -> str:
+    minutes = clock[0] * 60 + clock[1]
+    if minutes < 6 * 60:
+        return BAND_OVERNIGHT
+    if minutes < 12 * 60:
+        return BAND_MORNING
+    if minutes < 18 * 60:
+        return BAND_AFTERNOON
+    return BAND_EVENING
 
 
 def _h1(text: str) -> str:
@@ -152,14 +179,18 @@ def project_order(root: Path) -> dict[str, tuple[str, int, int]]:
 
 
 class _Node:
-    def __init__(self, task: TaskFile, href: str, *, present: bool) -> None:
+    def __init__(
+        self,
+        task: TaskFile,
+        href: str,
+        *,
+        clock: tuple[int, int] | None,
+    ) -> None:
         self.task = task
         self.href = href
-        self.present = present
         self.slug = task.slug
         self.infinitive = infinitive_of(task)
-        self.clock = clock_of(task.data)
-        self.after = after_slug(task.data)
+        self.clock = clock
         self.rank = CLASS_RANK.get(task.type, 9)
 
 
@@ -196,13 +227,6 @@ def _sort_key(
     )
 
 
-def _sorted_nodes(
-    nodes: list[_Node], order: dict[str, tuple[str, int, int]]
-) -> list[_Node]:
-    bands = _project_bands(nodes, order)
-    return sorted(nodes, key=lambda n: _sort_key(n, order, bands))
-
-
 def _line(node: _Node) -> str:
     return f"- [ ] [{node.infinitive}]({node.href})"
 
@@ -222,117 +246,46 @@ def _append_tasks(lines: list[str], rows: list[str]) -> None:
     lines.extend(rows)
 
 
-def _check_cycles(nodes: dict[str, _Node]) -> None:
-    color: dict[str, int] = {}
-
-    def walk(slug: str) -> None:
-        state = color.get(slug, 0)
-        if state == 1:
-            raise ValueError(f"do_after cycle at {slug}")
-        if state == 2:
-            return
-        color[slug] = 1
-        node = nodes.get(slug)
-        if node and node.after:
-            if node.after not in nodes:
-                raise ValueError(f"do_after missing slug {node.after!r}")
-            walk(node.after)
-        color[slug] = 2
-
-    for slug in list(nodes):
-        walk(slug)
-
-
-def _render_children(
-    parent: _Node,
-    kids: dict[str, list[_Node]],
-    order: dict[str, tuple[str, int, int]],
-    *,
-    depth: int,
-    lines: list[str],
-) -> None:
-    children = _sorted_nodes(kids.get(parent.slug) or [], order)
-    visible = [c for c in children if c.present or kids.get(c.slug)]
-    if not visible:
-        return
-    if parent.clock is not None and depth == 0:
-        _separate(lines)
-        lines.append(f"### {HEADING_AFTER} {parent.infinitive}")
-        lines.append("")
-    for child in visible:
-        if child.present:
-            lines.append(_line(child))
-        _render_children(child, kids, order, depth=depth + 1, lines=lines)
-
-
 def render_placed(
     present: list[_Node],
-    catalog: dict[str, _Node],
     order: dict[str, tuple[str, int, int]],
     *,
     headings: bool,
 ) -> list[str]:
+    if not present:
+        return []
     if not headings:
-        return [_line(n) for n in _sorted_nodes(present, order)]
+        bands = _project_bands(present, order)
+        return [_line(node) for node in sorted(present, key=lambda n: _sort_key(n, order, bands))]
 
-    kids: dict[str, list[_Node]] = defaultdict(list)
+    grouped: dict[str, list[_Node]] = defaultdict(list)
+    untimed: list[_Node] = []
     for node in present:
-        if node.after and node.after in catalog:
-            kids[node.after].append(node)
+        if node.clock is None:
+            untimed.append(node)
+        else:
+            grouped[band_of(node.clock)].append(node)
 
-    def ensure_ancestor(slug: str, seen: set[str]) -> None:
-        if slug in seen:
-            return
-        seen.add(slug)
-        node = catalog.get(slug)
-        if node is None or not node.after or node.after not in catalog:
-            return
-        parent = catalog[node.after]
-        if not any(existing.slug == node.slug for existing in kids[parent.slug]):
-            kids[parent.slug].append(node)
-        ensure_ancestor(parent.slug, seen)
-
-    walked: set[str] = set()
-    for slug in list(kids):
-        ensure_ancestor(slug, walked)
-
-    present_slugs = {n.slug for n in present}
-    referenced = {n.slug for group in kids.values() for n in group}
-    roots: list[_Node] = []
-    for node in present:
-        if node.slug not in referenced:
-            roots.append(node)
-    for slug in kids:
-        parent = catalog.get(slug)
-        if parent is None or parent.slug in referenced or parent.slug in present_slugs:
-            continue
-        roots.append(parent)
-
-    fence_nodes = [n for n in roots if n.clock is not None]
-    fence_bands = _project_bands(fence_nodes, order)
-
-    def fence_key(node: _Node) -> tuple:
-        return ((node.clock or (99, 99)),) + _sort_key(node, order, fence_bands)
-
-    fences = sorted(fence_nodes, key=fence_key)
     lines: list[str] = []
-    for fence in fences:
-        if fence.present:
-            lines.append(_line(fence))
-        _render_children(fence, kids, order, depth=0, lines=lines)
-
-    unplaced = [n for n in roots if n.clock is None]
-    shells = [n for n in unplaced if not n.present]
-    loose = [n for n in unplaced if n.present]
-    for shell in _sorted_nodes(shells, order):
-        _render_children(shell, kids, order, depth=0, lines=lines)
-    if loose:
+    for name in BAND_ORDER:
+        nodes = grouped.get(name) or []
+        if not nodes:
+            continue
+        bands = _project_bands(nodes, order)
+        nodes.sort(key=lambda n: ((n.clock or (99, 99)),) + _sort_key(n, order, bands))
         _separate(lines)
-        lines.append(f"### {HEADING_UNPLACED}")
+        lines.append(f"### {name}")
         lines.append("")
-        for node in _sorted_nodes(loose, order):
+        for node in nodes:
             lines.append(_line(node))
-            _render_children(node, kids, order, depth=1, lines=lines)
+    if untimed:
+        bands = _project_bands(untimed, order)
+        untimed.sort(key=lambda n: _sort_key(n, order, bands))
+        _separate(lines)
+        lines.append(f"### {HEADING_UNTIMED}")
+        lines.append("")
+        for node in untimed:
+            lines.append(_line(node))
     return lines
 
 
@@ -349,7 +302,11 @@ def _extend(lines: list[str], chunk: list[str]) -> None:
 
 
 def _merge_section(chunks: list[list[str]]) -> list[str]:
-    """One `###` heading per section. Later days append under the first use."""
+    """One `###` heading per section. Later days append under the first use.
+
+    A task line stays in the heading that already opened. A later heading
+    does not pull the previous task out of that list.
+    """
     groups: dict[str, list[str]] = {}
     blocks: list[tuple[str, object]] = []
 
@@ -361,17 +318,8 @@ def _merge_section(chunks: list[list[str]]) -> list[str]:
     for chunk in chunks:
         loose: list[str] = []
         current: list[str] | None = None
-        i = 0
         body = [line for line in chunk if line != ""]
-        while i < len(body):
-            line = body[i]
-            nxt = body[i + 1] if i + 1 < len(body) else ""
-            if line.startswith("- [ ]") and nxt.startswith("### "):
-                flush_loose(loose)
-                current = None
-                blocks.append(("fence", line))
-                i += 1
-                continue
+        for line in body:
             if line.startswith("### "):
                 flush_loose(loose)
                 bucket = groups.get(line)
@@ -380,20 +328,15 @@ def _merge_section(chunks: list[list[str]]) -> list[str]:
                     groups[line] = bucket
                     blocks.append(("group", (line, bucket)))
                 current = bucket
-                i += 1
                 continue
             if current is None:
                 loose.append(line)
             else:
                 current.append(line)
-            i += 1
         flush_loose(loose)
 
     lines: list[str] = []
     for kind, payload in blocks:
-        if kind == "fence":
-            _append_tasks(lines, [str(payload)])
-            continue
         if kind == "loose":
             rows = payload if isinstance(payload, list) else []
             if not rows:
@@ -440,49 +383,54 @@ def _href(folder: str, slug: str) -> str:
     return f"{folder}/{slug}.md"
 
 
+def _occurrences(task: TaskFile, today: date) -> list[date | None]:
+    """Dates that put this task in the index. None means Undefined."""
+    if task.type in UNIQUE_TYPES:
+        if task.folder != "pending":
+            return []
+        when = do_on_date(task.data)
+        return [when]
+    if task.type in RECURRING_TYPES and task.status == "pending":
+        if task.folder != "pending":
+            return []
+        return [do_on_date(task.data)]
+    if task.type in RECURRING_TYPES and task.status == "ongoing":
+        if task.folder != "ongoing":
+            return []
+        when = do_on_date(task.data)
+        if when is not None:
+            return [when]
+        return list(index_dates(task.data, today))
+    if task.type == "maintenance" and task.status == "ongoing" and task.folder == "ongoing":
+        return list(index_dates(task.data, today))
+    return []
+
+
 def collect_index(root: Path, today: date) -> dict[str, list[list[str]]]:
     order = project_order(root)
-    catalog: dict[str, _Node] = {}
+    placed: dict[str, dict[date | None, list[_Node]]] = defaultdict(
+        lambda: defaultdict(list)
+    )
     for task in iter_task_files(root):
-        catalog[task.slug] = _Node(task, _href(task.folder, task.slug), present=False)
-    _check_cycles(catalog)
-
-    placed: dict[str, dict[date | None, list[_Node]]] = defaultdict(lambda: defaultdict(list))
-    for task in iter_task_files(root):
-        t = task.type
-        node = catalog.get(task.slug)
-        if node is None:
-            continue
-        if t in UNIQUE_TYPES:
-            if task.folder != "pending":
-                continue
-            due = due_date(task.data)
-            heading = unique_bucket(due, today)
-            when = None if due is None else due
-            present = _Node(task, node.href, present=True)
-            placed[heading][when].append(present)
-            continue
-        if t in RECURRING_TYPES and task.status == "pending":
-            if task.folder != "pending":
-                continue
-            due = due_date(task.data)
-            heading = unique_bucket(due, today)
-            when = None if due is None else due
-            present = _Node(task, node.href, present=True)
-            placed[heading][when].append(present)
-            continue
-        if t in RECURRING_TYPES:
-            if task.folder != "ongoing":
-                continue
-        elif t == "maintenance":
-            if task.folder != "ongoing":
-                continue
-        else:
-            continue
-        for when in index_dates(task.data, today):
-            heading = recurring_bucket(when, today)
-            present = _Node(task, node.href, present=True)
-            placed[heading][when].append(present)
+        href = _href(task.folder, task.slug)
+        try:
+            clocks = clocks_of(task.data)
+        except ValueError:
+            clocks = []
+        appearances = clocks or [None]
+        for when in _occurrences(task, today):
+            if when is None:
+                heading = unique_bucket(None, today)
+            elif task.type == "maintenance" or (
+                task.type in RECURRING_TYPES
+                and task.status == "ongoing"
+                and do_on_date(task.data) is None
+            ):
+                heading = recurring_bucket(when, today)
+            else:
+                heading = unique_bucket(when, today)
+            for clock in appearances:
+                placed[heading][when].append(_Node(task, href, clock=clock))
 
     out: dict[str, list[list[str]]] = {}
     for heading, by_day in placed.items():
@@ -494,13 +442,7 @@ def collect_index(root: Path, today: date) -> dict[str, list[list[str]]]:
         else:
             days_seq = list(days)
         for day in days_seq:
-            nodes = by_day[day]
-            text = render_placed(
-                nodes,
-                catalog,
-                order,
-                headings=day is not None,
-            )
+            text = render_placed(by_day[day], order, headings=day is not None)
             if text:
                 chunks.append(text)
         out[heading] = chunks
@@ -509,9 +451,13 @@ def collect_index(root: Path, today: date) -> dict[str, list[list[str]]]:
 
 def reindex(root: Path, today: date | None = None) -> Path:
     from .config import today as today_fn
+    from .reconcile import reconcile_all
+    from .schedule import regenerate_schedule
 
     if today is None:
         today = today_fn(root)
+    reconcile_all(root)
+    regenerate_schedule(root, today)
     items = collect_index(root, today)
     text = assemble_index(items)
     path = tasks_dir(root) / "tasks.md"

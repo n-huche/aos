@@ -4,13 +4,13 @@ import re
 from datetime import date, timedelta
 from pathlib import Path
 
-from .cadence import day_complete, due_date, occurs_on, until_date
+from .cadence import day_complete, do_on_date, occurs_on, until_date
 from .config import (
     RECURRING_TYPES,
     SERIES_TYPES,
     UNIQUE_TYPES,
+    WEEKDAYS,
     daily_dir,
-    schedule_dir,
 )
 from .gitutil import commit_user, push_or_warn
 from .index import reindex
@@ -19,6 +19,8 @@ from .taskio import atomic_write, iter_task_files
 from .yamlfm import as_date
 
 NOTES_RE = re.compile(r"^##\s+Notes.*$", re.M)
+HOUR_ROW_RE = re.compile(r"^\|\s*(\d{2}:00)\s*\|\s*(.*?)\s*\|$")
+METRICS_MARK = "| routine | tasks |"
 
 
 def ymd_date_from_path(path: Path, root: Path) -> date | None:
@@ -39,155 +41,188 @@ def ymd_date_from_path(path: Path, root: Path) -> date | None:
         return None
 
 
-def schedule_date_from_path(path: Path, schedule_root: Path) -> date | None:
-    return ymd_date_from_path(path, schedule_root)
-
-
 def daily_path(root: Path, d: date) -> Path:
     return daily_dir(root) / f"{d.year:04d}" / f"{d.month:02d}" / f"{d.day:02d}.md"
 
 
-def delete_past_schedule(root: Path, d: date) -> list[Path]:
-    base = schedule_dir(root)
-    removed: list[Path] = []
-    if not base.is_dir():
-        return removed
-    for path in list(base.rglob("*.md")):
-        when = schedule_date_from_path(path, base)
-        if when is None:
-            continue
-        if when <= d:
-            path.unlink()
-            removed.append(path)
-            _prune_empty_parents(path.parent, base)
-    return removed
-
-
-def _prune_empty_parents(start: Path, stop: Path) -> None:
-    cur = start
-    while cur != stop and cur.is_dir():
-        try:
-            next(cur.iterdir())
-            break
-        except StopIteration:
-            parent = cur.parent
-            cur.rmdir()
-            cur = parent
+def month_rollup_path(root: Path, d: date) -> Path:
+    return daily_dir(root) / f"{d.year:04d}" / f"{d.month:02d}.md"
 
 
 def extract_notes(text: str) -> str | None:
-    m = NOTES_RE.search(text)
-    if not m:
+    match = NOTES_RE.search(text)
+    if not match:
         return None
-    return text[m.start():].rstrip() + "\n"
+    return text[match.start() :].rstrip() + "\n"
 
 
-def daily_sets(text: str) -> tuple[set[str], set[str], str | None]:
-    """Parse completed and failed hrefs from an existing daily file."""
-    completed: set[str] = set()
-    failed: set[str] = set()
-    section = ""
+def extract_hours(text: str) -> dict[str, str]:
+    found: dict[str, str] = {}
     for line in text.splitlines():
-        if line.startswith("## "):
-            section = line[3:].strip()
-            continue
-        if line.startswith("- ["):
-            href = ""
-            if "](" in line and line.endswith(")"):
-                href = line.rsplit("](", 1)[-1][:-1]
-            if section.startswith("Completed tasks"):
-                completed.add(href)
-            elif section.startswith("Failed tasks"):
-                failed.add(href)
-    result = None
-    for line in text.splitlines():
-        if line.startswith("**Result:**"):
-            result = line.split(":", 1)[-1].strip()
-            break
-    return completed, failed, result
+        match = HOUR_ROW_RE.match(line.strip())
+        if match:
+            found[match.group(1)] = match.group(2).strip()
+    return found
+
+
+def daily_is_closed(text: str) -> bool:
+    """A placeholder has the hour table and no metrics. Anything else counts."""
+    if METRICS_MARK in text or "**Result:**" in text:
+        return True
+    if "| hour | did |" in text:
+        return False
+    return True
 
 
 def _href_for(task_folder: str, slug: str) -> str:
     return f"../../../tasks/{task_folder}/{slug}.md"
 
 
-def collect_daily(root: Path, d: date) -> tuple[list[tuple[str, str]], list[tuple[str, str]], bool]:
-    """Returns (completed items, failed items, had_early_unique).
+def collect_daily(
+    root: Path, d: date
+) -> tuple[list[tuple[str, str]], list[tuple[str, str]], list[tuple[str, bool]]]:
+    """Completed, failed, and planned rows.
 
-    Item is (title, href). had_early_unique: unique completed_on==D with due date != D.
+    Planned row is (href, done). Paused tasks are absent.
     """
     completed: list[tuple[str, str]] = []
     failed: list[tuple[str, str]] = []
-    early = False
+    planned: list[tuple[str, bool]] = []
     for task in list(iter_task_files(root)):
+        if task.folder in {"paused", "canceled", "obsolete"}:
+            continue
+        if task.status in {"paused", "canceled", "obsolete"}:
+            continue
         t = task.type
         if t in UNIQUE_TYPES:
             completed_on = as_date(task.data.get("completed_on"))
-            due = as_date(task.data.get("due"))
+            when = do_on_date(task.data)
+            href = _href_for(task.folder, task.slug)
             if completed_on == d:
-                href = _href_for(task.folder, task.slug)
                 completed.append((task.title, href))
-                if due is not None and due != d:
-                    early = True
-            elif task.folder == "pending" and due is not None and due <= d:
+                planned.append((href, True))
+            elif task.folder == "pending" and when is not None and when <= d:
                 failed.append((task.title, _href_for("pending", task.slug)))
+                planned.append((_href_for("pending", task.slug), False))
             continue
         if t not in SERIES_TYPES:
             continue
-        if task.folder in {"canceled", "obsolete"}:
-            continue
         if t in RECURRING_TYPES and task.status == "pending":
-            due = due_date(task.data)
-            if task.folder == "pending" and due is not None and due <= d:
-                failed.append((task.title, _href_for("pending", task.slug)))
+            when = do_on_date(task.data)
+            if when is not None and when <= d:
+                href = _href_for("pending", task.slug)
+                failed.append((task.title, href))
+                planned.append((href, False))
             continue
         until = until_date(task.data)
-        done = day_complete(task.data, d)
-        if t in RECURRING_TYPES and until == d:
-            if task.folder == "ongoing":
-                finish_recurring_until(root, task)
-                folder = "completed"
-            else:
-                folder = task.folder
+        if t in RECURRING_TYPES and until == d and task.folder == "ongoing":
+            done = day_complete(task.data, d) or (
+                do_on_date(task.data) is not None and do_on_date(task.data) > d
+            )
+            finish_recurring_until(root, task)
+            href = _href_for("completed", task.slug)
+            planned.append((href, done))
             if done:
-                completed.append((task.title, _href_for(folder, task.slug)))
+                completed.append((task.title, href))
             else:
-                failed.append((task.title, _href_for(folder, task.slug)))
+                failed.append((task.title, href))
+            continue
+        when = do_on_date(task.data)
+        if t in RECURRING_TYPES and task.status == "ongoing" and when is not None:
+            href = _href_for(task.folder, task.slug)
+            checked = day_complete(task.data, d)
+            if checked:
+                completed.append((task.title, href))
+                planned.append((href, True))
+            elif when <= d:
+                failed.append((task.title, href))
+                planned.append((href, False))
             continue
         if not occurs_on(task.data, d):
             continue
+        href = _href_for(task.folder, task.slug)
+        done = day_complete(task.data, d)
+        planned.append((href, done))
         if done:
-            completed.append((task.title, _href_for(task.folder, task.slug)))
+            completed.append((task.title, href))
         else:
-            failed.append((task.title, _href_for(task.folder, task.slug)))
-    completed.sort(key=lambda x: x[0].lower())
-    failed.sort(key=lambda x: x[0].lower())
-    return completed, failed, early
+            failed.append((task.title, href))
+    completed.sort(key=lambda item: item[0].lower())
+    failed.sort(key=lambda item: item[0].lower())
+    return completed, failed, planned
 
 
-def result_of(completed: list[tuple[str, str]], failed: list[tuple[str, str]], early: bool) -> str:
-    if failed:
-        return "failure"
-    if early:
-        return "success"
-    return "satisfactory"
+def _percent(done: int, total: int) -> str:
+    if total <= 0:
+        return "null"
+    return f"{round(100 * done / total)}%"
+
+
+def routine_score(root: Path, d: date, hours: dict[str, str]) -> tuple[str, list[tuple[str, str, list[str]]]]:
+    """routine percent, and deviations as (hour, category, planned tokens)."""
+    from .schedule import plan_cell
+
+    comparable = 0
+    matched = 0
+    deviations: list[tuple[str, str, list[str]]] = []
+    for hour in range(24):
+        label = f"{hour:02d}:00"
+        report = hours.get(label, "null").strip()
+        plan = plan_cell(root, d, hour)
+        report_empty = report == "" or report.lower() == "null"
+        if plan is None or report_empty:
+            continue
+        tokens = [part.strip() for part in plan.split(",") if part.strip()]
+        comparable += 1
+        if report in tokens:
+            matched += 1
+            continue
+        deviations.append((label, report, tokens))
+    return _percent(matched, comparable), deviations
+
+
+def tasks_score(planned: list[tuple[str, bool]]) -> str:
+    if not planned:
+        return "null"
+    done = sum(1 for _href, ok in planned if ok)
+    return _percent(done, len(planned))
+
+
+def _parse_percent(cell: str) -> float | None:
+    cell = cell.strip()
+    if not cell.endswith("%"):
+        return None
+    try:
+        return float(cell[:-1])
+    except ValueError:
+        return None
 
 
 def render_daily(
     d: date,
-    result: str,
+    hours: dict[str, str],
+    routine: str,
+    tasks: str,
     completed: list[tuple[str, str]],
     failed: list[tuple[str, str]],
     notes: str | None = None,
 ) -> str:
-    lines = [
-        f"# {d.isoformat()}",
-        "",
-        f"**Result:** {result}",
-        "",
-        "## Completed tasks",
-        "",
-    ]
+    lines = [f"# {d.isoformat()}", "", "| hour | did |", "| --- | --- |"]
+    for hour in range(24):
+        label = f"{hour:02d}:00"
+        did = hours.get(label, "null") or "null"
+        lines.append(f"| {label} | {did} |")
+    lines.extend(
+        [
+            "",
+            METRICS_MARK,
+            "| --- | --- |",
+            f"| {routine} | {tasks} |",
+            "",
+            "## Completed tasks",
+            "",
+        ]
+    )
     if completed:
         for title, href in completed:
             lines.append(f"- [{title}]({href})")
@@ -207,8 +242,16 @@ def render_daily(
             lines.append("")
         lines.append(notes.rstrip())
         lines.append("")
-    text = "\n".join(lines).rstrip() + "\n"
-    return text
+    return "\n".join(lines).rstrip() + "\n"
+
+
+def render_placeholder(d: date) -> str:
+    """Tomorrow's file from midnight: the hour table only, no metrics yet."""
+    lines = [f"# {d.isoformat()}", "", "| hour | did |", "| --- | --- |"]
+    for hour in range(24):
+        lines.append(f"| {hour:02d}:00 | null |")
+    lines.append("")
+    return "\n".join(lines)
 
 
 def write_daily(
@@ -216,45 +259,29 @@ def write_daily(
     d: date,
     completed: list[tuple[str, str]],
     failed: list[tuple[str, str]],
-    early: bool,
+    planned: list[tuple[str, bool]],
 ) -> Path:
-    result = result_of(completed, failed, early)
     path = daily_path(root, d)
+    hours: dict[str, str] = {}
     notes = None
     if path.is_file():
         old = path.read_text(encoding="utf-8")
-        old_c, old_f, old_r = daily_sets(old)
-        new_c = {href for _t, href in completed}
-        new_f = {href for _t, href in failed}
-        if old_c == new_c and old_f == new_f and old_r == result:
-            return path
+        hours = extract_hours(old)
         notes = extract_notes(old)
-    text = render_daily(d, result, completed, failed, notes)
+    routine, _deviations = routine_score(root, d, hours)
+    tasks = tasks_score(planned)
+    text = render_daily(d, hours, routine, tasks, completed, failed, notes)
+    if path.is_file() and path.read_text(encoding="utf-8") == text:
+        return path
     atomic_write(path, text)
     return path
 
 
-def daily_close(
-    root: Path,
-    d: date | None = None,
-    *,
-    today: date | None = None,
-    commit: bool = True,
-) -> Path:
-    from .config import today as today_fn
-
-    if today is None:
-        today = today_fn(root)
-    if d is None:
-        d = today - timedelta(days=1)
-    completed, failed, early = collect_daily(root, d)
-    path = write_daily(root, d, completed, failed, early)
-    _clear_done_on(root, d)
-    delete_past_schedule(root, d)
-    reindex(root, d + timedelta(days=1))
-    if commit:
-        commit_user(root, f"aos: daily-close {d.isoformat()}")
-        push_or_warn(root)
+def ensure_placeholder(root: Path, d: date) -> Path:
+    path = daily_path(root, d)
+    if path.is_file():
+        return path
+    atomic_write(path, render_placeholder(d))
     return path
 
 
@@ -286,13 +313,37 @@ def list_daily_dates(root: Path) -> list[date]:
     return found
 
 
-def missing_close_dates(root: Path, today: date) -> list[date]:
-    """Days that still need daily-close: after the last daily, through yesterday.
+def closed_daily_dates(root: Path) -> list[date]:
+    base = daily_dir(root)
+    found: list[date] = []
+    if not base.is_dir():
+        return found
+    for path in base.rglob("*.md"):
+        when = ymd_date_from_path(path, base)
+        if when is None:
+            continue
+        text = path.read_text(encoding="utf-8")
+        if daily_is_closed(text):
+            found.append(when)
+    found.sort()
+    return found
 
-    With no daily yet, only yesterday — not the whole calendar.
+
+def last_closed_day(root: Path) -> date | None:
+    dates = closed_daily_dates(root)
+    if not dates:
+        return None
+    return dates[-1]
+
+
+def missing_close_dates(root: Path, today: date) -> list[date]:
+    """Days that still need daily-close: after the last closed daily, through yesterday.
+
+    With no closed daily yet, only yesterday — not the whole calendar.
+    A placeholder for tomorrow does not count as closed.
     """
     yesterday = today - timedelta(days=1)
-    existing = list_daily_dates(root)
+    existing = closed_daily_dates(root)
     if not existing:
         return [yesterday]
     last = existing[-1]
@@ -304,6 +355,160 @@ def missing_close_dates(root: Path, today: date) -> list[date]:
         missed.append(d)
         d += timedelta(days=1)
     return missed
+
+
+def _deviation_rows(root: Path, d: date) -> list[tuple[str, str, list[str]]]:
+    path = daily_path(root, d)
+    if not path.is_file():
+        return []
+    text = path.read_text(encoding="utf-8")
+    if not daily_is_closed(text):
+        return []
+    _routine, deviations = routine_score(root, d, extract_hours(text))
+    return deviations
+
+
+def _day_percents(root: Path, d: date) -> tuple[float | None, float | None]:
+    path = daily_path(root, d)
+    if not path.is_file():
+        return None, None
+    text = path.read_text(encoding="utf-8")
+    routine = None
+    tasks = None
+    for line in text.splitlines():
+        if not line.startswith("| ") or line.startswith("| routine") or line.startswith("| ---"):
+            continue
+        cells = [cell.strip() for cell in line.strip("|").split("|")]
+        if len(cells) == 2 and cells[0].endswith("%") or (
+            len(cells) == 2 and (cells[0] == "null" or cells[0].endswith("%"))
+            and ":" not in cells[0]
+        ):
+            routine = _parse_percent(cells[0])
+            tasks = _parse_percent(cells[1])
+    return routine, tasks
+
+
+def render_month_rollup(root: Path, year: int, month: int) -> str:
+    import calendar
+
+    last = calendar.monthrange(year, month)[1]
+    day_rows: list[tuple[date, float | None, float | None]] = []
+    hour_counts: dict[str, int] = {}
+    category_counts: dict[str, int] = {}
+    task_counts: dict[str, int] = {}
+    for day_num in range(1, last + 1):
+        when = date(year, month, day_num)
+        path = daily_path(root, when)
+        if not path.is_file() or not daily_is_closed(path.read_text(encoding="utf-8")):
+            continue
+        routine, tasks = _day_percents(root, when)
+        day_rows.append((when, routine, tasks))
+        for hour, category, tokens in _deviation_rows(root, when):
+            hour_counts[hour] = hour_counts.get(hour, 0) + 1
+            category_counts[category] = category_counts.get(category, 0) + 1
+            for token in tokens:
+                task_counts[token] = task_counts.get(token, 0) + 1
+
+    def avg(values: list[float]) -> str:
+        if not values:
+            return "null"
+        return f"{round(sum(values) / len(values))}%"
+
+    lines = [f"# {year:04d}-{month:02d}", "", "## Days", "", "| day | weekday | routine | tasks |", "| --- | --- | --- | --- |"]
+    for when, routine, tasks in day_rows:
+        lines.append(
+            "| {day} | {weekday} | {routine} | {tasks} |".format(
+                day=f"{when.day:02d}",
+                weekday=WEEKDAYS[when.weekday()],
+                routine="null" if routine is None else f"{round(routine)}%",
+                tasks="null" if tasks is None else f"{round(tasks)}%",
+            )
+        )
+    lines.extend(["", "## Weekdays", "", "| weekday | routine | tasks |", "| --- | --- | --- |"])
+    for name in WEEKDAYS:
+        routines = [routine for when, routine, _tasks in day_rows if WEEKDAYS[when.weekday()] == name and routine is not None]
+        tasks = [tasks for when, _routine, tasks in day_rows if WEEKDAYS[when.weekday()] == name and tasks is not None]
+        if not routines and not tasks:
+            continue
+        lines.append(f"| {name} | {avg(routines)} | {avg(tasks)} |")
+    routines = [routine for _when, routine, _tasks in day_rows if routine is not None]
+    tasks = [tasks for _when, _routine, tasks in day_rows if tasks is not None]
+    lines.extend(
+        [
+            "",
+            "## Month",
+            "",
+            METRICS_MARK,
+            "| --- | --- |",
+            f"| {avg(routines)} | {avg(tasks)} |",
+            "",
+            "## Hours with the most deviations",
+            "",
+            "| hour | deviations |",
+            "| --- | --- |",
+        ]
+    )
+    for hour, count in sorted(hour_counts.items(), key=lambda item: (-item[1], item[0])):
+        lines.append(f"| {hour} | {count} |")
+    lines.extend(
+        [
+            "",
+            "## Deviations by category",
+            "",
+            "| category | count |",
+            "| --- | --- |",
+        ]
+    )
+    for category, count in sorted(category_counts.items(), key=lambda item: (-item[1], item[0].casefold())):
+        lines.append(f"| {category} | {count} |")
+    lines.extend(
+        [
+            "",
+            "## Tasks most deviated",
+            "",
+            "| task | count |",
+            "| --- | --- |",
+        ]
+    )
+    for task, count in sorted(task_counts.items(), key=lambda item: (-item[1], item[0].casefold())):
+        lines.append(f"| {task} | {count} |")
+    lines.append("")
+    return "\n".join(lines)
+
+
+def write_month_rollup(root: Path, d: date) -> Path:
+    path = month_rollup_path(root, d)
+    atomic_write(path, render_month_rollup(root, d.year, d.month))
+    return path
+
+
+def daily_close(
+    root: Path,
+    d: date | None = None,
+    *,
+    today: date | None = None,
+    commit: bool = True,
+) -> Path:
+    from .config import today as today_fn
+    from .reconcile import reconcile_all
+    from .schedule import regenerate_schedule
+
+    if today is None:
+        today = today_fn(root)
+    if d is None:
+        d = today - timedelta(days=1)
+    reconcile_all(root)
+    completed, failed, planned = collect_daily(root, d)
+    regenerate_schedule(root, today)
+    path = write_daily(root, d, completed, failed, planned)
+    _clear_done_on(root, d)
+    ensure_placeholder(root, d + timedelta(days=1))
+    write_month_rollup(root, d)
+    reindex(root, d + timedelta(days=1))
+    if commit:
+        commit_user(root, f"aos: daily-close {d.isoformat()}")
+        push_or_warn(root)
+    return path
 
 
 def catch_up(

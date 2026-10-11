@@ -1,6 +1,5 @@
 ---
-status: pending
-due: null
+status: pending              # pending | ongoing | paused | completed | obsolete
 project: my-project
 depends_on: [mp-01-other-phase]
 ---
