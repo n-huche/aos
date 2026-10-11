@@ -5,7 +5,7 @@ from collections import defaultdict
 from datetime import date
 from pathlib import Path
 
-from .cadence import do_on_date, index_dates
+from .cadence import do_on_date, index_dates, stacked_dates
 from .config import (
     BAND_AFTERNOON,
     BAND_EVENING,
@@ -399,7 +399,7 @@ def _occurrences(task: TaskFile, today: date) -> list[date | None]:
             return []
         when = do_on_date(task.data)
         if when is not None:
-            return [when]
+            return stacked_dates(task.data, today)
         return list(index_dates(task.data, today))
     if task.type == "maintenance" and task.status == "ongoing" and task.folder == "ongoing":
         return list(index_dates(task.data, today))
@@ -470,12 +470,43 @@ def reindex(
     rebuild does not consume a checkbox.
     """
     from .config import today as today_fn
+
+    if today is None:
+        today = today_fn(root)
+    if apply_checks:
+        from .gitutil import git_lock, user_git_root
+
+        # Same lock as sync_vault, acquired first. The pass re-reads tasks.md
+        # under it, so a checkbox watch already cleared is not applied again.
+        with git_lock(user_git_root(root)):
+            return _reindex_work(
+                root,
+                today,
+                apply_checks=True,
+                note_completed=note_completed,
+                commit=commit,
+            )
+    return _reindex_work(
+        root,
+        today,
+        apply_checks=False,
+        note_completed=note_completed,
+        commit=commit,
+    )
+
+
+def _reindex_work(
+    root: Path,
+    today: date,
+    *,
+    apply_checks: bool,
+    note_completed: bool | None,
+    commit: bool,
+) -> Path:
     from .reconcile import reconcile_all
     from .schedule import regenerate_schedule
     from .sync import apply_report, collect_checked
 
-    if today is None:
-        today = today_fn(root)
     report = {"reverted": [], "unique": [], "recurring": [], "start": []}
     if apply_checks:
         report = collect_checked(root)
