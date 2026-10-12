@@ -247,6 +247,13 @@ def _show(task, day: date, hour: int, projects: dict) -> bool:
         if not _on_grid(task):
             return False
         return _planned_on(task, day, day)
+    if kind == "maintenance":
+        stamp = _stamp(task)
+        if stamp and stamp[0] == day and hour > stamp[1]:
+            return False
+        if not _on_grid(task):
+            return False
+        return _planned_on(task, day, day)
     if not _on_grid(task):
         return False
     return _planned_on(task, day, day)
@@ -316,6 +323,10 @@ def _releases_for_day(root: Path, day: date) -> list[tuple[str, int]]:
             if stamp and when == day and done == day and stamp[0] == day:
                 last = stamp[1]
         elif task.type == "recurring-independent":
+            stamp = _stamp(task)
+            if stamp and stamp[0] == day:
+                last = stamp[1]
+        elif task.type == "maintenance":
             stamp = _stamp(task)
             if stamp and stamp[0] == day:
                 last = stamp[1]

@@ -4,6 +4,7 @@ status: ongoing              # ongoing | paused | canceled
 do_at: ["06:00"]             # one or more HH:MM; omit when there is no hour
 infinitive: Do the thing
 done_on: []
+completed_at: null           # filled on the Today check; YYYY-MM-DDTHH:MM, America/Sao_Paulo
 cadence:
   kind: daily                # daily | weekdays | interval | month-weekday
   days: [wed, thu]

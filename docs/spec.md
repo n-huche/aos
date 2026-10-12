@@ -271,7 +271,7 @@ cadence:
 
 `status: pending` while unstarted and dated (folder `pending/`). `status: ongoing` while live (folder `ongoing/`). `status: paused` with no `do_on`.
 
-`do_on` on a live series is the next occurrence. While it is before today, the index stacks one line per cadence day from `do_on` through the last one before today. One `[x]` records today in `done_on` and moves `do_on` one cadence step after the scheduled day, never after today. A check on that scheduled day also records `completed_at` (`YYYY-MM-DDTHH:MM`, `America/Sao_Paulo`). A recurring-project records it on every check. There is no intra-day quota. Several clocks are one index line, at the first `do_at` in the order written, and one grid cell per clock for that same occurrence. `done_on` holds at most that open day. On daily-close of D, D is removed. A later date stays. The history of the day lives in `daily/`.
+`do_on` on a live series is the next occurrence. While it is before today, the index stacks one line per cadence day from `do_on` through the last one before today. One `[x]` records today in `done_on` and moves `do_on` one cadence step after the scheduled day, never after today. A check on that scheduled day also records `completed_at` (`YYYY-MM-DDTHH:MM`, `America/Sao_Paulo`). A recurring-project records it on every check. A live series with no `do_on` records it on the Today check. There is no intra-day quota. Several clocks are one index line, at the first `do_at` in the order written, and one grid cell per clock for that same occurrence. `done_on` holds at most that open day. On daily-close of D, D is removed. A later date stays. The history of the day lives in `daily/`.
 
 ### 4.2.1 Maintenance
 
@@ -282,6 +282,7 @@ status: ongoing              # ongoing | paused | canceled
 do_at: ["06:00"]             # clocks; omit when there is no hour
 infinitive: Do the thing
 done_on: []
+completed_at: null           # filled on the Today check; YYYY-MM-DDTHH:MM, America/Sao_Paulo
 cadence:
   kind: daily                # daily | weekdays | interval | month-weekday
   days: [wed, thu]
@@ -293,7 +294,7 @@ cadence:
 ---
 ```
 
-No `do_on`, no `until`. Folder `ongoing/` while live, `paused/` when the user pauses it, `canceled/` when the user stops it. Same `done_on` rule as a dateless live series: the check counts in **Today**, and today leaves the index once it is in `done_on`.
+No `do_on`, no `until`. Folder `ongoing/` while live, `paused/` when the user pauses it, `canceled/` when the user stops it. Same `done_on` rule as a dateless live series: the check counts in **Today**, and today leaves the index once it is in `done_on`. That check also records `completed_at`. The grid of that day keeps clocks through that hour and drops later hours (§ 5.5).
 
 `interval` + `months`: add calendar months; if the day does not exist in the target month, use the **last day** of that month (31 Jan + 1 month → 28/29 Feb).
 
@@ -476,6 +477,8 @@ Closed days are frozen. A column on or before the last closed daily is never rew
 
 An independent task checked on its own day stays through the hour of the check. `completed_at` is written when the `[x]` is applied. On that day the grid keeps every clock hour up to and including that hour, and later hours become `null`. A task at 07 through 11 checked at 10:xx stays from 07 through 10 and frees 11. The cut uses `completed_at`, not the daily. A unique checked before `do_on` leaves the open grid. A recurring checked on its `do_on` keeps that partial day and then shows only the next `do_on`, with every clock. A recurring checked on a different day does not paint a partial today; the grid shows the next `do_on`.
 
+Maintenance, and a live recurring with no `do_on`, checked in Today record `completed_at` the same way. On that day the grid keeps every clock hour up to and including that hour, and later hours of that day lose the label. The next cadence day keeps every clock. A column on or before the last closed daily is not rewritten. A day already listed in `done_on` with no `completed_at` does not move: reindex does not invent a clock, and every clock of that day stays.
+
 A project window belongs to the project. The cell is the project name. Completing one task does not free its hours while any other task of that project is still open. Canceled and obsolete tasks do not count. The window leaves only when every remaining task is completed. Then the same cut applies on the day of the latest `completed_at`: hours through that hour stay, and later hours become `null`.
 
 `user/preferences.md`: prose; **scripts do not read it**.
@@ -508,9 +511,11 @@ Inside `reindex`, after the checkbox pass, placement is reconciled: a unique or 
 
 Maintenance, and a live recurring with no `do_on`, in **Today**:
 
-1. Record today in `done_on` (drop earlier dates; keep a later date).
+1. Record today in `done_on` (drop earlier dates; keep a later date) and record `completed_at` (`<today>T<HH:MM>`, `America/Sao_Paulo`).
 2. Recurring with `until == today`: `status: completed`, move `ongoing/` → `completed/`, rewrite links (§ 6.4).
 3. Otherwise the file stays in `ongoing/`. Reindex drops the Today line.
+
+The grid cut for that `completed_at` is § 5.5. A file that already has today in `done_on` and has no `completed_at` is left unchanged: reindex does not invent a clock, and the grid keeps the cadence window.
 
 Live recurring **with** `do_on` (Today, Overdue, or a later bucket):
 
@@ -682,7 +687,7 @@ Files in `docs/templates/`. Body matches sections 4.x + the listed headings. No 
 1. Tree § 3; `user/` without real life; `preferences.md` empty/minimal is OK.
 2. `docs/spec.md` = this law; `AGENTS.md`; templates; `docs/cron.md`; `README.md`.
 3. The commands work (`reindex`, `watch`, `daily-close`, `validate`, `up`).
-4. Tests in `scripts/tests/` (not in `user/`): unique buckets; a unique with no `do_on` is paused and off the index; daily, weekdays, interval, until date — empty sections omitted; Overdue holds a past unique and a live recurring whose `do_on` is past; `x` on a dateless ongoing line outside Today reverted; `x` on an overdue recurring advances one `do_on` and the line stays while the date is still past; `x` unique moves + `completed_on` + commit and does not change `do_on`; early complete frees the open window and is not a failure on `do_on`; `x` ongoing Today fills `done_on` and leaves Today when the series has no `do_on`; first `x` on pending recurring starts it and advances `do_on`; `daily-close` until without x → completed + the day in Failed tasks; closed schedule columns stay, open columns follow the clocks; catch-up closes missed days with no credit and applies `[x]` on the return day; with `user/.git`, daily-close commits in the nested user git and the parent stays clean; recurring with no `do_on` while still pending is paused and does not fail; maintenance lives in `ongoing/`; `done_on` drops the closed day; `times` and `do_in` are rejected; a project follows its tasks into `paused`; null hours stay out of the routine percentage; commit waits out a foreign `index.lock`; a commit left by a failed push goes out on the next push; a failed push does not fail daily-close.
+4. Tests in `scripts/tests/` (not in `user/`): unique buckets; a unique with no `do_on` is paused and off the index; daily, weekdays, interval, until date — empty sections omitted; Overdue holds a past unique and a live recurring whose `do_on` is past; `x` on a dateless ongoing line outside Today reverted; `x` on an overdue recurring advances one `do_on` and the line stays while the date is still past; `x` unique moves + `completed_on` + commit and does not change `do_on`; early complete frees the open window and is not a failure on `do_on`; `x` ongoing Today fills `done_on` and leaves Today when the series has no `do_on`; first `x` on pending recurring starts it and advances `do_on`; `daily-close` until without x → completed + the day in Failed tasks; closed schedule columns stay, open columns follow the clocks; catch-up closes missed days with no credit and applies `[x]` on the return day; with `user/.git`, daily-close commits in the nested user git and the parent stays clean; recurring with no `do_on` while still pending is paused and does not fail; maintenance lives in `ongoing/`; `done_on` drops the closed day; `times` and `do_in` are rejected; a project follows its tasks into `paused`; null hours stay out of the routine percentage; commit waits out a foreign `index.lock`; a commit left by a failed push goes out on the next push; a failed push does not fail daily-close; a Today check on maintenance records `completed_at` and drops later hours of that day, the next cadence day keeps the clocks, and `done_on` today without `completed_at` leaves the window.
 5. `origin` on GitHub; public tree without real-life projects/tasks (`/user/` in gitignore).
 
 ---
