@@ -39,4 +39,4 @@
 
 - [Title](../../../tasks/pending/slug.md)
 
-## Notes, optional
+## Notes

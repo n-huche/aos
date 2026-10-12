@@ -161,7 +161,7 @@ Order: Object → Question → Options → Decision → Implications.
 - A sentence that needs its writing date to stay true does not belong.
 - When a fact dies: rewrite or delete. Do not append a later correction.
 
-Daily `## Notes, optional` are of that day. They are not this file.
+Daily `## Notes` are of that day. They are not this file. A daily that already says `## Notes, optional` is the same section.
 
 ---
 
@@ -597,10 +597,12 @@ If the process was dead while the calendar moved, `aos up` does **catch-up** bef
 
 - [Title](../../../tasks/pending/slug.md)
 
-## Notes, optional
+## Notes
 ```
 
 The hour table is 24 rows, `00:00`–`23:00`. A cell the user did not fill is `null`. While the day is open, `reindex` may write `## Completed tasks` under that table when a check lands on the day. It keeps the `did` column and the notes. It does not write `routine` / `tasks`, so the day stays open. Close keeps the hour column and the notes, and writes the metrics and the same completed list. Omit failed if empty. Live series: link `../../../tasks/ongoing/slug.md`. Recurring closed on `until`: `completed/`.
+
+A notes block this engine creates uses `## Notes`. A daily that already has `## Notes` or `## Notes, optional` keeps that heading and the text under it. Close and a rewrite of an open day do not rename it.
 
 **Done on D:** unique with `completed_on == D` (including one done early); live recurring or maintenance with D in `done_on`.
 

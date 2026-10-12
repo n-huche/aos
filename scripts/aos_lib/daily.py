@@ -18,7 +18,11 @@ from .sync import finish_recurring_until
 from .taskio import atomic_write, iter_task_files
 from .yamlfm import as_date
 
-NOTES_RE = re.compile(r"^##\s+Notes.*$", re.M)
+# A new notes block is `## Notes`. `## Notes, optional` is the old heading.
+# extract_notes keeps that line, and the renderers write it back, so a
+# rewrite does not rename an old daily or drop the text under it.
+NOTES_HEADING = "## Notes"
+NOTES_RE = re.compile(r"^##\s+Notes(?:, optional)?\s*$", re.M)
 HOUR_ROW_RE = re.compile(r"^\|\s*(\d{2}:00)\s*\|\s*(.*?)\s*\|$")
 METRICS_MARK = "| routine | tasks |"
 
@@ -275,7 +279,7 @@ def render_daily(
     if notes:
         notes = notes.rstrip() + "\n"
         if not notes.startswith("## "):
-            lines.append("## Notes, optional")
+            lines.append(NOTES_HEADING)
             lines.append("")
         lines.append(notes.rstrip())
         lines.append("")
@@ -329,7 +333,7 @@ def render_open_daily(
         notes = notes.rstrip() + "\n"
         if not notes.startswith("## "):
             lines.append("")
-            lines.append("## Notes, optional")
+            lines.append(NOTES_HEADING)
             lines.append("")
         else:
             lines.append("")
