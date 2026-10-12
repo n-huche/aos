@@ -23,6 +23,7 @@ from .config import (
     schedule_dir,
     user_dir,
 )
+from .daily import NOTES_RE
 from .taskio import iter_task_files
 from .yamlfm import as_date, split_frontmatter
 
@@ -35,6 +36,27 @@ def validate(root: Path) -> list[str]:
     errors.extend(_validate_projects(root))
     errors.extend(_validate_links(root))
     errors.extend(_validate_layout(root))
+    errors.extend(_validate_daily_notes(root))
+    return errors
+
+
+def _validate_daily_notes(root: Path) -> list[str]:
+    """Accept `## Notes` and the legacy `## Notes, optional`. Neither is an error."""
+    errors: list[str] = []
+    base = daily_dir(root)
+    if not base.is_dir():
+        return errors
+    for path in sorted(base.rglob("*.md")):
+        if not path.is_file():
+            continue
+        for line in path.read_text(encoding="utf-8").splitlines():
+            stripped = line.strip()
+            if NOTES_RE.fullmatch(stripped):
+                continue
+            if stripped.startswith("##") and stripped[2:].strip().startswith("Notes"):
+                errors.append(
+                    f"{_display(root, path)}: notes heading must be '## Notes' or '## Notes, optional'"
+                )
     return errors
 
 

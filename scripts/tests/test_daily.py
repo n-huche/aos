@@ -256,6 +256,7 @@ class DailyTest(AOSTest):
         self.assertIn("## Completed tasks", text)
         self.assertIn("tasks/completed/send.md", text)
         self.assertIn("| 07:00 | tiktok |", text)
+        self.assertIn("## Notes, optional", text)
         self.assertIn("kept", text)
         self.assertNotIn("| routine | tasks |", text)
         from aos_lib.schedule import parse_month
@@ -264,3 +265,51 @@ class DailyTest(AOSTest):
             (self.root / "user/schedule/2026/2026-09.md").read_text(encoding="utf-8")
         )
         self.assertEqual(cells[16][8], "null")
+
+    def _hour_table(self, iso: str, *, notes_heading: str | None, note: str | None) -> str:
+        lines = [f"# {iso}", "", "| hour | did |", "| --- | --- |"]
+        for hour in range(24):
+            lines.append(f"| {hour:02d}:00 | null |")
+        if notes_heading and note:
+            lines.extend(["", notes_heading, "", note, ""])
+        else:
+            lines.append("")
+        return "\n".join(lines)
+
+    def test_legacy_notes_are_read_validated_and_kept(self) -> None:
+        from aos_lib.daily import extract_notes
+
+        iso = "2026-09-15"
+        legacy = self._hour_table(iso, notes_heading="## Notes, optional", note="kept the note")
+        self.assertEqual(
+            extract_notes(legacy),
+            "## Notes, optional\n\nkept the note\n",
+        )
+        day = seed_daily(self.root, iso, legacy)
+        self.aos("validate")
+        self.aos("daily-close", iso, today="2026-09-16")
+        text = day.read_text(encoding="utf-8")
+        self.assertIn("## Notes, optional\n", text)
+        self.assertIn("kept the note", text)
+        self.assertNotIn("## Notes\n", text)
+        self.aos("validate")
+
+    def test_new_daily_is_generated_with_notes(self) -> None:
+        from aos_lib.daily import extract_notes, render_daily, render_open_daily
+
+        when = date(2026, 9, 16)
+        hours = {f"{hour:02d}:00": "null" for hour in range(24)}
+        closed = render_daily(when, hours, "null", "null", [], [], "kept the note")
+        opened = render_open_daily(when, hours, [], "kept the note")
+        for text in (closed, opened):
+            self.assertIn("## Notes\n", text)
+            self.assertIn("kept the note", text)
+            self.assertNotIn("Notes, optional", text)
+            self.assertEqual(extract_notes(text), "## Notes\n\nkept the note\n")
+        day = seed_daily(self.root, when.isoformat(), closed)
+        self.aos("validate")
+        self.aos("daily-close", when.isoformat(), today="2026-09-17")
+        text = day.read_text(encoding="utf-8")
+        self.assertIn("## Notes\n", text)
+        self.assertIn("kept the note", text)
+        self.assertNotIn("Notes, optional", text)
