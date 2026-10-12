@@ -655,3 +655,196 @@ Deitar.
         self.aos("reindex", now="2026-09-16T09:30")
         cells = parse_month(month.read_text(encoding="utf-8"))
         self.assertEqual(cells[16][9], "first-job, first-job")
+
+    def _month_cells(self):
+        from aos_lib.schedule import parse_month
+
+        return parse_month(
+            (self.root / "user/schedule/2026/2026-09.md").read_text(encoding="utf-8")
+        )
+
+    def _write_banho(self, clocks: list[str], *, done_on: list[str] | None = None) -> Path:
+        clock_list = ", ".join(f'"{clock}"' for clock in clocks)
+        if done_on:
+            done = "done_on:\n" + "".join(f"  - {day}\n" for day in done_on)
+        else:
+            done = "done_on: []\n"
+        path = self.root / "user/tasks/ongoing/banho.md"
+        path.write_text(
+            f"""---
+type: maintenance
+status: ongoing
+infinitive: Banho
+do_at: [{clock_list}]
+{done}cadence:
+  kind: daily
+---
+
+# Banho
+
+## What
+
+Banho.
+
+## How
+
+Tomar.
+""",
+            encoding="utf-8",
+        )
+        return path
+
+    def _check_today(self, slug: str) -> None:
+        tasks = self.root / "user/tasks/tasks.md"
+        tasks.write_text(mark(self.tasks_md(), slug=slug), encoding="utf-8")
+
+    def test_maintenance_checked_before_the_window_drops_the_label(self) -> None:
+        self._write_banho(["21:00"])
+        write_unique(self.root, "send", "Send", "2026-09-16", do_at="05:00")
+        self.aos("reindex", now="2026-09-16T06:00")
+        cells = self._month_cells()
+        self.assertEqual(cells[16][5], "send")
+        self.assertEqual(cells[16][21], "banho")
+        self.assertEqual(cells[17][21], "banho")
+        send = self.root / "user/tasks/pending/send.md"
+        send.write_text(
+            send.read_text(encoding="utf-8").replace('do_at: ["05:00"]', 'do_at: ["15:00"]'),
+            encoding="utf-8",
+        )
+        self._check_today("banho")
+        self.aos("reindex", now="2026-09-16T06:00")
+        data, _body = split_frontmatter(
+            (self.root / "user/tasks/ongoing/banho.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(data.get("completed_at"), "2026-09-16T06:00")
+        self.assertEqual([day.isoformat() for day in data.get("done_on") or []], ["2026-09-16"])
+        cells = self._month_cells()
+        self.assertEqual(cells[16][5], "send")
+        self.assertEqual(cells[16][15], "send")
+        self.assertEqual(cells[16][21], "null")
+        self.assertEqual(cells[17][21], "banho")
+
+    def test_maintenance_checked_after_the_window_keeps_earlier_hours(self) -> None:
+        self._write_banho(["07:00", "08:00", "11:00"])
+        write_unique(self.root, "open", "Open the month", "2026-09-20", do_at="09:00")
+        self.aos("reindex", now="2026-09-16T10:00")
+        cells = self._month_cells()
+        for hour in (7, 8, 11):
+            self.assertEqual(cells[16][hour], "banho", hour)
+        self._check_today("banho")
+        self.aos("reindex", now="2026-09-16T10:00")
+        data, _body = split_frontmatter(
+            (self.root / "user/tasks/ongoing/banho.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(data.get("completed_at"), "2026-09-16T10:00")
+        cells = self._month_cells()
+        self.assertEqual(cells[16][7], "banho")
+        self.assertEqual(cells[16][8], "banho")
+        self.assertEqual(cells[16][11], "null")
+        self.aos("reindex", now="2026-09-16T06:00")
+        cells = self._month_cells()
+        self.assertEqual(cells[16][7], "banho")
+        self.assertEqual(cells[16][8], "banho")
+        self.assertEqual(cells[16][11], "null")
+        for hour in (7, 8, 11):
+            self.assertEqual(cells[17][hour], "banho", hour)
+
+    def test_maintenance_returns_on_the_next_day(self) -> None:
+        self._write_banho(["21:00"])
+        write_unique(self.root, "open", "Open the month", "2026-09-20", do_at="09:00")
+        self.aos("reindex", now="2026-09-16T06:00")
+        self._check_today("banho")
+        self.aos("reindex", now="2026-09-16T06:00")
+        self.assertEqual(self._month_cells()[16][21], "null")
+        self.aos("reindex", today="2026-09-17", now="2026-09-17T08:00")
+        cells = self._month_cells()
+        self.assertEqual(cells[16][21], "null")
+        self.assertEqual(cells[17][21], "banho")
+        data, _body = split_frontmatter(
+            (self.root / "user/tasks/ongoing/banho.md").read_text(encoding="utf-8")
+        )
+        self.assertEqual(data.get("completed_at"), "2026-09-16T06:00")
+
+    def test_closed_day_stays_when_maintenance_is_checked(self) -> None:
+        self._write_banho(["21:00"])
+        write_unique(self.root, "open", "Open the month", "2026-09-20", do_at="09:00")
+        self.aos("reindex", now="2026-09-16T06:00")
+        self.aos("daily-close", "2026-09-15", today="2026-09-16", now="2026-09-16T06:00")
+        before = self._month_cells()[15]
+        self.assertEqual(before[21], "banho")
+        self._check_today("banho")
+        self.aos("reindex", now="2026-09-16T06:00")
+        cells = self._month_cells()
+        self.assertEqual(cells[15], before)
+        self.assertEqual(cells[16][21], "null")
+
+    def test_done_today_without_completed_at_keeps_the_window(self) -> None:
+        path = self._write_banho(["21:00"], done_on=["2026-09-16"])
+        write_unique(self.root, "open", "Open the month", "2026-09-20", do_at="09:00")
+        self.aos("reindex", now="2026-09-16T06:00")
+        early = self._month_cells()
+        self.assertEqual(early[16][21], "banho")
+        self.assertEqual(early[17][21], "banho")
+        data, _body = split_frontmatter(path.read_text(encoding="utf-8"))
+        self.assertIsNone(data.get("completed_at"))
+        self.aos("reindex", now="2026-09-16T18:00")
+        later = self._month_cells()
+        self.assertEqual(later[16][21], "banho")
+        self.assertEqual(later[17][21], "banho")
+        self.aos("reindex", now="2026-09-16T22:00")
+        frozen = self._month_cells()
+        self.assertEqual(frozen[16][21], "banho")
+        self.assertEqual(frozen[17][21], "banho")
+        data, _body = split_frontmatter(path.read_text(encoding="utf-8"))
+        self.assertIsNone(data.get("completed_at"))
+        self.assertEqual([day.isoformat() for day in data.get("done_on") or []], ["2026-09-16"])
+
+    def test_frozen_hour_after_the_stamp_drops_the_label(self) -> None:
+        path = self._write_banho(["07:00", "21:00"])
+        write_unique(self.root, "send", "Send", "2026-09-16", do_at="05:00")
+        self.aos("reindex", now="2026-09-16T06:00")
+        text = path.read_text(encoding="utf-8").replace(
+            "done_on: []\n",
+            "done_on:\n  - 2026-09-16\ncompleted_at: 2026-09-16T10:00\n",
+        )
+        path.write_text(text, encoding="utf-8")
+        self.aos("reindex", now="2026-09-16T22:00")
+        cells = self._month_cells()
+        self.assertEqual(cells[16][5], "send")
+        self.assertEqual(cells[16][7], "banho")
+        self.assertEqual(cells[16][21], "null")
+        self.assertEqual(cells[17][21], "banho")
+        data, _body = split_frontmatter(path.read_text(encoding="utf-8"))
+        self.assertEqual(data.get("completed_at"), "2026-09-16T10:00")
+
+    def test_dateless_recurring_checked_today_cuts_later_hours(self) -> None:
+        path = write_recurring(
+            self.root,
+            "water",
+            "Drink water",
+            kind="daily",
+            until="2026-12-01",
+            do_at="07:00",
+        )
+        path.write_text(
+            path.read_text(encoding="utf-8").replace(
+                'do_at: ["07:00"]',
+                'do_at: ["07:00", "08:00", "11:00"]',
+            ),
+            encoding="utf-8",
+        )
+        write_unique(self.root, "open", "Open the month", "2026-09-20", do_at="09:00")
+        self.aos("reindex", now="2026-09-16T10:00")
+        tasks = self.root / "user/tasks/tasks.md"
+        tasks.write_text(mark(self.tasks_md(), heading="Today"), encoding="utf-8")
+        self.aos("reindex", now="2026-09-16T10:00")
+        data, _body = split_frontmatter(path.read_text(encoding="utf-8"))
+        self.assertEqual(data.get("completed_at"), "2026-09-16T10:00")
+        self.assertIsNone(data.get("do_on"))
+        self.aos("reindex", now="2026-09-16T06:00")
+        cells = self._month_cells()
+        self.assertEqual(cells[16][7], "drink water")
+        self.assertEqual(cells[16][8], "drink water")
+        self.assertEqual(cells[16][11], "null")
+        for hour in (7, 8, 11):
+            self.assertEqual(cells[17][hour], "drink water", hour)

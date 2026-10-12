@@ -126,6 +126,9 @@ def mark_series_today(root: Path, task: TaskFile, day: date) -> None:
             task.save()
         return
     _mark_done_on(task, day)
+    # Today check of maintenance, or of a live series that has no do_on.
+    # A later reindex does not fill this in when the stamp is already missing.
+    _stamp_check(task, day)
     until = until_date(task.data)
     if task.type in RECURRING_TYPES and until == day and day_complete(task.data, day):
         _move_status(root, task, "completed")
